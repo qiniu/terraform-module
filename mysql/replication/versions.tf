@@ -1,0 +1,3 @@
+provider "qiniu" {}
+
+provider "random" {}
