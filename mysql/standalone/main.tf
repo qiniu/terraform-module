@@ -1,15 +1,3 @@
-# 生成资源后缀，避免命名冲突
-resource "random_string" "resource_suffix" {
-  length  = 6
-  upper   = false
-  lower   = true
-  special = false
-}
-
-locals {
-  standalone_suffix = random_string.resource_suffix.result
-}
-
 resource "qiniu_compute_instance" "mysql_primary_node" {
   instance_type    = var.instance_type // 虚拟机实例规格
   name             = format("mysql-standalone-%s", local.standalone_suffix)
