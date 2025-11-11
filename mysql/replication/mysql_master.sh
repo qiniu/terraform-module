@@ -23,11 +23,15 @@ EOF
 
 # 重启 MySQL 服务
 systemctl restart mysql
-sleep 1 # 等待 MySQL 服务重启完成
+
+# 等待 MySQL 服务重启完成
+while ! mysqladmin ping --silent; do sleep 1; done  
 
 mysql -uroot <<EOF
   ALTER USER 'root'@'localhost' IDENTIFIED BY '${mysql_admin_password}';
-  CREATE USER '${mysql_admin_username}'@'%' IDENTIFIED BY '${mysql_admin_password}';
+  CREATE USER '${mysql_admin_username}'@'%' IDENTIFIED BY '${mysql_admin_password}';为管理用户 '${mysql_admin_username}' 授权时使用了 '%' 作为主机，这意味着该用户可以从任何 IP 地址连接。如果实例有公网 IP，这将带来安全风险。建议将主机限制在特定的 IP 范围或 VPC 子网内，以增强安全性。
+  
+  
   GRANT ALL PRIVILEGES ON *.* TO '${mysql_admin_username}'@'%' WITH GRANT OPTION;
 
   CREATE USER '${mysql_replication_username}'@'%' IDENTIFIED WITH mysql_native_password BY '${mysql_replication_password}';
