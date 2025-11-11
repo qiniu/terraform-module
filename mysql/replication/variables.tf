@@ -1,8 +1,28 @@
 variable "instance_type" {
   type        = string
   description = "MySQL instance type"
+  default     = "ecs.t1.c1m2"
   validation {
-    condition     = var.instance_type != ""
+    condition = var.instance_type != "" && contains([
+      "ecs.t1.c1m2",
+      "ecs.t1.c2m4",
+      "ecs.t1.c4m8",
+      "ecs.t1.c12m24",
+      "ecs.t1.c32m64",
+      "ecs.t1.c24m48",
+      "ecs.t1.c8m16",
+      "ecs.t1.c16m32",
+      "ecs.g1.c16m120",
+      "ecs.g1.c32m240",
+      "ecs.c1.c1m2",
+      "ecs.c1.c2m4",
+      "ecs.c1.c4m8",
+      "ecs.c1.c8m16",
+      "ecs.c1.c16m32",
+      "ecs.c1.c24m48",
+      "ecs.c1.c12m24",
+      "ecs.c1.c32m64",
+    ], var.instance_type)
     error_message = "instance_type parameter is required but not provided"
   }
 }
@@ -18,20 +38,10 @@ variable "instance_system_disk_size" {
   }
 }
 
-variable "mysql_replica_count" {
-  type        = number
-  description = "Number of MySQL replica nodes"
-  default     = 2
-
-  validation {
-    condition     = var.mysql_replica_count >= 1 && var.mysql_replica_count <= 10
-    error_message = "mysql_replica_count must be between 1 and 10"
-  }
-}
-
 variable "mysql_username" {
   type        = string
-  description = "MySQL admin username"
+  description = "MySQL username"
+  default     = "admin"
 
   validation {
     condition     = length(var.mysql_username) >= 1 && length(var.mysql_username) <= 32
@@ -41,7 +51,7 @@ variable "mysql_username" {
 
 variable "mysql_password" {
   type        = string
-  description = "MySQL admin password"
+  description = "MySQL password"
   sensitive   = true
 
   validation {
@@ -61,12 +71,29 @@ variable "mysql_db_name" {
   default     = ""
 
   validation {
-    condition = var.mysql_db_name == "" ? true : (
-      length(var.mysql_db_name) >= 1 &&
-      length(var.mysql_db_name) <= 64 &&
-      can(regex("^[a-zA-Z0-9_]*$", var.mysql_db_name)) &&
-      !contains(["mysql", "information_schema", "performance_schema", "sys"], var.mysql_db_name)
-    )
+    condition     = var.mysql_db_name == "" || length(var.mysql_db_name) >= 1 && length(var.mysql_db_name) <= 64 && can(regex("^[a-zA-Z0-9_]*$", var.mysql_db_name)) && !contains(["mysql", "information_schema", "performance_schema", "sys"], var.mysql_db_name)
     error_message = "mysql_db_name must be 1-64 chars, only alphanumeric/underscore, and not a reserved name (mysql, information_schema, performance_schema, sys)"
+  }
+}
+
+variable "mysql_replica_count" {
+  type        = number
+  description = "Number of MySQL replica nodes"
+  default     = 2
+
+  validation {
+    condition     = var.mysql_replica_count >= 1 && var.mysql_replica_count <= 2
+    error_message = "mysql_replica_count must be between 1 and 2"
+  }
+}
+
+variable "mysql_replication_username" {
+  type        = string
+  description = "MySQL replication username"
+  default     = "replication"
+
+  validation {
+    condition     = length(var.mysql_replication_username) >= 1 && length(var.mysql_replication_username) <= 32
+    error_message = "mysql_replication_username parameter must be between 1 and 32 characters long"
   }
 }

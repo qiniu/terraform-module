@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
 
+# Install MySQL if not already installed
+echo "Checking for MySQL installation..."
+if ! command -v mysql &> /dev/null; then
+    echo "MySQL not found, installing..."
+    apt-get update
+    DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-client-8.0 mysql-server-8.0 mysql-router mysql-shell
+fi
+
 echo "This is the primary node."
 
 # 允许外部IP访问
@@ -29,12 +37,12 @@ while ! mysqladmin ping --silent; do sleep 1; done
 
 mysql -uroot <<EOF
   ALTER USER 'root'@'localhost' IDENTIFIED BY '${mysql_admin_password}';
-  CREATE USER '${mysql_admin_username}'@'%' IDENTIFIED BY '${mysql_admin_password}';为管理用户 '${mysql_admin_username}' 授权时使用了 '%' 作为主机，这意味着该用户可以从任何 IP 地址连接。如果实例有公网 IP，这将带来安全风险。建议将主机限制在特定的 IP 范围或 VPC 子网内，以增强安全性。
-  
-  
+  CREATE USER IF NOT EXISTS '${mysql_admin_username}'@'%' IDENTIFIED BY '${mysql_admin_password}';
+  ALTER USER '${mysql_admin_username}'@'%' IDENTIFIED BY '${mysql_admin_password}';
   GRANT ALL PRIVILEGES ON *.* TO '${mysql_admin_username}'@'%' WITH GRANT OPTION;
 
-  CREATE USER '${mysql_replication_username}'@'%' IDENTIFIED WITH mysql_native_password BY '${mysql_replication_password}';
+  CREATE USER IF NOT EXISTS '${mysql_replication_username}'@'%' IDENTIFIED WITH mysql_native_password BY '${mysql_replication_password}';
+  ALTER USER '${mysql_replication_username}'@'%' IDENTIFIED WITH mysql_native_password BY '${mysql_replication_password}';
   GRANT REPLICATION SLAVE ON *.* TO '${mysql_replication_username}'@'%';
   FLUSH PRIVILEGES;
 EOF

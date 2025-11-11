@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
 
+# Install MySQL if not already installed
+echo "Checking for MySQL installation..."
+if ! command -v mysql &> /dev/null; then
+    echo "MySQL not found, installing..."
+    apt-get update
+    DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-client-8.0 mysql-server-8.0 mysql-router mysql-shell
+fi
+
 echo "This is a replica node."
 
 # 允许外部IP访问
@@ -22,7 +30,9 @@ EOF
 
 # 重启 MySQL 服务
 systemctl restart mysql
-sleep 1 # 等待 MySQL 服务重启完成
+
+# 等待 MySQL 服务重启完成
+while ! mysqladmin ping --silent; do sleep 1; done  
 
 # 轮询等待主库启动
 while ! mysqladmin ping -h "${mysql_master_ip}" -u"${mysql_replication_username}" -p"${mysql_replication_password}" --silent; do
