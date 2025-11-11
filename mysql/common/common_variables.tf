@@ -23,7 +23,7 @@ variable "instance_type" {
       "ecs.c1.c12m24",
       "ecs.c1.c32m64",
     ], var.instance_type)
-    error_message = "instance_type parameter is required but not provided"
+    error_message = "instance_type parameter must be one of the allowed instance types"
   }
 }
 
