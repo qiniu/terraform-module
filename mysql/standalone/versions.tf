@@ -1,3 +1,1 @@
-provider "qiniu" {}
-
-provider "random" {}
+../common/common_versions.tf
