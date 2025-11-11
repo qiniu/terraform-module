@@ -9,7 +9,7 @@ if ! command -v mysql &> /dev/null; then
     echo "MySQL not found, installing..."
     apt-get update
     DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-client-8.0 mysql-server-8.0 mysql-router mysql-shell
-fi``
+fi
 
 echo "Setting up MySQL standalone instance..."
 
@@ -21,7 +21,9 @@ rm -f /var/lib/mysql/auto.cnf
 
 # 重启 MySQL 服务
 systemctl restart mysql
-sleep 1 # 等待 MySQL 服务重启完成
+
+# 等待 MySQL 服务重启完成
+while ! mysqladmin ping --silent; do sleep 1; done  
 
 # 配置基础用户
 mysql -uroot <<EOF
