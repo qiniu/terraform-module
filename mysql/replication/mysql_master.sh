@@ -1,6 +1,13 @@
 #!/bin/bash
 set -e
 
+# 设置环境变量（使用 printf 避免特殊字符问题）
+MYSQL_ADMIN_USERNAME='${mysql_admin_username}'
+MYSQL_ADMIN_PASSWORD='${mysql_admin_password}'
+MYSQL_REPLICATION_USERNAME='${mysql_replication_username}'
+MYSQL_REPLICATION_PASSWORD='${mysql_replication_password}'
+MYSQL_DB_NAME='${mysql_db_name}'
+
 # Install MySQL if not already installed
 echo "Checking for MySQL installation..."
 if ! command -v mysql &> /dev/null; then
@@ -36,23 +43,23 @@ systemctl restart mysql
 while ! mysqladmin ping --silent; do sleep 1; done  
 
 mysql -uroot <<EOF
-  ALTER USER 'root'@'localhost' IDENTIFIED BY '${mysql_admin_password}';
-  CREATE USER IF NOT EXISTS '${mysql_admin_username}'@'%' IDENTIFIED BY '${mysql_admin_password}';
-  ALTER USER '${mysql_admin_username}'@'%' IDENTIFIED BY '${mysql_admin_password}';
-  GRANT ALL PRIVILEGES ON *.* TO '${mysql_admin_username}'@'%' WITH GRANT OPTION;
+  ALTER USER 'root'@'localhost' IDENTIFIED BY '$MYSQL_ADMIN_PASSWORD';
+  CREATE USER IF NOT EXISTS '$MYSQL_ADMIN_USERNAME'@'%' IDENTIFIED BY '$MYSQL_ADMIN_PASSWORD';
+  ALTER USER '$MYSQL_ADMIN_USERNAME'@'%' IDENTIFIED BY '$MYSQL_ADMIN_PASSWORD';
+  GRANT ALL PRIVILEGES ON *.* TO '$MYSQL_ADMIN_USERNAME'@'%' WITH GRANT OPTION;
 
-  CREATE USER IF NOT EXISTS '${mysql_replication_username}'@'%' IDENTIFIED WITH mysql_native_password BY '${mysql_replication_password}';
-  ALTER USER '${mysql_replication_username}'@'%' IDENTIFIED WITH mysql_native_password BY '${mysql_replication_password}';
-  GRANT REPLICATION SLAVE ON *.* TO '${mysql_replication_username}'@'%';
+  CREATE USER IF NOT EXISTS '$MYSQL_REPLICATION_USERNAME'@'%' IDENTIFIED WITH mysql_native_password BY '$MYSQL_REPLICATION_PASSWORD';
+  ALTER USER '$MYSQL_REPLICATION_USERNAME'@'%' IDENTIFIED WITH mysql_native_password BY '$MYSQL_REPLICATION_PASSWORD';
+  GRANT REPLICATION SLAVE ON *.* TO '$MYSQL_REPLICATION_USERNAME'@'%';
   FLUSH PRIVILEGES;
 EOF
 
 # 如果 mysql_db_name 不为空，则创建数据库
-if [[ -n "${mysql_db_name}" ]]; then
-  mysql -u"${mysql_admin_username}" -p"${mysql_admin_password}" <<EOF
-CREATE DATABASE IF NOT EXISTS \`${mysql_db_name}\`;
+if [[ -n "$MYSQL_DB_NAME" ]]; then
+  mysql -u"$MYSQL_ADMIN_USERNAME" -p"$MYSQL_ADMIN_PASSWORD" <<EOF
+CREATE DATABASE IF NOT EXISTS \`$MYSQL_DB_NAME\`;
 EOF
 fi
 
 # 查看数据库
-mysql -u"${mysql_admin_username}" -p"${mysql_admin_password}" -e "SHOW DATABASES;"
+mysql -u"$MYSQL_ADMIN_USERNAME" -p"$MYSQL_ADMIN_PASSWORD" -e "SHOW DATABASES;"
