@@ -16,6 +16,10 @@ variable "mysql_replication_username" {
   default     = "replication"
 
   validation {
+    condition     = can(regex("^[a-zA-Z0-9_]+$", var.mysql_admin_username))
+    error_message = "mysql_replication_username must contain only alphanumeric and underscore"
+  }
+  validation {
     condition     = length(var.mysql_replication_username) >= 1 && length(var.mysql_replication_username) <= 32
     error_message = "mysql_replication_username parameter must be between 1 and 32 characters long"
   }

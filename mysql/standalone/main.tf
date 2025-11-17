@@ -1,3 +1,12 @@
+// 生成实例密码
+resource "random_password" "mysql_instance_password" {
+  length  = 16
+  special = true
+  lower   = true
+  upper   = true
+  numeric = true
+}
+
 resource "qiniu_compute_instance" "mysql_primary_node" {
   instance_type    = var.instance_type // 虚拟机实例规格
   name             = format("mysql-standalone-%s", local.standalone_suffix)
@@ -9,4 +18,5 @@ resource "qiniu_compute_instance" "mysql_primary_node" {
     mysql_password = var.mysql_password,
     mysql_db_name  = var.mysql_db_name,
   }))
+  password = random_password.mysql_instance_password.result
 }

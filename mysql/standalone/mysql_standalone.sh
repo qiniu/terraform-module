@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+# 设置环境变量（使用单引号避免特殊字符问题）
+MYSQL_USERNAME='${mysql_username}'
+MYSQL_PASSWORD='${mysql_password}'
+MYSQL_DB_NAME='${mysql_db_name}'
+
 # Install MySQL if not already installed
 
 echo "Checking for MySQL installation..."
@@ -27,16 +32,16 @@ while ! mysqladmin ping --silent; do sleep 1; done
 
 # 配置基础用户
 mysql -uroot <<EOF
-ALTER USER 'root'@'localhost' IDENTIFIED BY '${mysql_password}';
-CREATE USER '${mysql_username}'@'%' IDENTIFIED BY '${mysql_password}';
-GRANT ALL PRIVILEGES ON *.* TO '${mysql_username}'@'%' WITH GRANT OPTION;
+ALTER USER 'root'@'localhost' IDENTIFIED BY '$MYSQL_PASSWORD';
+CREATE USER '$MYSQL_USERNAME'@'%' IDENTIFIED BY '$MYSQL_PASSWORD';
+GRANT ALL PRIVILEGES ON *.* TO '$MYSQL_USERNAME'@'%' WITH GRANT OPTION;
 FLUSH PRIVILEGES;
 EOF
 
 # 如果 mysql_db_name 不为空，则创建数据库
-if [[ -n "${mysql_db_name}" ]]; then
-  mysql -u"${mysql_username}" -p"${mysql_password}" <<EOF
-CREATE DATABASE IF NOT EXISTS \`${mysql_db_name}\`;
+if [[ -n "$MYSQL_DB_NAME" ]]; then
+  mysql -u"$MYSQL_USERNAME" -p"$MYSQL_PASSWORD" <<EOF
+CREATE DATABASE IF NOT EXISTS \`$MYSQL_DB_NAME\`;
 EOF
 fi
 

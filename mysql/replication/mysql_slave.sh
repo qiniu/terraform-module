@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+# 设置环境变量（使用单引号避免特殊字符问题）
+MYSQL_MASTER_IP='${mysql_master_ip}'
+MYSQL_REPLICATION_USERNAME='${mysql_replication_username}'
+MYSQL_REPLICATION_PASSWORD='${mysql_replication_password}'
+
 # Install MySQL if not already installed
 echo "Checking for MySQL installation..."
 if ! command -v mysql &> /dev/null; then
@@ -35,17 +40,17 @@ systemctl restart mysql
 while ! mysqladmin ping --silent; do sleep 1; done  
 
 # 轮询等待主库启动
-while ! mysqladmin ping -h "${mysql_master_ip}" -u"${mysql_replication_username}" -p"${mysql_replication_password}" --silent; do
-  echo "Waiting for MySQL master at ${mysql_master_ip} to be ready..."
+while ! mysqladmin ping -h "$MYSQL_MASTER_IP" -u"$MYSQL_REPLICATION_USERNAME" -p"$MYSQL_REPLICATION_PASSWORD" --silent; do
+  echo "Waiting for MySQL master at $MYSQL_MASTER_IP to be ready..."
   sleep 2
 done
 
 # 配置从库，将自动将主库所有变更都同步过来，包括用户配置
 mysql -uroot <<EOF
   CHANGE MASTER TO
-    MASTER_HOST = '${mysql_master_ip}',
-    MASTER_USER = '${mysql_replication_username}',
-    MASTER_PASSWORD = '${mysql_replication_password}',
+    MASTER_HOST = '$MYSQL_MASTER_IP',
+    MASTER_USER = '$MYSQL_REPLICATION_USERNAME',
+    MASTER_PASSWORD = '$MYSQL_REPLICATION_PASSWORD',
     MASTER_AUTO_POSITION = 1;
   START SLAVE;
   SHOW SLAVE STATUS\G;

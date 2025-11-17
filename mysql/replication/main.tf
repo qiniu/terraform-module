@@ -7,6 +7,16 @@ resource "qiniu_compute_placement_group" "mysql_pg" {
   strategy    = "Spread"
 }
 
+// 生成实例密码
+resource "random_password" "mysql_instance_password" {
+  count   = var.mysql_replica_count + 1 // 主库加从库数量
+  length  = 16
+  special = true
+  lower   = true
+  upper   = true
+  numeric = true
+}
+
 # 创建 MySQL 主库
 resource "qiniu_compute_instance" "mysql_primary_node" {
   instance_type      = var.instance_type
@@ -15,6 +25,7 @@ resource "qiniu_compute_instance" "mysql_primary_node" {
   description        = format("Primary node for MySQL replication cluster %s", local.cluster_suffix)
   image_id           = local.ubuntu_image_id
   system_disk_size   = var.instance_system_disk_size
+  password           = random_password.mysql_instance_password[0].result
 
   user_data = base64encode(templatefile("${path.module}/mysql_master.sh", {
     mysql_server_id            = "1"
@@ -38,6 +49,7 @@ resource "qiniu_compute_instance" "mysql_replication_nodes" {
   description        = format("Replica node %02d for MySQL replication cluster %s", count.index + 1, local.cluster_suffix)
   image_id           = local.ubuntu_image_id
   system_disk_size   = var.instance_system_disk_size
+  password           = random_password.mysql_instance_password[count.index + 1].result
 
   user_data = base64encode(templatefile("${path.module}/mysql_slave.sh", {
     mysql_master_ip            = qiniu_compute_instance.mysql_primary_node.private_ip_addresses[0].ipv4
