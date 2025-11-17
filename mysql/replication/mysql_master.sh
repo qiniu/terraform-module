@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# 设置环境变量（使用 printf 避免特殊字符问题）
+# 设置环境变量
 MYSQL_ADMIN_USERNAME='${mysql_admin_username}'
 MYSQL_ADMIN_PASSWORD='${mysql_admin_password}'
 MYSQL_REPLICATION_USERNAME='${mysql_replication_username}'
