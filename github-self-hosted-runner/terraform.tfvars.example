@@ -1,0 +1,48 @@
+# ==========================================
+# GitHub Self-hosted Runner 配置示例
+#
+# 使用方法：
+# 1. 复制此文件: cp terraform.tfvars.example terraform.tfvars
+# 2. 修改下面的值
+# 3. 运行: terraform apply
+# ==========================================
+
+# ========== 必填参数 ==========
+
+# GitHub 仓库 URL
+github_repo_url = "https://github.com/your-org/your-repo"
+
+# GitHub Personal Access Token (需要 repo 或 admin:org 权限)
+# 获取地址: https://github.com/settings/tokens
+github_token = "ghp_xxxxxxxxxxxxxxxxxxxx"
+
+
+# ========== 可选参数 ==========
+
+# 虚拟机规格选择（根据工作负载选择）
+# - ecs.t1.c2m4  (2核4GB)  - 轻量级测试
+# - ecs.t1.c4m8  (4核8GB)  - 前端构建
+# - ecs.t1.c8m16 (8核16GB) - 后端编译/Docker构建
+instance_type = "ecs.t1.c2m4"
+
+# 系统盘大小（GiB），建议至少 50GB
+instance_system_disk_size = 50
+
+# Runner 名称（留空则自动生成）
+runner_name = ""
+
+# 自定义标签（会自动添加 self-hosted, linux, x64）
+runner_labels = []
+# 示例：
+# runner_labels = ["gpu", "production", "docker"]
+
+# Runner 进程的用户名
+runner_username = "runner"
+
+# 是否安装 Docker
+enable_docker = true
+
+# 额外安装的软件包
+additional_packages = []
+# 示例：
+# additional_packages = ["nodejs", "npm", "python3-pip", "golang-go"]
