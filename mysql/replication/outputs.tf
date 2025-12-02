@@ -21,3 +21,18 @@ output "mysql_replication_password" {
   description = "MySQL replication password (randomly generated)"
   sensitive   = true
 }
+
+output "mysql_primary_instance_password" {
+  value       = random_password.mysql_instance_password[0].result
+  description = "Password for the MySQL primary instance (randomly generated)"
+  sensitive   = true
+}
+
+output "mysql_replica_instance_passwords" {
+  value = [
+    for i in range(var.mysql_replica_count) :
+    random_password.mysql_instance_password[i + 1].result
+  ]
+  description = "List of passwords for MySQL replica instances (randomly generated)"
+  sensitive   = true
+}
