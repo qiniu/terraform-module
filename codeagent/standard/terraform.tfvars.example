@@ -1,0 +1,19 @@
+# CodeAgent Standard Edition Configuration Example
+# Copy this file to terraform.tfvars and update with your values
+
+# Required: AI Model API Key
+model_api_key = "your-ai-model-api-key-here"
+
+# Optional: Instance Configuration (defaults shown)
+# instance_type             = "ecs.c1.c16m32"  # 16 cores, 32GB RAM
+# instance_system_disk_size = 100              # 100GB system disk
+# internet_max_bandwidth    = 100              # 100Mbps bandwidth
+# cost_charge_type          = "PostPaid"       # PostPaid or PrePaid
+
+# Optional: Custom Image ID (if using different image)
+# image_id = "image-692e5bd2cb731012743a05f4"
+
+# Optional: GitLab Configuration
+# gitlab_base_url       = "http://111.62.212.109"           # GitLab instance URL
+# gitlab_webhook_secret = "012345"                          # Webhook secret
+# gitlab_token          = "glpat-xxxxxxxxxx"                # Personal Access Token
