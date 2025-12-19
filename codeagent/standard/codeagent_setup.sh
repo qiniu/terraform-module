@@ -13,6 +13,10 @@ MODEL_API_KEY='${model_api_key}'
 GITLAB_BASE_URL='${gitlab_base_url}'
 GITLAB_WEBHOOK_SECRET='${gitlab_webhook_secret}'
 GITLAB_TOKEN='${gitlab_token}'
+CNB_BASE_URL='${cnb_base_url}'
+CNB_API_URL='${cnb_api_url}'
+CNB_WEBHOOK_SECRET='${cnb_webhook_secret}'
+CNB_TOKEN='${cnb_token}'
 
 echo "=========================================="
 echo "Starting CodeAgent Standard configuration..."
@@ -36,9 +40,23 @@ echo "Found supervisor config at: $SUPERVISOR_CONF"
 sed -i.bak "s/\"fake_token\"/\"$MODEL_API_KEY\"/g" "$SUPERVISOR_CONF"
 echo "✓ API_KEY updated successfully"
 
-# 2. Update GitLab configuration in codeagent.yaml
+# 2. Install yq if not present
 echo "----------------------------------------"
-echo "Step 2: Updating GitLab configuration..."
+echo "Step 2: Installing yq (YAML processor)..."
+echo "----------------------------------------"
+
+if ! command -v yq &> /dev/null; then
+    echo "yq not found, installing via apt..."
+    apt-get update -qq
+    apt-get install -y yq
+    echo "✓ yq installed successfully"
+else
+    echo "✓ yq already installed"
+fi
+
+# 3. Update GitLab configuration in codeagent.yaml
+echo "----------------------------------------"
+echo "Step 3: Updating GitLab configuration..."
 echo "----------------------------------------"
 
 CODEAGENT_CONF="/home/codeagent/codeagent/_package/conf/codeagent.yaml"
@@ -56,19 +74,19 @@ if [ -n "$GITLAB_BASE_URL" ]; then
     # Backup original file
     cp "$CODEAGENT_CONF" "$CODEAGENT_CONF.bak"
 
-    # Replace base_url (find the line with "base_url: https://gitlab.com" and replace)
-    sed -i "s|base_url: https://gitlab.com|base_url: $GITLAB_BASE_URL|g" "$CODEAGENT_CONF"
+    # Use yq to update GitLab configuration
+    yq -i -y ".platforms.gitlab.instances.com.base_url = \"$GITLAB_BASE_URL\"" "$CODEAGENT_CONF"
     echo "✓ Updated base_url to: $GITLAB_BASE_URL"
 
-    # Replace webhook_secret (find the line with webhook_secret and replace the value)
+    # Update webhook_secret if provided
     if [ -n "$GITLAB_WEBHOOK_SECRET" ]; then
-        sed -i "s|webhook_secret: \".*\"|webhook_secret: \"$GITLAB_WEBHOOK_SECRET\"|g" "$CODEAGENT_CONF"
+        yq -i -y ".platforms.gitlab.instances.com.webhook_secret = \"$GITLAB_WEBHOOK_SECRET\"" "$CODEAGENT_CONF"
         echo "✓ Updated webhook_secret"
     fi
 
-    # Replace token (find the line with token starting with "glpat-" and replace)
+    # Update token if provided
     if [ -n "$GITLAB_TOKEN" ]; then
-        sed -i "s|token: \"glpat-.*\"|token: \"$GITLAB_TOKEN\"|g" "$CODEAGENT_CONF"
+        yq -i -y ".platforms.gitlab.instances.com.token = \"$GITLAB_TOKEN\"" "$CODEAGENT_CONF"
         echo "✓ Updated GitLab token"
     fi
 
@@ -77,9 +95,39 @@ else
     echo "No GitLab configuration provided, skipping..."
 fi
 
-# 3. Restart CodeAgent service via supervisor
+# 4. Update CNB platform configuration in codeagent.yaml
 echo "----------------------------------------"
-echo "Step 3: Restarting CodeAgent service..."
+echo "Step 4: Updating CNB platform configuration..."
+echo "----------------------------------------"
+
+# Check if CNB configuration is provided
+if [ -n "$CNB_BASE_URL" ] && [ -n "$CNB_API_URL" ]; then
+    echo "Configuring CNB platform..."
+
+    # Backup if not already backed up
+    if [ ! -f "$CODEAGENT_CONF.bak.cnb" ]; then
+        cp "$CODEAGENT_CONF" "$CODEAGENT_CONF.bak.cnb"
+    fi
+
+    # Use yq to update CNB configuration
+    yq -i -y ".platforms.cnb.instances.cool.base_url = \"$CNB_BASE_URL\"" "$CODEAGENT_CONF"
+    yq -i -y ".platforms.cnb.instances.cool.api_url = \"$CNB_API_URL\"" "$CODEAGENT_CONF"
+    yq -i -y ".platforms.cnb.instances.cool.webhook_secret = \"$CNB_WEBHOOK_SECRET\"" "$CODEAGENT_CONF"
+    yq -i -y ".platforms.cnb.instances.cool.token = \"$CNB_TOKEN\"" "$CODEAGENT_CONF"
+
+    echo "✓ CNB configuration updated via yq"
+    echo "✓ CNB platform configuration completed"
+    echo "  - Base URL: $CNB_BASE_URL"
+    echo "  - API URL: $CNB_API_URL"
+    echo "  - Webhook secret: [HIDDEN]"
+    echo "  - Token: [HIDDEN]"
+else
+    echo "No CNB configuration provided, skipping..."
+fi
+
+# 5. Restart CodeAgent service via supervisor
+echo "----------------------------------------"
+echo "Step 5: Restarting CodeAgent service..."
 echo "----------------------------------------"
 
 if ! command -v supervisorctl &> /dev/null; then
@@ -91,9 +139,9 @@ supervisorctl reread
 supervisorctl update
 echo "✓ CodeAgent service restarted successfully"
 
-# 4. Verify services
+# 6. Verify services
 echo "----------------------------------------"
-echo "Step 4: Verifying services..."
+echo "Step 6: Verifying services..."
 echo "----------------------------------------"
 
 echo "Supervisor status:"

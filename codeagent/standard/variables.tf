@@ -54,7 +54,7 @@ variable "internet_max_bandwidth" {
 variable "image_id" {
   type        = string
   description = "CodeAgent pre-configured image ID"
-  default     = "image-693b7d014fc9d0719531c21f"
+  default     = "image-69450f6b5d7ae428f333baf0"
 
   validation {
     condition     = can(regex("^image-[a-z0-9]+$", var.image_id))
@@ -96,6 +96,43 @@ variable "gitlab_webhook_secret" {
 variable "gitlab_token" {
   type        = string
   description = "GitLab Personal Access Token"
+  default     = ""
+  sensitive   = true
+}
+
+# CNB configuration variables
+variable "cnb_base_url" {
+  type        = string
+  description = "CNB platform base URL"
+  default     = ""
+
+  validation {
+    condition     = var.cnb_base_url == "" || can(regex("^https?://", var.cnb_base_url))
+    error_message = "cnb_base_url must start with http:// or https://"
+  }
+}
+
+variable "cnb_api_url" {
+  type        = string
+  description = "CNB platform API URL"
+  default     = ""
+
+  validation {
+    condition     = var.cnb_api_url == "" || can(regex("^https?://", var.cnb_api_url))
+    error_message = "cnb_api_url must start with http:// or https://"
+  }
+}
+
+variable "cnb_webhook_secret" {
+  type        = string
+  description = "CNB platform webhook secret"
+  default     = ""
+  sensitive   = true
+}
+
+variable "cnb_token" {
+  type        = string
+  description = "CNB platform access token"
   default     = ""
   sensitive   = true
 }
