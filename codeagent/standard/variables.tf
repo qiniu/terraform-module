@@ -99,3 +99,40 @@ variable "gitlab_token" {
   default     = ""
   sensitive   = true
 }
+
+# CNB configuration variables
+variable "cnb_base_url" {
+  type        = string
+  description = "CNB platform base URL"
+  default     = ""
+
+  validation {
+    condition     = var.cnb_base_url == "" || can(regex("^https?://", var.cnb_base_url))
+    error_message = "cnb_base_url must start with http:// or https://"
+  }
+}
+
+variable "cnb_api_url" {
+  type        = string
+  description = "CNB platform API URL"
+  default     = ""
+
+  validation {
+    condition     = var.cnb_api_url == "" || can(regex("^https?://", var.cnb_api_url))
+    error_message = "cnb_api_url must start with http:// or https://"
+  }
+}
+
+variable "cnb_webhook_secret" {
+  type        = string
+  description = "CNB platform webhook secret"
+  default     = ""
+  sensitive   = true
+}
+
+variable "cnb_token" {
+  type        = string
+  description = "CNB platform access token"
+  default     = ""
+  sensitive   = true
+}

@@ -18,12 +18,16 @@ resource "qiniu_compute_instance" "codeagent_instance" {
   password               = random_password.codeagent_instance_password.result
 
   # Use user_data for configuration via cloud-init
-  # Script configures API Key and GitLab configuration
+  # Script configures API Key, GitLab and CNB configuration
   user_data = base64encode(templatefile("${path.module}/codeagent_setup.sh", {
-    model_api_key        = var.model_api_key
-    gitlab_base_url      = var.gitlab_base_url
+    model_api_key         = var.model_api_key
+    gitlab_base_url       = var.gitlab_base_url
     gitlab_webhook_secret = var.gitlab_webhook_secret
-    gitlab_token         = var.gitlab_token
+    gitlab_token          = var.gitlab_token
+    cnb_base_url          = var.cnb_base_url
+    cnb_api_url           = var.cnb_api_url
+    cnb_webhook_secret    = var.cnb_webhook_secret
+    cnb_token             = var.cnb_token
   }))
 
   timeouts {
