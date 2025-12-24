@@ -1,0 +1,24 @@
+# CodeAgent & GitLab Deployment Configuration Example
+# Copy this file to terraform.tfvars and update with your values
+
+# ===== Required Parameters =====
+
+# AI Model API Key (Required)
+model_api_key = "your-ai-model-api-key-here"
+
+# ===== Optional: Instance Configuration =====
+
+# GitLab Instance Configuration
+# gitlab_instance_type         = "ecs.c1.c16m32"  # 16 cores, 32GB RAM
+# gitlab_system_disk_size      = 100              # 100GB system disk
+# gitlab_internet_max_bandwidth = 100             # 100Mbps bandwidth
+# gitlab_image_id              = "image-693bdc845d7ae428f33348af"
+
+# CodeAgent Instance Configuration
+# codeagent_instance_type         = "ecs.c1.c16m32"  # 16 cores, 32GB RAM
+# codeagent_system_disk_size      = 100              # 100GB system disk
+# codeagent_internet_max_bandwidth = 100             # 100Mbps bandwidth
+# codeagent_image_id              = "image-693b7d014fc9d0719531c21f"
+
+# ===== Note =====
+# GitLab configuration (webhook_secret and token) is hardcoded in the module
