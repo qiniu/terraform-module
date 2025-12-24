@@ -40,18 +40,17 @@ echo "Found supervisor config at: $SUPERVISOR_CONF"
 sed -i.bak "s/\"fake_token\"/\"$MODEL_API_KEY\"/g" "$SUPERVISOR_CONF"
 echo "✓ API_KEY updated successfully"
 
-# 2. Install yq if not present
+# 2. Install Python YAML library if not present
 echo "----------------------------------------"
-echo "Step 2: Installing yq (YAML processor)..."
+echo "Step 2: Installing Python YAML library..."
 echo "----------------------------------------"
 
-if ! command -v yq &> /dev/null; then
-    echo "yq not found, installing via apt..."
-    apt-get update -qq
-    apt-get install -y yq
-    echo "✓ yq installed successfully"
+if ! python3 -c "import ruamel.yaml" &> /dev/null; then
+    echo "ruamel.yaml not found, installing via pip..."
+    pip3 install ruamel.yaml
+    echo "✓ ruamel.yaml installed successfully"
 else
-    echo "✓ yq already installed"
+    echo "✓ ruamel.yaml already installed"
 fi
 
 # 3. Update GitLab configuration in codeagent.yaml
@@ -74,23 +73,54 @@ if [ -n "$GITLAB_BASE_URL" ]; then
     # Backup original file
     cp "$CODEAGENT_CONF" "$CODEAGENT_CONF.bak"
 
-    # Use yq to update GitLab configuration
-    yq -i -y ".platforms.gitlab.instances.com.base_url = \"$GITLAB_BASE_URL\"" "$CODEAGENT_CONF"
-    echo "✓ Updated base_url to: $GITLAB_BASE_URL"
+    # Use Python to update GitLab configuration
+    python3 <<'EOF'
+import os
+import sys
+from ruamel.yaml import YAML
+
+yaml = YAML()
+yaml.preserve_quotes = True
+yaml.default_flow_style = False
+
+config_file = os.environ['CODEAGENT_CONF']
+gitlab_base_url = os.environ.get('GITLAB_BASE_URL')
+gitlab_webhook_secret = os.environ.get('GITLAB_WEBHOOK_SECRET')
+gitlab_token = os.environ.get('GITLAB_TOKEN')
+
+try:
+    with open(config_file, 'r') as f:
+        config = yaml.load(f)
+
+    # Update GitLab base_url
+    if gitlab_base_url:
+        config['platforms']['gitlab']['instances']['com']['base_url'] = gitlab_base_url
 
     # Update webhook_secret if provided
-    if [ -n "$GITLAB_WEBHOOK_SECRET" ]; then
-        yq -i -y ".platforms.gitlab.instances.com.webhook_secret = \"$GITLAB_WEBHOOK_SECRET\"" "$CODEAGENT_CONF"
-        echo "✓ Updated webhook_secret"
-    fi
+    if gitlab_webhook_secret:
+        config['platforms']['gitlab']['instances']['com']['webhook_secret'] = gitlab_webhook_secret
 
     # Update token if provided
-    if [ -n "$GITLAB_TOKEN" ]; then
-        yq -i -y ".platforms.gitlab.instances.com.token = \"$GITLAB_TOKEN\"" "$CODEAGENT_CONF"
-        echo "✓ Updated GitLab token"
-    fi
+    if gitlab_token:
+        config['platforms']['gitlab']['instances']['com']['token'] = gitlab_token
 
-    echo "✓ GitLab configuration updated successfully"
+    with open(config_file, 'w') as f:
+        yaml.dump(config, f)
+
+    print("✓ GitLab configuration updated successfully", file=sys.stderr)
+except Exception as e:
+    print(f"ERROR: Failed to update GitLab configuration: {e}", file=sys.stderr)
+    sys.exit(1)
+EOF
+
+    if [ $? -eq 0 ]; then
+        echo "✓ Updated base_url: [CONFIGURED]"
+        [ -n "$GITLAB_WEBHOOK_SECRET" ] && echo "✓ Updated webhook_secret"
+        [ -n "$GITLAB_TOKEN" ] && echo "✓ Updated GitLab token"
+    else
+        echo "ERROR: Failed to update GitLab configuration"
+        exit 1
+    fi
 else
     echo "No GitLab configuration provided, skipping..."
 fi
@@ -104,23 +134,57 @@ echo "----------------------------------------"
 if [ -n "$CNB_BASE_URL" ] && [ -n "$CNB_API_URL" ]; then
     echo "Configuring CNB platform..."
 
-    # Backup if not already backed up
-    if [ ! -f "$CODEAGENT_CONF.bak.cnb" ]; then
-        cp "$CODEAGENT_CONF" "$CODEAGENT_CONF.bak.cnb"
+    # Use Python to update CNB configuration
+    python3 <<'EOF'
+import os
+import sys
+from ruamel.yaml import YAML
+
+yaml = YAML()
+yaml.preserve_quotes = True
+yaml.default_flow_style = False
+
+config_file = os.environ['CODEAGENT_CONF']
+cnb_base_url = os.environ.get('CNB_BASE_URL')
+cnb_api_url = os.environ.get('CNB_API_URL')
+cnb_webhook_secret = os.environ.get('CNB_WEBHOOK_SECRET')
+cnb_token = os.environ.get('CNB_TOKEN')
+
+try:
+    with open(config_file, 'r') as f:
+        config = yaml.load(f)
+
+    # Update CNB required fields
+    if cnb_base_url and cnb_api_url:
+        config['platforms']['cnb']['instances']['cool']['base_url'] = cnb_base_url
+        config['platforms']['cnb']['instances']['cool']['api_url'] = cnb_api_url
+
+        # Update optional fields only if provided
+        if cnb_webhook_secret:
+            config['platforms']['cnb']['instances']['cool']['webhook_secret'] = cnb_webhook_secret
+
+        if cnb_token:
+            config['platforms']['cnb']['instances']['cool']['token'] = cnb_token
+
+    with open(config_file, 'w') as f:
+        yaml.dump(config, f)
+
+    print("✓ CNB configuration updated successfully", file=sys.stderr)
+except Exception as e:
+    print(f"ERROR: Failed to update CNB configuration: {e}", file=sys.stderr)
+    sys.exit(1)
+EOF
+
+    if [ $? -eq 0 ]; then
+        echo "✓ CNB platform configuration completed"
+        echo "  - Base URL: [CONFIGURED]"
+        echo "  - API URL: [CONFIGURED]"
+        [ -n "$CNB_WEBHOOK_SECRET" ] && echo "  - Webhook secret: [CONFIGURED]"
+        [ -n "$CNB_TOKEN" ] && echo "  - Token: [CONFIGURED]"
+    else
+        echo "ERROR: Failed to update CNB configuration"
+        exit 1
     fi
-
-    # Use yq to update CNB configuration
-    yq -i -y ".platforms.cnb.instances.cool.base_url = \"$CNB_BASE_URL\"" "$CODEAGENT_CONF"
-    yq -i -y ".platforms.cnb.instances.cool.api_url = \"$CNB_API_URL\"" "$CODEAGENT_CONF"
-    yq -i -y ".platforms.cnb.instances.cool.webhook_secret = \"$CNB_WEBHOOK_SECRET\"" "$CODEAGENT_CONF"
-    yq -i -y ".platforms.cnb.instances.cool.token = \"$CNB_TOKEN\"" "$CODEAGENT_CONF"
-
-    echo "✓ CNB configuration updated via yq"
-    echo "✓ CNB platform configuration completed"
-    echo "  - Base URL: $CNB_BASE_URL"
-    echo "  - API URL: $CNB_API_URL"
-    echo "  - Webhook secret: [HIDDEN]"
-    echo "  - Token: [HIDDEN]"
 else
     echo "No CNB configuration provided, skipping..."
 fi
@@ -135,7 +199,7 @@ if ! command -v supervisorctl &> /dev/null; then
     exit 1
 fi
 
-supervisorctl reread 
+supervisorctl reread
 supervisorctl update
 echo "✓ CodeAgent service restarted successfully"
 
