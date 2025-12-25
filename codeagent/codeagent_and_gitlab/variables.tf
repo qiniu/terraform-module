@@ -92,7 +92,7 @@ variable "codeagent_internet_max_bandwidth" {
 variable "codeagent_image_id" {
   type        = string
   description = "CodeAgent pre-configured image ID"
-  default     = "image-693b7d014fc9d0719531c21f"
+  default     = "image-694ba6d04003c59f46bd71c5"
 
   validation {
     condition     = can(regex("^image-[a-z0-9]+$", var.codeagent_image_id))
