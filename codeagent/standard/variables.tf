@@ -2,7 +2,7 @@
 variable "instance_type" {
   type        = string
   description = "CodeAgent instance type (ECS specification)"
-  default     = "ecs.c1.c16m32"
+  default     = "ecs.c1.c12m24"
 
   validation {
     condition = var.instance_type != "" && contains([
@@ -43,7 +43,7 @@ variable "instance_system_disk_size" {
 variable "internet_max_bandwidth" {
   type        = number
   description = "Maximum internet bandwidth in Mbps (0-200)"
-  default     = 100
+  default     = 200
 
   validation {
     condition     = var.internet_max_bandwidth > 0 && var.internet_max_bandwidth <= 200
