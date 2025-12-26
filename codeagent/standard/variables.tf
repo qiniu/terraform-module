@@ -51,6 +51,16 @@ variable "internet_max_bandwidth" {
   }
 }
 
+variable "internet_charge_type" {
+  type        = string
+  description = "Internet charge type"
+  default     = "PeakBandwidth"
+  validation {
+    condition  = contains(["Bandwidth", "PeakBandwidth", "Traffic"], var.internet_charge_type )
+    error_message = "internet_charge_type must be either 'Bandwidth' or 'PeakBandwidth' or 'Traffic'"
+  }
+}
+
 variable "image_id" {
   type        = string
   description = "CodeAgent pre-configured image ID"

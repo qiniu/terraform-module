@@ -23,6 +23,7 @@ resource "qiniu_compute_instance" "gitlab_instance" {
   image_id               = var.gitlab_image_id
   system_disk_size       = var.gitlab_system_disk_size
   internet_max_bandwidth = var.gitlab_internet_max_bandwidth
+  internet_charge_type   = var.gitlab_internet_charge_type
   password               = random_password.gitlab_instance_password.result
 
   timeouts {
@@ -73,6 +74,7 @@ resource "qiniu_compute_instance" "codeagent_instance" {
   image_id               = var.codeagent_image_id
   system_disk_size       = var.codeagent_system_disk_size
   internet_max_bandwidth = var.codeagent_internet_max_bandwidth
+  internet_charge_type   = var.codeagent_internet_charge_type
   password               = random_password.codeagent_instance_password.result
 
   # Configure CodeAgent with GitLab URL
