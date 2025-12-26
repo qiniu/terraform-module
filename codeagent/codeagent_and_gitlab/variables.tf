@@ -38,6 +38,16 @@ variable "gitlab_internet_max_bandwidth" {
   }
 }
 
+variable "gitlab_internet_charge_type" {
+  type        = string
+  description = "Internet charge type"
+  default     = "PeakBandwidth"
+  validation {
+    condition  = contains(["Bandwidth", "PeakBandwidth", "Traffic"], var.gitlab_internet_charge_type)
+    error_message = "internet_charge_type must be either 'Bandwidth' or 'PeakBandwidth' or 'Traffic'"
+  }
+}
+
 variable "gitlab_image_id" {
   type        = string
   description = "GitLab pre-configured image ID"
@@ -86,6 +96,16 @@ variable "codeagent_internet_max_bandwidth" {
   validation {
     condition     = var.codeagent_internet_max_bandwidth >= 0 && var.codeagent_internet_max_bandwidth <= 200
     error_message = "codeagent_internet_max_bandwidth must be between 0 and 200 Mbps"
+  }
+}
+
+variable "codeagent_internet_charge_type" {
+  type        = string
+  description = "Internet charge type"
+  default     = "PeakBandwidth"
+  validation {
+    condition  = contains(["Bandwidth", "PeakBandwidth", "Traffic"], var.codeagent_internet_charge_type)
+    error_message = "internet_charge_type must be either 'Bandwidth' or 'PeakBandwidth' or 'Traffic'"
   }
 }
 

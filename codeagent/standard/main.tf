@@ -15,6 +15,7 @@ resource "qiniu_compute_instance" "codeagent_instance" {
   image_id               = var.image_id
   system_disk_size       = var.instance_system_disk_size
   internet_max_bandwidth = var.internet_max_bandwidth
+  internet_charge_type   = var.internet_charge_type
   password               = random_password.codeagent_instance_password.result
 
   # Use user_data for configuration via cloud-init
