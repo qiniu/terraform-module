@@ -63,7 +63,7 @@ variable "gitlab_image_id" {
 variable "codeagent_instance_type" {
   type        = string
   description = "CodeAgent instance type (ECS specification)"
-  default     = "ecs.c1.c16m32"
+  default     = "ecs.c1.c12m24"
 
   validation {
     condition = var.codeagent_instance_type != "" && contains([
@@ -91,7 +91,7 @@ variable "codeagent_system_disk_size" {
 variable "codeagent_internet_max_bandwidth" {
   type        = number
   description = "CodeAgent maximum internet bandwidth in Mbps (0-200)"
-  default     = 100
+  default     = 200
 
   validation {
     condition     = var.codeagent_internet_max_bandwidth >= 0 && var.codeagent_internet_max_bandwidth <= 200
