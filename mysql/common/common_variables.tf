@@ -55,17 +55,23 @@ variable "mysql_username" {
 
 variable "mysql_password" {
   type        = string
-  description = "MySQL password"
+  description = "MySQL password (optional, randomly generated if not provided)"
+  default     = null
   sensitive   = true
 
   validation {
-    condition     = length(var.mysql_password) >= 8
-    error_message = "mysql_password parameter must be at least 8 characters long"
+    condition     = var.mysql_password == null || length(var.mysql_password) >= 8
+    error_message = "mysql_password parameter must be at least 8 characters long when provided"
   }
 
   validation {
-    condition     = can(regex("[a-z]", var.mysql_password)) && can(regex("[A-Z]", var.mysql_password)) && can(regex("[0-9]", var.mysql_password)) && can(regex("[!-/:-@\\[-`{-~]", var.mysql_password))
-    error_message = "mysql_password parameter must contain at least one lowercase letter, one uppercase letter, one digit, and one special character"
+    condition = var.mysql_password == null || (
+      can(regex("[a-z]", var.mysql_password)) &&
+      can(regex("[A-Z]", var.mysql_password)) &&
+      can(regex("[0-9]", var.mysql_password)) &&
+      can(regex("[!-/:-@\\[-`{-~]", var.mysql_password))
+    )
+    error_message = "mysql_password must contain at least one lowercase letter, uppercase letter, digit, and special character when provided"
   }
 }
 
