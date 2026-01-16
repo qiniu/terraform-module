@@ -36,3 +36,9 @@ output "mysql_replica_instance_passwords" {
   description = "List of passwords for MySQL replica instances (randomly generated)"
   sensitive   = true
 }
+
+output "mysql_db_password" {
+  value       = local.mysql_password
+  description = "MySQL database password (user-provided or randomly generated)"
+  sensitive   = true
+}

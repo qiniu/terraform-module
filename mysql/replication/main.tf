@@ -30,7 +30,7 @@ resource "qiniu_compute_instance" "mysql_primary_node" {
   user_data = base64encode(templatefile("${path.module}/mysql_master.sh", {
     mysql_server_id            = "1"
     mysql_admin_username       = var.mysql_username
-    mysql_admin_password       = var.mysql_password
+    mysql_admin_password       = local.mysql_password
     mysql_replication_username = local.replication_username
     mysql_replication_password = local.replication_password
     mysql_db_name              = var.mysql_db_name

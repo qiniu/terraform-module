@@ -8,3 +8,9 @@ output "mysql_instance_password" {
   description = "Password for the MySQL instance (randomly generated)"
   sensitive   = true
 }
+
+output "mysql_db_password" {
+  value       = local.mysql_password
+  description = "MySQL database password (user-provided or randomly generated)"
+  sensitive   = true
+}

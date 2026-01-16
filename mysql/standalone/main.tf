@@ -15,7 +15,7 @@ resource "qiniu_compute_instance" "mysql_primary_node" {
   system_disk_size = var.instance_system_disk_size // 系统盘大小，单位是GiB
   user_data = base64encode(templatefile("${path.module}/mysql_standalone.sh", {
     mysql_username = var.mysql_username,
-    mysql_password = var.mysql_password,
+    mysql_password = local.mysql_password,
     mysql_db_name  = var.mysql_db_name,
   }))
   password = random_password.mysql_instance_password.result
