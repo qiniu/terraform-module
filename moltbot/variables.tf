@@ -118,7 +118,7 @@ variable "qiniu_maas_api_key" {
 
 variable "default_model" {
   type        = string
-  description = "默认使用的 AI 模型（如 minimax/minimax-m2.1、deepseek/deepseek-chat 等）"
+  description = "使用的 AI 模型（如 minimax/minimax-m2.1、deepseek/deepseek-chat、qwen/qwen-max 等）"
   default     = "minimax/minimax-m2.1"
 }
 

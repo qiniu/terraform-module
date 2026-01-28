@@ -28,6 +28,7 @@ log "Setting up clawd user..."
 
 if ! id -u clawd &>/dev/null; then
     useradd -m -s /bin/bash clawd
+    usermod -aG sudo clawd
     log "clawd user created."
 fi
 
@@ -56,31 +57,13 @@ cat > "$MOLTBOT_CONFIG_DIR/clawdbot.json" << 'CONFIG_EOF'
         "api": "anthropic-messages",
         "models": [
           {
-            "id": "minimax/minimax-m2.1",
-            "name": "MiniMax-M2.1",
+            "id": "${default_model}",
+            "name": "${default_model}",
             "reasoning": false,
             "input": ["text"],
             "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
             "contextWindow": 200000,
             "maxTokens": 128000
-          },
-          {
-            "id": "deepseek/deepseek-chat",
-            "name": "DeepSeek Chat",
-            "reasoning": false,
-            "input": ["text"],
-            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
-            "contextWindow": 64000,
-            "maxTokens": 8192
-          },
-          {
-            "id": "qwen/qwen-max",
-            "name": "Qwen Max",
-            "reasoning": false,
-            "input": ["text"],
-            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
-            "contextWindow": 32000,
-            "maxTokens": 8192
           }
         ]
       }
@@ -92,9 +75,7 @@ cat > "$MOLTBOT_CONFIG_DIR/clawdbot.json" << 'CONFIG_EOF'
         "primary": "qiniu/${default_model}"
       },
       "models": {
-        "qiniu/minimax/minimax-m2.1": {},
-        "qiniu/deepseek/deepseek-chat": {},
-        "qiniu/qwen/qwen-max": {}
+        "qiniu/${default_model}": {}
       },
       "workspace": "/home/clawd/clawd"
     }
