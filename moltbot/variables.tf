@@ -2,7 +2,7 @@
 # Moltbot Terraform Module - Variables
 # ============================================================================
 # 本模块用于在七牛云 LAS 上部署 Moltbot 个人 AI 助手
-# 基于 Ubuntu 24.04 LTS 官方镜像，自动安装 Node.js 和 Clawdbot
+# 基于七牛云 LAS 社区镜像 Clawdbot，开箱即用
 # ============================================================================
 
 # ============================================================================
@@ -63,7 +63,7 @@ variable "system_disk_size" {
 variable "system_disk_type" {
   type        = string
   description = "系统盘类型"
-  default     = "cloud.ssd"
+  default     = "local.ssd"
 
   validation {
     condition     = contains(["local.ssd", "cloud.ssd"], var.system_disk_type)
@@ -73,12 +73,12 @@ variable "system_disk_type" {
 
 variable "internet_max_bandwidth" {
   type        = number
-  description = "公网最大带宽（Mbps），0 表示不分配公网 IP"
-  default     = 10
+  description = "公网最大带宽（Mbps），取值范围 10-200"
+  default     = 100
 
   validation {
-    condition     = var.internet_max_bandwidth >= 0 && var.internet_max_bandwidth <= 200
-    error_message = "internet_max_bandwidth must be between 0 and 200 Mbps."
+    condition     = var.internet_max_bandwidth >= 10 && var.internet_max_bandwidth <= 200
+    error_message = "internet_max_bandwidth must be between 10 and 200 Mbps."
   }
 }
 

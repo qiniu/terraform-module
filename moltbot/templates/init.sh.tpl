@@ -4,7 +4,7 @@
 # ============================================================================
 # 本脚本在实例首次启动时执行，完成以下任务：
 # 1. 创建 clawd 用户并配置权限
-# 2. 安装 Node.js 和 Clawdbot
+# 2. 通过官方安装脚本安装 Clawdbot（会自动安装 Node.js）
 # 3. 生成 Clawdbot 配置文件
 # 4. 启动 Clawdbot Gateway 服务
 # ============================================================================
@@ -39,74 +39,16 @@ log "clawd user password updated."
 loginctl enable-linger clawd || true
 
 # ============================================================================
-# 2. 安装 Node.js 和 Clawdbot
+# 2. 安装 Clawdbot（通过官方安装脚本，会自动安装 Node.js）
 # ============================================================================
 
-log "Checking Node.js installation..."
-
-# 检查 Node.js 版本
-check_node_version() {
-    if command -v node &>/dev/null; then
-        local version
-        version=$(node -v | cut -d'v' -f2 | cut -d'.' -f1)
-        if [ "$version" -ge 22 ]; then
-            return 0
-        fi
-    fi
-    return 1
-}
-
-# 安装 Node.js 22.x
-install_node() {
-    log "Installing Node.js 22.x..."
-
-    if command -v apt-get &>/dev/null; then
-        # Debian/Ubuntu
-        curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-        apt-get install -y nodejs
-    elif command -v dnf &>/dev/null; then
-        # Fedora/RHEL 8+
-        curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
-        dnf install -y nodejs
-    elif command -v yum &>/dev/null; then
-        # CentOS/RHEL 7
-        curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
-        yum install -y nodejs
-    else
-        log "ERROR: Unsupported package manager. Please install Node.js 22+ manually."
-        exit 1
-    fi
-
-    log "Node.js $(node -v) installed successfully."
-}
-
-# 检查并安装 Node.js
-if check_node_version; then
-    log "Node.js $(node -v) found (meets requirement >= 22)."
-else
-    install_node
-fi
-
-# 安装 Clawdbot
 install_clawdbot() {
-    log "Installing Clawdbot via npm..."
+    log "Installing Clawdbot via official install script..."
 
-    # 设置 npm 全局安装目录（避免权限问题）
-    local npm_prefix="/home/clawd/.npm-global"
-    mkdir -p "$npm_prefix"
-    chown -R clawd:clawd "$npm_prefix"
-
-    # 为 clawd 用户配置 npm prefix
-    runuser -u clawd -- npm config set prefix "$npm_prefix"
-
-    # 添加到 PATH（写入 .bashrc）
-    local path_line='export PATH="$HOME/.npm-global/bin:$PATH"'
-    if ! grep -q ".npm-global" /home/clawd/.bashrc 2>/dev/null; then
-        echo "$path_line" >> /home/clawd/.bashrc
-    fi
-
-    # 使用 clawd 用户安装 clawdbot
-    runuser -u clawd -- env PATH="$npm_prefix/bin:$PATH" npm install -g clawdbot
+    # 使用 clawd 用户运行官方安装脚本
+    # --no-onboard: 跳过交互式引导
+    # --no-prompt: 禁用提示（非交互模式）
+    runuser -u clawd -- bash -c 'curl -fsSL https://molt.bot/install.sh | bash -s -- --no-onboard --no-prompt'
 
     log "Clawdbot installed successfully."
 }
@@ -269,15 +211,13 @@ if [ ! -d "$XDG_RUNTIME_DIR" ]; then
     chmod 700 "$XDG_RUNTIME_DIR"
 fi
 
-# clawdbot 二进制路径
-CLAWDBOT_BIN="/home/clawd/.npm-global/bin/clawdbot"
-
 # 使用 runuser 并设置正确的环境变量启动用户服务
-runuser -u clawd -- env XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" PATH="/home/clawd/.npm-global/bin:$PATH" "$CLAWDBOT_BIN" gateway install || {
+# clawdbot 会被安装到 ~/.npm-global/bin 目录
+runuser -u clawd -- env XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" bash -c 'source ~/.bashrc && clawdbot gateway install' || {
     log "WARNING: Failed to install clawdbot gateway service."
 }
 
-runuser -u clawd -- env XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" PATH="/home/clawd/.npm-global/bin:$PATH" "$CLAWDBOT_BIN" gateway restart || {
+runuser -u clawd -- env XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" bash -c 'source ~/.bashrc && clawdbot gateway restart' || {
     log "WARNING: Failed to restart clawdbot gateway. It may need manual configuration."
 }
 
