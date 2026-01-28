@@ -52,7 +52,7 @@ cat > "$MOLTBOT_CONFIG_DIR/clawdbot.json" << 'CONFIG_EOF'
     "providers": {
       "qiniu": {
         "baseUrl": "https://api.qnaigc.com",
-        "apiKey": "${llm_api_key}",
+        "apiKey": "${maas_api_key}",
         "api": "anthropic-messages",
         "models": [
           {

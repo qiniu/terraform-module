@@ -75,8 +75,8 @@ resource "qiniu_compute_instance" "moltbot" {
     # clawd 用户使用与 root 相同的密码
     clawd_password = var.root_password
 
-    # LLM 配置（固定使用七牛 MaaS）
-    llm_api_key   = var.qiniu_llm_api_key
+    # MaaS 配置（固定使用七牛 MaaS）
+    maas_api_key  = var.qiniu_maas_api_key
     default_model = var.default_model
 
     # Dashboard token

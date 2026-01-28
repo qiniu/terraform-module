@@ -106,7 +106,7 @@ variable "root_password" {
 # 七牛 MaaS 配置
 # ============================================================================
 
-variable "qiniu_llm_api_key" {
+variable "qiniu_maas_api_key" {
   type        = string
   sensitive   = true
   description = "七牛 MaaS API 密钥（从 https://portal.qiniu.com/ai-inference/api-key 获取）"

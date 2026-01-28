@@ -31,7 +31,7 @@ root_password = "YourSecurePassword123!"
 # ============================================================================
 
 # 七牛 MaaS API Key（从 https://portal.qiniu.com/ai-inference/api-key 获取）
-qiniu_llm_api_key = "sk-your-qiniu-api-key"
+qiniu_maas_api_key = "sk-your-qiniu-api-key"
 
 # 默认模型
 # 可选值：minimax/minimax-m2.1、deepseek/deepseek-chat、qwen/qwen-max 等
