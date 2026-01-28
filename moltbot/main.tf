@@ -40,33 +40,16 @@ data "qiniu_compute_images" "clawdbot" {
 }
 
 locals {
-  # 从环境变量 QINIU_REGION_ID 获取区域 ID
-  _env_region_id = try(trimspace(data.external.region_id.result.region_id), "")
-  env_region_id  = local._env_region_id != "" ? local._env_region_id : null
-
-  # 优先使用显式传入的 region_id，其次使用环境变量
-  effective_region_id = var.region_id != null ? var.region_id : local.env_region_id
-
+  region_id   = trimspace(data.external.region_id.result.region_id)
   name_prefix = "${var.instance_name_prefix}-${random_string.suffix.result}"
 
-  # 筛选 Clawdbot 镜像，并匹配指定区域
-  clawdbot_images_filtered = [
+  # 筛选当前区域的 Clawdbot 镜像，按创建时间降序排序后取最新的
+  clawdbot_images = sort([
     for img in data.qiniu_compute_images.clawdbot.items :
-    img if can(regex("^Clawdbot-v", img.name)) && img.region_id == local.effective_region_id
-  ]
+    "${img.created_at}|${img.id}" if can(regex("^Clawdbot-v2026\\.1\\.", img.name)) && img.region_id == local.region_id
+  ])
 
-  # 按创建时间降序排序，选择最新的镜像
-  clawdbot_images_sorted = reverse(sort([
-    for img in local.clawdbot_images_filtered : img.created_at
-  ]))
-
-  # 根据排序后的时间找到对应的镜像
-  clawdbot_images = [
-    for img in local.clawdbot_images_filtered :
-    img if length(local.clawdbot_images_sorted) > 0 && img.created_at == local.clawdbot_images_sorted[0]
-  ]
-
-  selected_image_id = length(local.clawdbot_images) > 0 ? local.clawdbot_images[0].id : null
+  selected_image_id = length(local.clawdbot_images) > 0 ? split("|", local.clawdbot_images[length(local.clawdbot_images) - 1])[1] : null
 }
 
 # ============================================================================
@@ -87,7 +70,7 @@ resource "qiniu_compute_instance" "moltbot" {
   # root 用户密码
   password = var.root_password
 
-  # 初始化脚本 - 安装 Node.js、Clawdbot 并配置 Gateway
+  # 初始化脚本 - 配置用户密码、生成配置文件并启动 Gateway
   user_data = base64encode(templatefile("${path.module}/templates/init.sh.tpl", {
     # clawd 用户使用与 root 相同的密码
     clawd_password = var.root_password
@@ -112,17 +95,12 @@ resource "qiniu_compute_instance" "moltbot" {
   }
 
   lifecycle {
-    # 防止因 user_data 变更导致实例重建
-    ignore_changes = [user_data]
-
-    precondition {
-      condition     = local.effective_region_id != null && local.effective_region_id != ""
-      error_message = "region_id 不能为空，请通过变量 region_id 或环境变量 QINIU_REGION_ID 指定区域。"
-    }
+    # 防止因配置变更导致实例被销毁重建
+    ignore_changes = [user_data, instance_type, system_disk_size]
 
     precondition {
       condition     = local.selected_image_id != null
-      error_message = "未找到匹配的 Clawdbot 镜像，请检查 region_id 是否正确。"
+      error_message = "未找到匹配的 Clawdbot 镜像，请检查 QINIU_REGION_ID 环境变量是否正确配置。"
     }
   }
 }
