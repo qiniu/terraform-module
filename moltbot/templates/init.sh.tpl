@@ -28,11 +28,10 @@ log "Setting up clawd user..."
 
 if ! id -u clawd &>/dev/null; then
     useradd -m -s /bin/bash clawd
-    usermod -aG sudo clawd
     log "clawd user created."
 fi
 
-echo "clawd:${clawd_password}" | chpasswd
+printf '%s:%s\n' clawd '${clawd_password}' | chpasswd
 loginctl enable-linger clawd || true
 
 # ============================================================================
