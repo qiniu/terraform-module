@@ -33,7 +33,7 @@ output "ssh_command" {
 
 output "ssh_tunnel_command" {
   value = length(qiniu_compute_instance.openclaw.public_ip_addresses) > 0 ? (
-    "ssh -L ${var.gateway_port}:127.0.0.1:${var.gateway_port} openclaw@${qiniu_compute_instance.openclaw.public_ip_addresses[0].ipv4}"
+    "ssh -N -L ${var.gateway_port}:127.0.0.1:${var.gateway_port} openclaw@${qiniu_compute_instance.openclaw.public_ip_addresses[0].ipv4}"
   ) : null
   description = "SSH 隧道转发命令（用于访问 Dashboard）"
 }

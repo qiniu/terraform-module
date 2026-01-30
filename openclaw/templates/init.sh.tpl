@@ -43,8 +43,10 @@ log "Generating OpenClaw configuration..."
 
 OPENCLAW_CONFIG_DIR="/home/openclaw/.openclaw"
 OPENCLAW_WORKSPACE="/home/openclaw/.openclaw/workspace"
+OPENCLAW_CREDENTIALS="/home/openclaw/.openclaw/credentials"
 mkdir -p "$OPENCLAW_CONFIG_DIR"
 mkdir -p "$OPENCLAW_WORKSPACE"
+mkdir -p "$OPENCLAW_CREDENTIALS"
 
 cat > "$OPENCLAW_CONFIG_DIR/openclaw.json" << 'CONFIG_EOF'
 {
@@ -97,8 +99,8 @@ CONFIG_EOF
 # ============================================================================
 
 log "Setting file permissions..."
+chmod 700 "$OPENCLAW_CONFIG_DIR"
 chown -R openclaw:openclaw "$OPENCLAW_CONFIG_DIR"
-chown -R openclaw:openclaw "$OPENCLAW_WORKSPACE"
 chmod 600 "$OPENCLAW_CONFIG_DIR/openclaw.json"
 
 # ============================================================================
