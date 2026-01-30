@@ -9,11 +9,6 @@
 # 随机后缀（用于资源命名唯一性）
 # ============================================================================
 
-# 读取环境变量 QINIU_REGION_ID
-data "external" "region_id" {
-  program = ["sh", "-c", "echo '{\"region_id\": \"'\"$QINIU_REGION_ID\"'\"}'"]
-}
-
 resource "random_string" "suffix" {
   length  = 6
   upper   = false
@@ -40,13 +35,12 @@ data "qiniu_compute_images" "openclaw" {
 }
 
 locals {
-  region_id   = trimspace(data.external.region_id.result.region_id)
   name_prefix = "${var.instance_name_prefix}-${random_string.suffix.result}"
 
-  # 筛选当前区域的 OpenClaw 镜像，按创建时间降序排序后取最新的
+  # 筛选 OpenClaw 镜像，按创建时间降序排序后取最新的
   openclaw_images = sort([
     for img in data.qiniu_compute_images.openclaw.items :
-    "${img.created_at}|${img.id}" if can(regex("^OpenClaw-v2026\\.1\\.29", img.name)) && img.region_id == local.region_id
+    "${img.created_at}|${img.id}" if can(regex("^OpenClaw-v2026\\.1\\.29", img.name))
   ])
 
   selected_image_id = length(local.openclaw_images) > 0 ? split("|", local.openclaw_images[length(local.openclaw_images) - 1])[1] : null
@@ -100,7 +94,7 @@ resource "qiniu_compute_instance" "openclaw" {
 
     precondition {
       condition     = local.selected_image_id != null
-      error_message = "未找到匹配的 OpenClaw 镜像，请检查 QINIU_REGION_ID 环境变量是否正确配置。"
+      error_message = "未找到匹配的 OpenClaw 镜像，请确认当前区域已上架 OpenClaw 社区镜像。"
     }
   }
 }
