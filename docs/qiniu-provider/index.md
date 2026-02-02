@@ -21,7 +21,6 @@ description: |-
 - `endpoints` (Attributes) Qiniu 各个服务地址 (see [below for nested schema](#nestedatt--endpoints))
 - `region_id` (String) Qiniu Region ID，指定所有资源所在的区域
 - `secret_key` (String, Sensitive) Qiniu Secret Key
-- `skip_region_id_validation` (Boolean) 是否跳过region_id的校验
 
 <a id="nestedatt--endpoints"></a>
 ### Nested Schema for `endpoints`

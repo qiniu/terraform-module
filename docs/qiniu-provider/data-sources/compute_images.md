@@ -22,7 +22,7 @@ description: |-
 ### Optional
 
 - `limit` (Number) 可选的限制返回数量, 最小值为1。不填或填为 null 则不限制数量全量返回
-- `region_id` (String) 按区域过滤镜像
+- `region_id` (String) 可选的区域 ID 过滤字段，如果未指定则使用 provider 级别配置的 region_id
 - `state` (String) 镜像状态过滤，允许 Accepted、Creating、Available、Deprecated、Disabled、Failed
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 

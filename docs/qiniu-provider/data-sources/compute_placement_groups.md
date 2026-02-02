@@ -19,7 +19,7 @@ description: |-
 
 - `limit` (Number) 可选的限制返回数量, 最小值为1。不填或填为 null 则不限制数量全量返回
 - `name_regex` (String) 可选的名称正则过滤字段
-- `region` (String) 可选的区域过滤字段
+- `region_id` (String) 可选的区域 ID 过滤字段，如果未指定则使用 provider 级别配置的 region_id
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
