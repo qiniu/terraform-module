@@ -26,6 +26,7 @@ description: |-
 - `cost_charge_type` (String) 实例计费类型
 - `description` (String) 实例描述
 - `hostname` (String) 主机名称，指定实例的主机名
+- `internet_charge_type` (String) 网络计费类型，取值范围：Bandwidth（按固定带宽计费）、PeakBandwidth（按峰值带宽计费）、Traffic（按流量计费）
 - `internet_max_bandwidth` (Number) 公网最大带宽，单位是Mbps，取值范围0-200，默认值为0，表示不分配公网IP
 - `name` (String) 实例名称，指定实例的名称
 - `password` (String, Sensitive) 实例密码，如果未指定则随机生成。（TODO: 当前修改密码会造成重装系统，后续如有修改密码API，则可能会优化）

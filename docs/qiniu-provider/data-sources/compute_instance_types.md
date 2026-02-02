@@ -20,7 +20,7 @@ description: |-
 - `family` (String) 按实例规格族过滤
 - `instance_type` (String) 按实例规格 ID 过滤
 - `limit` (Number) 可选的限制返回数量, 最小值为1。不填或填为 null 则不限制数量全量返回
-- `region_id` (String) 按可用区域过滤
+- `region_id` (String) 可选的区域 ID 过滤字段，如果未指定则使用 provider 级别配置的 region_id
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only

@@ -19,7 +19,7 @@ description: |-
 
 - `limit` (Number) 可选的限制返回数量, 最小值为1。不填或填为 null 则不限制数量全量返回
 - `name_regex` (String) 可选的名称正则过滤字段
-- `region_id` (String) 可选的区域ID过滤字段
+- `region_id` (String) 可选的区域 ID 过滤字段，如果未指定则使用 provider 级别配置的 region_id
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
@@ -47,6 +47,7 @@ Read-Only:
 - `image_id` (String) 镜像ID
 - `image_name` (String) 镜像名称
 - `instance_type` (String) 实例类型，指定实例的规格
+- `internet_charge_type` (String) 网络计费类型，取值范围：Bandwidth（按固定带宽计费）、PeakBandwidth（按峰值带宽计费）、Traffic（按流量计费）
 - `internet_max_bandwidth` (Number) 公网最大带宽，单位Mbps，指定实例的公网带宽
 - `memory` (Number) 主机内存大小，单位是GiB
 - `name` (String) 实例名称，指定实例的名称
