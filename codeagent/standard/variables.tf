@@ -64,7 +64,7 @@ variable "internet_charge_type" {
 variable "image_id" {
   type        = string
   description = "CodeAgent pre-configured image ID"
-  default     = "image-694ba6d04003c59f46bd71c5"
+  default     = "image-698c3cfbcee176e6ce8a8c9a"
 
   validation {
     condition     = can(regex("^image-[a-z0-9]+$", var.image_id))
