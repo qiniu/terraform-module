@@ -6,10 +6,10 @@
 
 > 由于当前的七牛 Provider 暂未发布到 registry.terraform.io 平台, 故无法实现在线自动安装，需要手动下载插件二进制并拷贝到指定目录下。
 
-- [darwin_arm64](http://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/hashicorp/qiniu/1.0.0/darwin_arm64/terraform-provider-qiniu)
-- [darwin_amd64](http://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/hashicorp/qiniu/1.0.0/darwin_amd64/terraform-provider-qiniu)
-- [linux_arm64](http://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/hashicorp/qiniu/1.0.0/linux_arm64/terraform-provider-qiniu)
-- [linux_amd64](http://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/hashicorp/qiniu/1.0.0/linux_amd64/terraform-provider-qiniu)
+- [darwin_arm64](http://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/qiniu/qiniu/1.0.0/darwin_arm64/terraform-provider-qiniu)
+- [darwin_amd64](http://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/qiniu/qiniu/1.0.0/darwin_amd64/terraform-provider-qiniu)
+- [linux_arm64](http://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/qiniu/qiniu/1.0.0/linux_arm64/terraform-provider-qiniu)
+- [linux_amd64](http://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/qiniu/qiniu/1.0.0/linux_amd64/terraform-provider-qiniu)
 
 编写本地配置文件，默认配置文件路径在`$HOME/.terraformrc`下
 
@@ -21,11 +21,11 @@ provider_installation {
   // 本地文件系统镜像源，qiniu 插件目前需要使用这种方式安装，需要将插件拷贝到指定镜像目录中
   filesystem_mirror {
     path    = "/home/zzq/.terraform.d/plugin-mirror"
-    include = ["registry.terraform.io/hashicorp/qiniu"]
+    include = ["registry.terraform.io/qiniu/qiniu"]
   }
   // 官方镜像源，需要排除 qiniu 插件的安装
   direct {
-    exclude = ["registry.terraform.io/hashicorp/qiniu"]
+    exclude = ["registry.terraform.io/qiniu/qiniu"]
   }
 }
 ```
@@ -40,7 +40,7 @@ provider_installation {
 ├── plugin-cache
 └── plugin-mirror
     └── registry.terraform.io
-        └── hashicorp
+        └── qiniu
             └── qiniu
                 └── 1.0.0
                     └── linux_amd64
