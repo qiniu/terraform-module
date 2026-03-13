@@ -76,10 +76,10 @@ resource "qiniu_compute_instance" "openclaw" {
     # Dashboard token
     dashboard_token = random_password.dashboard_token.result
 
-    # 工作空间配置
-    gateway_port = var.gateway_port
-    gateway_bind             = var.expose_dashboard ? "lan" : "loopback"
-    disable_device_auth      = var.disable_device_auth
+    # Gateway 配置
+    gateway_port        = var.gateway_port
+    gateway_bind        = var.expose_dashboard ? "lan" : "loopback"
+    disable_device_auth = var.disable_device_auth
   }))
 
   description = "OpenClaw AI Assistant - Managed by Terraform"

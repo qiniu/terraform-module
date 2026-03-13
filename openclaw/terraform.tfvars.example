@@ -34,8 +34,8 @@ root_password = "YourSecurePassword123!"
 qiniu_maas_api_key = "sk-your-qiniu-api-key"
 
 # 默认模型
-# 可选值：minimax/minimax-m2.1、deepseek/deepseek-chat、qwen/qwen-max 等
-default_model = "minimax/minimax-m2.1"
+# 可选值：minimax/minimax-m2.5、deepseek/deepseek-chat、qwen/qwen-max 等
+default_model = "minimax/minimax-m2.5"
 
 # ============================================================================
 # 高级配置（可选）
@@ -46,3 +46,12 @@ default_model = "minimax/minimax-m2.1"
 
 # 实例名称前缀
 # instance_name_prefix = "openclaw"
+
+# 镜像名称前缀（用于筛选匹配的社区镜像）
+# image_name_prefix = "OpenClaw-v2026.3.8"
+
+# 是否将 Dashboard 暴露到公网
+# expose_dashboard = false
+
+# 是否禁用设备认证
+# disable_device_auth = false
