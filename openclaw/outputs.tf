@@ -32,14 +32,16 @@ output "ssh_command" {
 }
 
 output "ssh_tunnel_command" {
-  value = length(qiniu_compute_instance.openclaw.public_ip_addresses) > 0 ? (
+  value = !var.expose_dashboard && length(qiniu_compute_instance.openclaw.public_ip_addresses) > 0 ? (
     "ssh -N -L ${var.gateway_port}:127.0.0.1:${var.gateway_port} openclaw@${qiniu_compute_instance.openclaw.public_ip_addresses[0].ipv4}"
   ) : null
-  description = "SSH 隧道转发命令（用于访问 Dashboard）"
+  description = "SSH 隧道转发命令（用于访问 Dashboard，仅 expose_dashboard=false 时输出）"
 }
 
 output "dashboard_url" {
-  value = "http://127.0.0.1:${var.gateway_port}/?token=${random_password.dashboard_token.result}"
+  value = var.expose_dashboard && length(qiniu_compute_instance.openclaw.public_ip_addresses) > 0 ? (
+    "http://${qiniu_compute_instance.openclaw.public_ip_addresses[0].ipv4}:${var.gateway_port}/?token=${random_password.dashboard_token.result}"
+  ) : "http://127.0.0.1:${var.gateway_port}/?token=${random_password.dashboard_token.result}"
   sensitive   = true
-  description = "Dashboard 访问 URL（需先建立 SSH 隧道）"
+  description = "Dashboard 访问 URL"
 }

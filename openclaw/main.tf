@@ -40,7 +40,7 @@ locals {
   # 筛选 OpenClaw 镜像，按创建时间降序排序后取最新的
   openclaw_images = sort([
     for img in data.qiniu_compute_images.openclaw.items :
-    "${img.created_at}|${img.id}" if can(regex("^OpenClaw-v2026\\.1\\.29", img.name))
+    "${img.created_at}|${img.id}" if startswith(img.name, var.image_name_prefix)
   ])
 
   selected_image_id = length(local.openclaw_images) > 0 ? split("|", local.openclaw_images[length(local.openclaw_images) - 1])[1] : null
@@ -76,8 +76,10 @@ resource "qiniu_compute_instance" "openclaw" {
     # Dashboard token
     dashboard_token = random_password.dashboard_token.result
 
-    # 工作空间配置
-    gateway_port = var.gateway_port
+    # Gateway 配置
+    gateway_port        = var.gateway_port
+    gateway_bind        = var.expose_dashboard ? "lan" : "loopback"
+    disable_device_auth = var.disable_device_auth
   }))
 
   description = "OpenClaw AI Assistant - Managed by Terraform"

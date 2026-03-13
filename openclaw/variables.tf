@@ -118,12 +118,12 @@ variable "qiniu_maas_api_key" {
 
 variable "default_model" {
   type        = string
-  description = "使用的 AI 模型（如 minimax/minimax-m2.1、deepseek/deepseek-chat、qwen/qwen-max 等）"
-  default     = "minimax/minimax-m2.1"
+  description = "使用的 AI 模型（如 minimax/minimax-m2.5、deepseek/deepseek-chat、qwen/qwen-max 等）"
+  default     = "minimax/minimax-m2.5"
 }
 
 # ============================================================================
-# 工作空间配置
+# Gateway 配置
 # ============================================================================
 
 variable "gateway_port" {
@@ -132,8 +132,30 @@ variable "gateway_port" {
   default     = 18789
 }
 
+variable "expose_dashboard" {
+  type        = bool
+  description = "是否将 Dashboard 暴露到公网（true: 监听 0.0.0.0 并设置 allowedOrigins:[*]，false: 仅监听 127.0.0.1 需 SSH 隧道访问）"
+  default     = false
+}
+
+variable "disable_device_auth" {
+  type        = bool
+  description = "是否禁用设备认证（设置 dangerouslyDisableDeviceAuth:true）"
+  default     = false
+}
+
+# ============================================================================
+# 镜像与命名
+# ============================================================================
+
 variable "instance_name_prefix" {
   type        = string
   description = "实例名称前缀"
   default     = "openclaw"
+}
+
+variable "image_name_prefix" {
+  type        = string
+  description = "OpenClaw 社区镜像名称前缀，用于筛选匹配的镜像"
+  default     = "OpenClaw-v2026.3.8"
 }
