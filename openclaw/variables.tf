@@ -112,6 +112,13 @@ variable "qiniu_maas_api_key" {
   description = "七牛 MaaS API 密钥（从 https://portal.qiniu.com/ai-inference/api-key 获取）"
 }
 
+variable "wx_secret" {
+  type        = string
+  sensitive   = true
+  description = "可选的微信绑定串，格式为 botid|token|savedAt|baseUrl|userId；为空时跳过微信初始化"
+  default     = ""
+}
+
 # ============================================================================
 # AI 模型配置
 # ============================================================================

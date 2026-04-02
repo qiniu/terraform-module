@@ -48,6 +48,59 @@ run_as_openclaw openclaw config set models.mode merge
 run_as_openclaw openclaw config set "models.providers.qiniu" --strict-json "$PROVIDER_JSON"
 run_as_openclaw openclaw models set "qiniu/$MODEL_ID"
 
+if [[ -n "${wx_secret}" ]]; then
+    log "Configuring OpenClaw Weixin binding..."
+
+    OPENCLAW_HOME=$(getent passwd "$OPENCLAW_USER" | cut -d: -f6)
+    ACCOUNT_LINE=$(cat <<'EOF_OPENCLAW_WX'
+${wx_secret}
+EOF_OPENCLAW_WX
+)
+
+    run_as_openclaw env ACCOUNT_LINE="$ACCOUNT_LINE" OPENCLAW_HOME="$OPENCLAW_HOME" bash <<'EOF_OPENCLAW_WX'
+set -euo pipefail
+
+IFS='|' read -r BOT_ID TOKEN SAVED_AT BASE_URL USER_ID EXTRA <<<"${ACCOUNT_LINE}"
+
+if [[ -n "${EXTRA:-}" ]]; then
+  echo "error: expected 5 fields, got extra data" >&2
+  exit 1
+fi
+
+if [[ -z "${BOT_ID}" || -z "${TOKEN}" || -z "${SAVED_AT}" || -z "${BASE_URL}" || -z "${USER_ID}" ]]; then
+  echo "error: ACCOUNT_LINE must be botid|token|savedAt|baseUrl|userId" >&2
+  exit 1
+fi
+
+BASE_DIR="${OPENCLAW_HOME}/.openclaw/openclaw-weixin"
+ACCOUNTS_DIR="${BASE_DIR}/accounts"
+ACCOUNT_FILE="${ACCOUNTS_DIR}/${BOT_ID}.json"
+INDEX_FILE="${BASE_DIR}/accounts.json"
+
+mkdir -p "${ACCOUNTS_DIR}"
+
+cat > "${INDEX_FILE}" <<EOF
+[
+  "${BOT_ID}"
+]
+EOF
+
+cat > "${ACCOUNT_FILE}" <<EOF
+{
+  "token": "${TOKEN}",
+  "savedAt": "${SAVED_AT}",
+  "baseUrl": "${BASE_URL}",
+  "userId": "${USER_ID}"
+}
+EOF
+
+chmod 600 "${ACCOUNT_FILE}" || true
+
+echo "Wrote ${INDEX_FILE}"
+echo "Wrote ${ACCOUNT_FILE}"
+EOF_OPENCLAW_WX
+fi
+
 GATEWAY_JSON=$(cat <<ENDJSON
 {"port":${gateway_port},"mode":"local","bind":"${gateway_bind}","auth":{"mode":"token","token":"${dashboard_token}"}}
 ENDJSON

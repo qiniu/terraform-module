@@ -33,6 +33,9 @@ root_password = "YourSecurePassword123!"
 # 七牛 MaaS API Key（从 https://portal.qiniu.com/ai-inference/api-key 获取）
 qiniu_maas_api_key = "sk-your-qiniu-api-key"
 
+# 可选微信绑定串，格式：botid|token|savedAt|baseUrl|userId
+# wx_secret = "0fbf13d7a361-im-bot|0fbf13d7a361@im.bot:060000cef79d365b868a9ea4cf79be9d4bc4e2|2026-04-02T07:13:55.577Z|https://ilinkai.weixin.qq.com|o9cq80wJlFo0Jkqk0F9kHZBTWLH8@im.wechat"
+
 # 默认模型
 # 可选值：minimax/minimax-m2.5、deepseek/deepseek-chat、qwen/qwen-max 等
 default_model = "minimax/minimax-m2.5"
