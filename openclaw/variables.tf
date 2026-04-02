@@ -119,6 +119,18 @@ variable "wx_secret" {
   default     = ""
 }
 
+variable "qq_secret" {
+  type        = string
+  sensitive   = true
+  description = "可选的 QQ 机器人凭证，格式为 AppID:AppSecret；为空时跳过 QQ channel 初始化"
+  default     = ""
+
+  validation {
+    condition     = var.qq_secret == "" || can(regex("^[^:]+:[^:]+$", var.qq_secret))
+    error_message = "qq_secret must be empty or in AppID:AppSecret format."
+  }
+}
+
 # ============================================================================
 # AI 模型配置
 # ============================================================================

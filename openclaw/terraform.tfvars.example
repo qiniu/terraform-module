@@ -36,6 +36,9 @@ qiniu_maas_api_key = "sk-your-qiniu-api-key"
 # 可选微信绑定串，格式：botid|token|savedAt|baseUrl|userId
 # wx_secret = "xxxxxx-im-bot|xxxxxx-im-bot@im.bot:0xxxx|2026-01-01T00:00:00.000Z|https://ilinkai.weixin.qq.com|xxxxxx@im.wechat"
 
+# 可选 QQ 机器人凭证，格式：AppID:AppSecret
+# qq_secret = "1903681131:bFtYDtZGxfN6...skcVO"
+
 # 默认模型
 # 可选值：minimax/minimax-m2.5、deepseek/deepseek-chat、qwen/qwen-max 等
 default_model = "minimax/minimax-m2.5"

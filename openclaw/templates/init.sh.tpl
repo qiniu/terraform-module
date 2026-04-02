@@ -101,6 +101,21 @@ echo "Wrote $${ACCOUNT_FILE}"
 EOF_OPENCLAW_WX
 fi
 
+if [[ -n "${qq_secret}" ]]; then
+    log "Configuring OpenClaw QQ bot channel..."
+
+    QQ_SECRET=$(cat <<'EOF_OPENCLAW_QQ'
+${qq_secret}
+EOF_OPENCLAW_QQ
+)
+
+    run_as_openclaw env QQ_SECRET="$QQ_SECRET" bash <<'EOF_OPENCLAW_QQ'
+set -euo pipefail
+
+openclaw channels add --channel qqbot --token "$${QQ_SECRET}"
+EOF_OPENCLAW_QQ
+fi
+
 GATEWAY_JSON=$(cat <<ENDJSON
 {"port":${gateway_port},"mode":"local","bind":"${gateway_bind}","auth":{"mode":"token","token":"${dashboard_token}"}}
 ENDJSON
