@@ -34,7 +34,7 @@ root_password = "YourSecurePassword123!"
 qiniu_maas_api_key = "sk-your-qiniu-api-key"
 
 # 可选微信绑定串，格式：botid|token|savedAt|baseUrl|userId
-# wx_secret = "0fbf13d7a361-im-bot|0fbf13d7a361@im.bot:060000cef79d365b868a9ea4cf79be9d4bc4e2|2026-04-02T07:13:55.577Z|https://ilinkai.weixin.qq.com|o9cq80wJlFo0Jkqk0F9kHZBTWLH8@im.wechat"
+# wx_secret = "xxxxxx-im-bot|xxxxxx-im-bot@im.bot:0xxxx|2026-01-01T00:00:00.000Z|https://ilinkai.weixin.qq.com|xxxxxx@im.wechat"
 
 # 默认模型
 # 可选值：minimax/minimax-m2.5、deepseek/deepseek-chat、qwen/qwen-max 等

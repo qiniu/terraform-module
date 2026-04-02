@@ -60,44 +60,44 @@ EOF_OPENCLAW_WX
     run_as_openclaw env ACCOUNT_LINE="$ACCOUNT_LINE" OPENCLAW_HOME="$OPENCLAW_HOME" bash <<'EOF_OPENCLAW_WX'
 set -euo pipefail
 
-IFS='|' read -r BOT_ID TOKEN SAVED_AT BASE_URL USER_ID EXTRA <<<"${ACCOUNT_LINE}"
+IFS='|' read -r BOT_ID TOKEN SAVED_AT BASE_URL USER_ID EXTRA <<<"$${ACCOUNT_LINE}"
 
-if [[ -n "${EXTRA:-}" ]]; then
+if [[ -n "$${EXTRA:-}" ]]; then
   echo "error: expected 5 fields, got extra data" >&2
   exit 1
 fi
 
-if [[ -z "${BOT_ID}" || -z "${TOKEN}" || -z "${SAVED_AT}" || -z "${BASE_URL}" || -z "${USER_ID}" ]]; then
+if [[ -z "$${BOT_ID}" || -z "$${TOKEN}" || -z "$${SAVED_AT}" || -z "$${BASE_URL}" || -z "$${USER_ID}" ]]; then
   echo "error: ACCOUNT_LINE must be botid|token|savedAt|baseUrl|userId" >&2
   exit 1
 fi
 
-BASE_DIR="${OPENCLAW_HOME}/.openclaw/openclaw-weixin"
-ACCOUNTS_DIR="${BASE_DIR}/accounts"
-ACCOUNT_FILE="${ACCOUNTS_DIR}/${BOT_ID}.json"
-INDEX_FILE="${BASE_DIR}/accounts.json"
+BASE_DIR="$${OPENCLAW_HOME}/.openclaw/openclaw-weixin"
+ACCOUNTS_DIR="$${BASE_DIR}/accounts"
+ACCOUNT_FILE="$${ACCOUNTS_DIR}/$${BOT_ID}.json"
+INDEX_FILE="$${BASE_DIR}/accounts.json"
 
-mkdir -p "${ACCOUNTS_DIR}"
+mkdir -p "$${ACCOUNTS_DIR}"
 
-cat > "${INDEX_FILE}" <<EOF
+cat > "$${INDEX_FILE}" <<EOF
 [
-  "${BOT_ID}"
+  "$${BOT_ID}"
 ]
 EOF
 
-cat > "${ACCOUNT_FILE}" <<EOF
+cat > "$${ACCOUNT_FILE}" <<EOF
 {
-  "token": "${TOKEN}",
-  "savedAt": "${SAVED_AT}",
-  "baseUrl": "${BASE_URL}",
-  "userId": "${USER_ID}"
+  "token": "$${TOKEN}",
+  "savedAt": "$${SAVED_AT}",
+  "baseUrl": "$${BASE_URL}",
+  "userId": "$${USER_ID}"
 }
 EOF
 
-chmod 600 "${ACCOUNT_FILE}" || true
+chmod 600 "$${ACCOUNT_FILE}" || true
 
-echo "Wrote ${INDEX_FILE}"
-echo "Wrote ${ACCOUNT_FILE}"
+echo "Wrote $${INDEX_FILE}"
+echo "Wrote $${ACCOUNT_FILE}"
 EOF_OPENCLAW_WX
 fi
 
