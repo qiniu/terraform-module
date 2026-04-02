@@ -43,8 +43,7 @@ locals {
     "${img.created_at}|${img.id}" if startswith(img.name, var.image_name_prefix)
   ])
 
-  selected_image_id   = length(local.openclaw_images) > 0 ? split("|", local.openclaw_images[length(local.openclaw_images) - 1])[1] : null
-  effective_wx_secret = trimspace(var.wx_secret) != "" ? var.wx_secret : var.wx_secrect
+  selected_image_id = length(local.openclaw_images) > 0 ? split("|", local.openclaw_images[length(local.openclaw_images) - 1])[1] : null
 }
 
 # ============================================================================
@@ -73,7 +72,7 @@ resource "qiniu_compute_instance" "openclaw" {
     # MaaS 配置（固定使用七牛 MaaS）
     maas_api_key  = var.qiniu_maas_api_key
     default_model = var.default_model
-    wx_secret     = local.effective_wx_secret
+    wx_secret     = var.wx_secret
 
     # Dashboard token
     dashboard_token = random_password.dashboard_token.result
