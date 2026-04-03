@@ -3,7 +3,7 @@ terraform {
 
   required_providers {
     qiniu = {
-      source  = "hashicorp/qiniu"
+      source  = "qiniu/qiniu"
       version = "~> 1.0.0"
     }
     random = {
