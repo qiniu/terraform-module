@@ -190,3 +190,23 @@ terraform apply "tfplan"
 ## 基于七牛资源栈在线运行
 
 TODO
+
+## 资源栈 Terraform Provider 白名单列表
+
+> 在七牛资源栈中运行 Terraform 时，只能使用以下已纳入白名单的 Provider。使用白名单以外的 Provider 将导致资源栈创建/更新失败。如需支持其他 Provider，请提交工单申请。
+
+详细说明请参考：[资源栈常见问题排查](https://developer.qiniu.com/las/kb/13334/faq-rsf-troubleshooting?category=kb)
+
+| Provider | Source | Version | 用途 |
+|----------|--------|---------|------|
+| qiniu | qiniu/qiniu | 1.0.0 | 管理七牛云资源 |
+| random | hashicorp/random | 3.8.0 | 生成随机数 |
+| time | hashicorp/time | 0.13.1 | 处理时间相关操作 |
+| archive | hashicorp/archive | 2.7.1 | 处理压缩文件 |
+| cloudinit | hashicorp/cloudinit | 2.3.7 | 生成 cloud-init 配置 |
+| external | hashicorp/external | 2.3.5 | 执行外部程序 |
+| null | hashicorp/null | 3.2.4 | 提供空资源 |
+| http | hashicorp/http | 3.5.0 | 发起 HTTP 请求 |
+| tls | hashicorp/tls | 4.1.0 | 生成 RSA 密钥和证书 |
+| local | hashicorp/local | 2.5.3 | 操作本地文件 |
+| docker | kreuzwerker/docker | 3.6.2 | 管理 Docker 容器 |
