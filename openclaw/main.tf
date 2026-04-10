@@ -72,6 +72,8 @@ resource "qiniu_compute_instance" "openclaw" {
     # MaaS 配置（固定使用七牛 MaaS）
     maas_api_key  = var.qiniu_maas_api_key
     default_model = var.default_model
+    wx_secret     = var.wx_secret
+    qq_secret     = var.qq_secret
 
     # Dashboard token
     dashboard_token = random_password.dashboard_token.result
