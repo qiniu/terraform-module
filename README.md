@@ -15,12 +15,12 @@
 
 ```hcl
 // 全局插件缓存本地目录
-plugin_cache_dir = "/home/zzq/.terraform.d/plugin-cache"
+plugin_cache_dir = "/home/<HOME>/.terraform.d/plugin-cache"
 
 provider_installation {
   // 本地文件系统镜像源，qiniu 插件目前需要使用这种方式安装，需要将插件拷贝到指定镜像目录中
   filesystem_mirror {
-    path    = "/home/zzq/.terraform.d/plugin-mirror"
+    path    = "/home/<HOME>/.terraform.d/plugin-mirror"
     include = ["registry.terraform.io/qiniu/qiniu"]
   }
   // 官方镜像源，需要排除 qiniu 插件的安装
