@@ -6,26 +6,26 @@
 
 > 由于当前的七牛 Provider 暂未发布到 registry.terraform.io 平台, 故无法实现在线自动安装，需要手动下载插件二进制并拷贝到指定目录下。
 
-- [darwin_arm64](http://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/hashicorp/qiniu/1.0.0/darwin_arm64/terraform-provider-qiniu)
-- [darwin_amd64](http://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/hashicorp/qiniu/1.0.0/darwin_amd64/terraform-provider-qiniu)
-- [linux_arm64](http://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/hashicorp/qiniu/1.0.0/linux_arm64/terraform-provider-qiniu)
-- [linux_amd64](http://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/hashicorp/qiniu/1.0.0/linux_amd64/terraform-provider-qiniu)
+- [darwin_arm64](http://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/qiniu/qiniu/1.0.0/darwin_arm64/terraform-provider-qiniu)
+- [darwin_amd64](http://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/qiniu/qiniu/1.0.0/darwin_amd64/terraform-provider-qiniu)
+- [linux_arm64](http://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/qiniu/qiniu/1.0.0/linux_arm64/terraform-provider-qiniu)
+- [linux_amd64](http://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/qiniu/qiniu/1.0.0/linux_amd64/terraform-provider-qiniu)
 
 编写本地配置文件，默认配置文件路径在`$HOME/.terraformrc`下
 
 ```hcl
 // 全局插件缓存本地目录
-plugin_cache_dir = "/home/zzq/.terraform.d/plugin-cache"
+plugin_cache_dir = "/home/<HOME>/.terraform.d/plugin-cache"
 
 provider_installation {
   // 本地文件系统镜像源，qiniu 插件目前需要使用这种方式安装，需要将插件拷贝到指定镜像目录中
   filesystem_mirror {
-    path    = "/home/zzq/.terraform.d/plugin-mirror"
-    include = ["registry.terraform.io/hashicorp/qiniu"]
+    path    = "/home/<HOME>/.terraform.d/plugin-mirror"
+    include = ["registry.terraform.io/qiniu/qiniu"]
   }
   // 官方镜像源，需要排除 qiniu 插件的安装
   direct {
-    exclude = ["registry.terraform.io/hashicorp/qiniu"]
+    exclude = ["registry.terraform.io/qiniu/qiniu"]
   }
 }
 ```
@@ -40,7 +40,7 @@ provider_installation {
 ├── plugin-cache
 └── plugin-mirror
     └── registry.terraform.io
-        └── hashicorp
+        └── qiniu
             └── qiniu
                 └── 1.0.0
                     └── linux_amd64
@@ -197,16 +197,16 @@ TODO
 
 详细说明请参考：[资源栈常见问题排查](https://developer.qiniu.com/las/kb/13334/faq-rsf-troubleshooting?category=kb)
 
-| Provider | Source | Version | 用途 |
-|----------|--------|---------|------|
-| qiniu | qiniu/qiniu | 1.0.0 | 管理七牛云资源 |
-| random | hashicorp/random | 3.8.0 | 生成随机数 |
-| time | hashicorp/time | 0.13.1 | 处理时间相关操作 |
-| archive | hashicorp/archive | 2.7.1 | 处理压缩文件 |
-| cloudinit | hashicorp/cloudinit | 2.3.7 | 生成 cloud-init 配置 |
-| external | hashicorp/external | 2.3.5 | 执行外部程序 |
-| null | hashicorp/null | 3.2.4 | 提供空资源 |
-| http | hashicorp/http | 3.5.0 | 发起 HTTP 请求 |
-| tls | hashicorp/tls | 4.1.0 | 生成 RSA 密钥和证书 |
-| local | hashicorp/local | 2.5.3 | 操作本地文件 |
-| docker | kreuzwerker/docker | 3.6.2 | 管理 Docker 容器 |
+| Provider  | Source              | Version | 用途                 |
+| --------- | ------------------- | ------- | -------------------- |
+| qiniu     | qiniu/qiniu         | 1.0.0   | 管理七牛云资源       |
+| random    | hashicorp/random    | 3.8.0   | 生成随机数           |
+| time      | hashicorp/time      | 0.13.1  | 处理时间相关操作     |
+| archive   | hashicorp/archive   | 2.7.1   | 处理压缩文件         |
+| cloudinit | hashicorp/cloudinit | 2.3.7   | 生成 cloud-init 配置 |
+| external  | hashicorp/external  | 2.3.5   | 执行外部程序         |
+| null      | hashicorp/null      | 3.2.4   | 提供空资源           |
+| http      | hashicorp/http      | 3.5.0   | 发起 HTTP 请求       |
+| tls       | hashicorp/tls       | 4.1.0   | 生成 RSA 密钥和证书  |
+| local     | hashicorp/local     | 2.5.3   | 操作本地文件         |
+| docker    | kreuzwerker/docker  | 3.6.2   | 管理 Docker 容器     |
