@@ -222,6 +222,11 @@ variable "gateway_port" {
   type        = number
   description = "Gateway 端口"
   default     = 18789
+
+  validation {
+    condition     = var.gateway_port >= 1 && var.gateway_port <= 65535
+    error_message = "gateway_port 必须在 1 到 65535 之间。"
+  }
 }
 
 variable "expose_dashboard" {

@@ -68,9 +68,18 @@ resource "qiniu_compute_instance" "openclaw" {
   cost_period_unit          = var.cost_charge_type == "PrePaid" ? var.cost_period_unit : null
   cost_discount_activity_id = var.cost_charge_type == "PrePaid" && var.cost_discount_activity_id != "" ? var.cost_discount_activity_id : null
 
-  # 端口转发配置
+  # 端口转发配置：用户配置的端口转发 + expose_dashboard 时自动添加 gateway_port
   dynamic "port_forwards" {
-    for_each = var.internet_public_ip_type == "Shared" ? var.port_forwards : []
+    for_each = var.internet_public_ip_type == "Shared" ? (
+      var.expose_dashboard ? (
+        # 如果 gateway_port 不在用户列表中，则添加
+        contains([for p in var.port_forwards : p.internal_port], var.gateway_port) ? (
+          var.port_forwards
+          ) : (
+          concat(var.port_forwards, [{ internal_port = var.gateway_port }])
+        )
+      ) : var.port_forwards
+    ) : []
     content {
       internal_port = port_forwards.value.internal_port
     }
