@@ -27,16 +27,6 @@ output "expired_at" {
   description = "实例过期时间（RFC3339 格式），仅预付费实例返回"
 }
 
-output "order_id" {
-  value       = qiniu_compute_instance.openclaw.order_id
-  description = "实例创建订单 ID，仅预付费实例返回"
-}
-
-output "order_state" {
-  value       = qiniu_compute_instance.openclaw.order_state
-  description = "实例创建订单状态，仅预付费实例返回"
-}
-
 # ============================================================================
 # 访问信息
 # ============================================================================
