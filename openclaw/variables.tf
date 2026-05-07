@@ -83,6 +83,17 @@ variable "internet_charge_type" {
   }
 }
 
+variable "internet_public_ip_type" {
+  type        = string
+  description = "公网 IP 类型，Dedicated 为独立公网 IP，Shared 为共享公网 IP"
+  default     = "Dedicated"
+
+  validation {
+    condition     = contains(["Dedicated", "Shared"], var.internet_public_ip_type)
+    error_message = "internet_public_ip_type must be Dedicated or Shared."
+  }
+}
+
 variable "root_password" {
   type        = string
   sensitive   = true
@@ -100,6 +111,61 @@ variable "root_password" {
     )
     error_message = "密码不符合要求：必须不少于 8 位，且同时包含字母、数字和特殊符号。"
   }
+}
+
+# ============================================================================
+# 计费配置
+# ============================================================================
+
+variable "cost_charge_type" {
+  type        = string
+  description = "实例计费类型，PostPaid 为后付费（按量计费），PrePaid 为预付费（包年包月）"
+  default     = "PostPaid"
+
+  validation {
+    condition     = contains(["PostPaid", "PrePaid"], var.cost_charge_type)
+    error_message = "cost_charge_type must be PostPaid or PrePaid."
+  }
+}
+
+variable "cost_period" {
+  type        = number
+  description = "预付费购买时长，仅在 cost_charge_type 为 PrePaid 时生效；默认值为 1"
+  default     = 1
+
+  validation {
+    condition     = var.cost_period >= 1 && var.cost_period <= 36
+    error_message = "cost_period must be between 1 and 36."
+  }
+}
+
+variable "cost_period_unit" {
+  type        = string
+  description = "预付费购买时长单位，仅在 cost_charge_type 为 PrePaid 时生效，支持 Month、Year"
+  default     = "Month"
+
+  validation {
+    condition     = contains(["Month", "Year"], var.cost_period_unit)
+    error_message = "cost_period_unit must be Month or Year."
+  }
+}
+
+variable "cost_discount_activity_id" {
+  type        = string
+  description = "预付费促销活动 ID，仅在 cost_charge_type 为 PrePaid 时生效"
+  default     = ""
+}
+
+# ============================================================================
+# 端口转发配置
+# ============================================================================
+
+variable "port_forwards" {
+  type = list(object({
+    internal_port = number
+  }))
+  description = "端口转发规则列表，仅当 internet_public_ip_type 为 Shared 且 internet_max_bandwidth 大于 0 时可配置"
+  default     = []
 }
 
 # ============================================================================

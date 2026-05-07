@@ -58,8 +58,23 @@ resource "qiniu_compute_instance" "openclaw" {
   system_disk_size = var.system_disk_size
   system_disk_type = var.system_disk_type
 
-  internet_max_bandwidth = var.internet_max_bandwidth
-  internet_charge_type   = var.internet_charge_type
+  internet_max_bandwidth  = var.internet_max_bandwidth
+  internet_charge_type    = var.internet_charge_type
+  internet_public_ip_type = var.internet_public_ip_type
+
+  # 计费配置
+  cost_charge_type          = var.cost_charge_type
+  cost_period               = var.cost_charge_type == "PrePaid" ? var.cost_period : null
+  cost_period_unit          = var.cost_charge_type == "PrePaid" ? var.cost_period_unit : null
+  cost_discount_activity_id = var.cost_charge_type == "PrePaid" && var.cost_discount_activity_id != "" ? var.cost_discount_activity_id : null
+
+  # 端口转发配置
+  dynamic "port_forwards" {
+    for_each = var.internet_public_ip_type == "Shared" ? var.port_forwards : []
+    content {
+      internal_port = port_forwards.value.internal_port
+    }
+  }
 
   # root 用户密码
   password = var.root_password
