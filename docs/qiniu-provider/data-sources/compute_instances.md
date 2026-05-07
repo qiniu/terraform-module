@@ -39,19 +39,28 @@ Optional:
 
 Read-Only:
 
+- `cost_auto_renew_enabled` (Boolean) 自动续费开关
+- `cost_auto_renew_period` (Number) 自动续费时长
+- `cost_auto_renew_period_unit` (String) 自动续费时长单位
 - `cost_charge_type` (String) 计费类型，指定实例的计费方式
+- `cost_discount_activity_id` (String) 预付费促销活动 ID
+- `cost_period` (Number) 预付费购买时长
+- `cost_period_unit` (String) 预付费购买时长单位
 - `cpu` (Number) 主机核心数量
 - `created_at` (String) 实例创建时间，格式为RFC3339
 - `description` (String) 实例描述
+- `expired_at` (String) 实例过期时间，格式为RFC3339，仅在预付费实例时返回
 - `id` (String) 实例ID
 - `image_id` (String) 镜像ID
 - `image_name` (String) 镜像名称
 - `instance_type` (String) 实例类型，指定实例的规格
 - `internet_charge_type` (String) 网络计费类型，取值范围：Bandwidth（按固定带宽计费）、PeakBandwidth（按峰值带宽计费）、Traffic（按流量计费）
 - `internet_max_bandwidth` (Number) 公网最大带宽，单位Mbps，指定实例的公网带宽
+- `internet_public_ip_type` (String) 公网 IP 类型，取值范围：Dedicated（独立公网 IP）、Shared（共享公网 IP）
 - `memory` (Number) 主机内存大小，单位是GiB
 - `name` (String) 实例名称，指定实例的名称
 - `placement_group_id` (String) 置放组ID，指定实例所属的置放组，如果不指定，则不加入任何置放组
+- `port_forwards` (Attributes Set) 端口转发列表，端口转发实例通过共享公网 IP 的特定端口映射到实例内部端口 (see [below for nested schema](#nestedatt--instances--port_forwards))
 - `private_ip_addresses` (Attributes List) (see [below for nested schema](#nestedatt--instances--private_ip_addresses))
 - `public_ip_addresses` (Attributes List) (see [below for nested schema](#nestedatt--instances--public_ip_addresses))
 - `region_id` (String) 实例所在的区域ID
@@ -60,6 +69,18 @@ Read-Only:
 - `system_disk_id` (String) 系统盘ID
 - `system_disk_size` (Number) 系统盘大小，单位是GiB
 - `system_disk_type` (String) 系统盘类型，指定系统盘的存储类型
+
+<a id="nestedatt--instances--port_forwards"></a>
+### Nested Schema for `instances.port_forwards`
+
+Read-Only:
+
+- `external_port` (Number) 公网端口
+- `id` (String) 端口转发资源 ID
+- `internal_port` (Number) 实例内网端口
+- `public_ip` (String) 公网 IP
+- `state` (String) 端口转发状态
+
 
 <a id="nestedatt--instances--private_ip_addresses"></a>
 ### Nested Schema for `instances.private_ip_addresses`
