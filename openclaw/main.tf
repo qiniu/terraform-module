@@ -115,5 +115,10 @@ resource "qiniu_compute_instance" "openclaw" {
       condition     = local.selected_image_id != null
       error_message = "未找到匹配的 OpenClaw 镜像，请确认当前区域已上架 OpenClaw 社区镜像。"
     }
+
+    precondition {
+      condition     = var.internet_public_ip_type == "Shared" || length(var.port_forwards) == 0
+      error_message = "port_forwards 仅在 internet_public_ip_type 为 Shared 时可配置。请将 internet_public_ip_type 设置为 Shared，或清空 port_forwards。"
+    }
   }
 }

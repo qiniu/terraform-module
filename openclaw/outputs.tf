@@ -14,10 +14,16 @@ output "instance_id" {
 }
 
 output "public_ip" {
-  value = length(qiniu_compute_instance.openclaw.public_ip_addresses) > 0 ? (
-    qiniu_compute_instance.openclaw.public_ip_addresses[0].ipv4
-  ) : null
-  description = "公网 IP 地址"
+  value = var.internet_public_ip_type == "Shared" ? (
+    length(qiniu_compute_instance.openclaw.port_forwards) > 0 ? (
+      qiniu_compute_instance.openclaw.port_forwards[0].public_ip
+    ) : null
+    ) : (
+    length(qiniu_compute_instance.openclaw.public_ip_addresses) > 0 ? (
+      qiniu_compute_instance.openclaw.public_ip_addresses[0].ipv4
+    ) : null
+  )
+  description = "公网 IP 地址（Shared 模式从 port_forwards 获取，Dedicated 模式从 public_ip_addresses 获取）"
 }
 
 output "expired_at" {
@@ -40,22 +46,44 @@ output "order_state" {
 # ============================================================================
 
 output "ssh_command" {
-  value = length(qiniu_compute_instance.openclaw.public_ip_addresses) > 0 ? (
-    "ssh openclaw@${qiniu_compute_instance.openclaw.public_ip_addresses[0].ipv4}"
-  ) : null
+  value = var.internet_public_ip_type == "Shared" ? (
+    length(qiniu_compute_instance.openclaw.port_forwards) > 0 ? (
+      "ssh openclaw@${qiniu_compute_instance.openclaw.port_forwards[0].public_ip}"
+    ) : null
+    ) : (
+    length(qiniu_compute_instance.openclaw.public_ip_addresses) > 0 ? (
+      "ssh openclaw@${qiniu_compute_instance.openclaw.public_ip_addresses[0].ipv4}"
+    ) : null
+  )
   description = "SSH 连接命令（openclaw 用户）"
 }
 
 output "ssh_tunnel_command" {
-  value = !var.expose_dashboard && length(qiniu_compute_instance.openclaw.public_ip_addresses) > 0 ? (
-    "ssh -N -L ${var.gateway_port}:127.0.0.1:${var.gateway_port} openclaw@${qiniu_compute_instance.openclaw.public_ip_addresses[0].ipv4}"
+  value = !var.expose_dashboard ? (
+    var.internet_public_ip_type == "Shared" ? (
+      length(qiniu_compute_instance.openclaw.port_forwards) > 0 ? (
+        "ssh -N -L ${var.gateway_port}:127.0.0.1:${var.gateway_port} openclaw@${qiniu_compute_instance.openclaw.port_forwards[0].public_ip}"
+      ) : null
+      ) : (
+      length(qiniu_compute_instance.openclaw.public_ip_addresses) > 0 ? (
+        "ssh -N -L ${var.gateway_port}:127.0.0.1:${var.gateway_port} openclaw@${qiniu_compute_instance.openclaw.public_ip_addresses[0].ipv4}"
+      ) : null
+    )
   ) : null
   description = "SSH 隧道转发命令（用于访问 Dashboard，仅 expose_dashboard=false 时输出）"
 }
 
 output "dashboard_url" {
-  value = var.expose_dashboard && length(qiniu_compute_instance.openclaw.public_ip_addresses) > 0 ? (
-    "http://${qiniu_compute_instance.openclaw.public_ip_addresses[0].ipv4}:${var.gateway_port}/?token=${random_password.dashboard_token.result}"
+  value = var.expose_dashboard ? (
+    var.internet_public_ip_type == "Shared" ? (
+      length(qiniu_compute_instance.openclaw.port_forwards) > 0 ? (
+        "http://${qiniu_compute_instance.openclaw.port_forwards[0].public_ip}:${var.gateway_port}/?token=${random_password.dashboard_token.result}"
+      ) : "http://127.0.0.1:${var.gateway_port}/?token=${random_password.dashboard_token.result}"
+      ) : (
+      length(qiniu_compute_instance.openclaw.public_ip_addresses) > 0 ? (
+        "http://${qiniu_compute_instance.openclaw.public_ip_addresses[0].ipv4}:${var.gateway_port}/?token=${random_password.dashboard_token.result}"
+      ) : "http://127.0.0.1:${var.gateway_port}/?token=${random_password.dashboard_token.result}"
+    )
   ) : "http://127.0.0.1:${var.gateway_port}/?token=${random_password.dashboard_token.result}"
   sensitive   = true
   description = "Dashboard 访问 URL"

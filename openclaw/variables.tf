@@ -166,6 +166,13 @@ variable "port_forwards" {
   }))
   description = "端口转发规则列表，仅当 internet_public_ip_type 为 Shared 且 internet_max_bandwidth 大于 0 时可配置"
   default     = []
+
+  validation {
+    condition = alltrue([
+      for p in var.port_forwards : p.internal_port >= 1 && p.internal_port <= 65535
+    ]) && length(var.port_forwards) == length(distinct([for p in var.port_forwards : p.internal_port]))
+    error_message = "internal_port 必须在 1 到 65535 之间，且每个端口号必须唯一。"
+  }
 }
 
 # ============================================================================
