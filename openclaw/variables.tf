@@ -85,7 +85,7 @@ variable "internet_charge_type" {
 
 variable "internet_public_ip_type" {
   type        = string
-  description = "公网 IP 类型，Dedicated 为独立公网 IP，Shared 为共享公网 IP"
+  description = "公网 IP 类型，Dedicated 为独立公网 IP，Shared 为共享公网 IP。注意：PrePaid+Dedicated 组合下会自动不传此字段以兼容服务端 bug (qbox/las#3207)"
   default     = "Dedicated"
 
   validation {
@@ -160,18 +160,14 @@ variable "cost_discount_activity_id" {
 # 端口转发配置
 # ============================================================================
 
-variable "port_forwards" {
-  type = list(object({
-    internal_port = number
-  }))
-  description = "端口转发规则列表，仅当 internet_public_ip_type 为 Shared 且 internet_max_bandwidth 大于 0 时可配置"
+variable "extra_port_forwards" {
+  type        = set(number)
+  description = "额外的要端口转发的内网端口列表，仅当 internet_public_ip_type 为 Shared 时可配置。SSH(22) 端口会自动添加，expose_dashboard 时 gateway_port 也会自动添加"
   default     = []
 
   validation {
-    condition = alltrue([
-      for p in var.port_forwards : p.internal_port >= 1 && p.internal_port <= 65535
-    ]) && length(var.port_forwards) == length(distinct([for p in var.port_forwards : p.internal_port]))
-    error_message = "internal_port 必须在 1 到 65535 之间，且每个端口号必须唯一。"
+    condition     = alltrue([for p in var.extra_port_forwards : p >= 1 && p <= 65535])
+    error_message = "internal_port 必须在 1 到 65535 之间"
   }
 }
 
