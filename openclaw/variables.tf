@@ -34,6 +34,10 @@ variable "instance_type" {
       "ecs.c1.c32m64",
       "ecs.g1.c16m120",
       "ecs.g1.c32m240",
+      "69c5fce89e43138e3e5caaa5", # 线上环境 2026_user_acquisition 活动规格 2026_user_acquisition-LAS-2C/2G/20G/200Mbps-SharedIP cn-changshan-1
+      "69c5fcfd9e43138e3e5caaad", # 线上环境 2026_user_acquisition 活动规格 2026_user_acquisition-LAS-2C/2G/20G/200Mbps-SharedIP ap-northeast-1
+      # "69c5fcfd9e43138e3e5caaad", # 线上环境 2026_user_acquisition 活动规格 2026_user_acquisition-LAS-2C/2G/20G/200Mbps-SharedIP ap-southeast-1 （已售馨）
+      
     ], var.instance_type)
     error_message = "instance_type must be one of the allowed ECS instance types."
   }
