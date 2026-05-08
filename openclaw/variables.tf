@@ -136,12 +136,22 @@ variable "cost_period" {
   type        = number
   description = "预付费购买时长，仅在 cost_charge_type 为 PrePaid 时生效"
   default     = null
+
+  validation {
+    condition     = var.cost_period == null || (var.cost_period >= 1 && var.cost_period <= 36)
+    error_message = "cost_period must be between 1 and 36."
+  }
 }
 
 variable "cost_period_unit" {
   type        = string
   description = "预付费购买时长单位，仅在 cost_charge_type 为 PrePaid 时生效，支持 Month、Year"
   default     = null
+
+  validation {
+    condition     = var.cost_period_unit == null || contains(["Month", "Year"], var.cost_period_unit)
+    error_message = "cost_period_unit must be Month or Year."
+  }
 }
 
 variable "cost_discount_activity_id" {

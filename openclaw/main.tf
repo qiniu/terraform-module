@@ -137,8 +137,8 @@ resource "qiniu_compute_instance" "openclaw" {
     }
 
     precondition {
-      condition     = var.cost_charge_type != "PrePaid" || (var.cost_period != null && var.cost_period_unit != null && var.cost_period >= 1 && var.cost_period <= 36 && contains(["Month", "Year"], var.cost_period_unit))
-      error_message = "PrePaid 模式下必须设置 cost_period（1-36）和 cost_period_unit（Month 或 Year）。"
+      condition     = var.cost_charge_type != "PrePaid" || (var.cost_period != null && var.cost_period_unit != null)
+      error_message = "PrePaid 模式下必须设置 cost_period 和 cost_period_unit。"
     }
   }
 }
