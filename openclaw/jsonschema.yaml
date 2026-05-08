@@ -1,0 +1,295 @@
+# ============================================================================
+# OpenClaw Terraform Module - Variables JSON Schema
+# ============================================================================
+# 遵循 JSON Schema 2020-12 规范，扩展使用 ajv-errors 的 errorMessage 关键字
+# ============================================================================
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+type: object
+
+# 不允许传入多余的字段
+additionalProperties: false
+
+properties:
+  # ==========================================================================
+  # 实例规格配置
+  # ==========================================================================
+
+  instance_type:
+    type: string
+    description: "ECS 实例规格"
+    default: "ecs.t1.c4m8"
+    enum:
+      - "ecs.t1.c1m2"
+      - "ecs.t1.c2m4"
+      - "ecs.t1.c4m8"
+      - "ecs.t1.c8m16"
+      - "ecs.t1.c12m24"
+      - "ecs.t1.c16m32"
+      - "ecs.t1.c24m48"
+      - "ecs.t1.c32m64"
+      - "ecs.c1.c1m2"
+      - "ecs.c1.c2m4"
+      - "ecs.c1.c4m8"
+      - "ecs.c1.c8m16"
+      - "ecs.c1.c12m24"
+      - "ecs.c1.c16m32"
+      - "ecs.c1.c24m48"
+      - "ecs.c1.c32m64"
+      - "ecs.g1.c16m120"
+      - "ecs.g1.c32m240"
+      - "69c5fce89e43138e3e5caaa5" # 2026_user_acquisition 活动规格 cn-changshan-1
+      - "69c5fcfd9e43138e3e5caaad" # 2026_user_acquisition 活动规格 ap-northeast-1
+    not:
+      const: ""
+    errorMessage: "请选择有效的 ECS 实例规格"
+
+  system_disk_size:
+    type: number
+    description: "系统盘大小（GiB）"
+    default: 50
+    minimum: 10
+    maximum: 500
+    errorMessage:
+      type: "系统盘大小必须为数字"
+      minimum: "系统盘大小不能小于 10 GiB"
+      maximum: "系统盘大小不能超过 500 GiB"
+
+  system_disk_type:
+    type: string
+    description: "系统盘类型"
+    default: "local.ssd"
+    enum:
+      - "local.ssd"
+      - "cloud.ssd"
+    errorMessage: "系统盘类型必须为 local.ssd 或 cloud.ssd"
+
+  internet_max_bandwidth:
+    type: number
+    description: "公网最大带宽（Mbps），取值范围 10-200"
+    default: 100
+    minimum: 10
+    maximum: 200
+    errorMessage:
+      type: "公网带宽必须为数字"
+      minimum: "公网带宽不能小于 10 Mbps"
+      maximum: "公网带宽不能超过 200 Mbps"
+
+  internet_charge_type:
+    type: string
+    description: "网络计费类型"
+    default: "PeakBandwidth"
+    enum:
+      - "Bandwidth"
+      - "PeakBandwidth"
+      - "Traffic"
+    errorMessage: "网络计费类型必须为 Bandwidth、PeakBandwidth 或 Traffic"
+
+  internet_public_ip_type:
+    type: string
+    description: "公网 IP 类型，Dedicated 为独立公网 IP，Shared 为共享公网 IP"
+    default: "Dedicated"
+    enum:
+      - "Dedicated"
+      - "Shared"
+    errorMessage: "公网 IP 类型必须为 Dedicated 或 Shared"
+
+  root_password:
+    type: string
+    description: "实例 root 用户密码（要求：不少于 8 位，必须同时包含字母、数字和特殊符号）"
+    minLength: 8
+    allOf:
+      - pattern: "[A-Za-z]"
+      - pattern: "[0-9]"
+      - pattern: "[^A-Za-z0-9]"
+    errorMessage:
+      minLength: "密码长度不能少于 8 位"
+      allOf: "密码必须同时包含字母、数字和特殊符号"
+
+  # ==========================================================================
+  # 计费配置
+  # ==========================================================================
+
+  cost_charge_type:
+    type: string
+    description: "实例计费类型，PostPaid 为后付费（按量计费），PrePaid 为预付费（包年包月）"
+    default: "PostPaid"
+    enum:
+      - "PostPaid"
+      - "PrePaid"
+    errorMessage: "计费类型必须为 PostPaid（按量计费）或 PrePaid（包年包月）"
+
+  cost_period:
+    type: ["number", "null"]
+    description: "预付费购买时长，仅在 cost_charge_type 为 PrePaid 时生效"
+    default: null
+    minimum: 1
+    maximum: 36
+    errorMessage:
+      type: "购买时长必须为数字"
+      minimum: "购买时长不能小于 1"
+      maximum: "购买时长不能超过 36"
+
+  cost_period_unit:
+    type: ["string", "null"]
+    description: "预付费购买时长单位，仅在 cost_charge_type 为 PrePaid 时生效，支持 Month、Year"
+    default: null
+    enum:
+      - "Month"
+      - "Year"
+    errorMessage: "购买时长单位必须为 Month 或 Year"
+
+  cost_discount_activity_id:
+    type: ["string", "null"]
+    description: "预付费促销活动 ID，仅在 cost_charge_type 为 PrePaid 时生效"
+    default: null
+
+  # ==========================================================================
+  # 端口转发配置
+  # ==========================================================================
+
+  extra_port_forwards:
+    type: array
+    description: "额外的要端口转发的内网端口列表，仅当 internet_public_ip_type 为 Shared 时可配置"
+    default: []
+    uniqueItems: true
+    items:
+      type: number
+      minimum: 1
+      maximum: 65535
+      errorMessage:
+        type: "端口号必须为数字"
+        minimum: "端口号不能小于 1"
+        maximum: "端口号不能超过 65535"
+    errorMessage:
+      type: "端口转发列表必须为数组"
+      uniqueItems: "端口转发列表中存在重复端口"
+
+  # ==========================================================================
+  # 七牛 MaaS 配置
+  # ==========================================================================
+
+  qiniu_maas_api_key:
+    type: string
+    description: "七牛 MaaS API 密钥（从 https://portal.qiniu.com/ai-inference/api-key 获取）"
+    errorMessage:
+      type: "API 密钥必须为字符串"
+      minLength: "API 密钥不能为空"
+
+  wx_secret:
+    type: string
+    description: "可选的微信绑定串，格式为 botid|token|savedAt|baseUrl|userId；为空时跳过微信初始化"
+    default: ""
+
+  qq_secret:
+    type: string
+    description: "可选的 QQ 机器人凭证，格式为 AppID:AppSecret；为空时跳过 QQ channel 初始化"
+    default: ""
+    oneOf:
+      - const: ""
+      - pattern: "^[^:]+:[^:]+$"
+    errorMessage: "QQ 凭证格式错误，应为 AppID:AppSecret 或留空"
+
+  # ==========================================================================
+  # AI 模型配置
+  # ==========================================================================
+
+  default_model:
+    type: string
+    description: "使用的 AI 模型（如 minimax/minimax-m2.5、deepseek/deepseek-chat、qwen/qwen-max 等）"
+    default: "minimax/minimax-m2.5"
+
+  # ==========================================================================
+  # Gateway 配置
+  # ==========================================================================
+
+  gateway_port:
+    type: number
+    description: "Gateway 端口"
+    default: 18789
+    minimum: 1
+    maximum: 65535
+    errorMessage:
+      type: "Gateway 端口必须为数字"
+      minimum: "Gateway 端口不能小于 1"
+      maximum: "Gateway 端口不能超过 65535"
+
+  expose_dashboard:
+    type: boolean
+    description: "是否将 Dashboard 暴露到公网"
+    default: false
+
+  disable_device_auth:
+    type: boolean
+    description: "是否禁用设备认证"
+    default: false
+
+  # ==========================================================================
+  # 镜像与命名
+  # ==========================================================================
+
+  instance_name_prefix:
+    type: string
+    description: "实例名称前缀"
+    default: "openclaw"
+
+  image_name_prefix:
+    type: string
+    description: "OpenClaw 社区镜像名称前缀，用于筛选匹配的镜像"
+    default: "OpenClaw-v2026.3.8"
+
+# ============================================================================
+# 必填字段
+# ============================================================================
+
+required:
+  - root_password
+  - qiniu_maas_api_key
+
+# ============================================================================
+# 多字段组合校验（if/then/else + errorMessage）
+# ============================================================================
+
+allOf:
+  # PrePaid 计费时必须指定 cost_period 和 cost_period_unit
+  - if:
+      properties:
+        cost_charge_type:
+          const: "PrePaid"
+      required: [cost_charge_type]
+    then:
+      properties:
+        cost_period:
+          not: { type: "null" }
+        cost_period_unit:
+          not: { type: "null" }
+      required: [cost_period, cost_period_unit]
+      errorMessage: "预付费模式下必须指定购买时长和时长单位"
+
+  # PostPaid 计费时 cost_period、cost_period_unit、cost_discount_activity_id 必须为 null
+  - if:
+      properties:
+        cost_charge_type:
+          const: "PostPaid"
+      required: [cost_charge_type]
+    then:
+      properties:
+        cost_period:
+          type: "null"
+        cost_period_unit:
+          type: "null"
+        cost_discount_activity_id:
+          type: "null"
+      errorMessage: "按量计费模式下不能指定购买时长、时长单位和活动 ID"
+
+  # 非 Shared IP 时 extra_port_forwards 必须为空
+  - if:
+      not:
+        properties:
+          internet_public_ip_type:
+            const: "Shared"
+    then:
+      properties:
+        extra_port_forwards:
+          maxItems: 0
+      errorMessage: "extra_port_forwards 仅在 internet_public_ip_type 为 Shared 时可配置"
