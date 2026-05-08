@@ -7,3 +7,4 @@ custom-plugins/
 *.lock.hcl
 *.auto.*
 env.sh
+*.tfvars
