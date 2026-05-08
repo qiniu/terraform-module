@@ -44,6 +44,15 @@ locals {
   ])
 
   selected_image_id = length(local.openclaw_images) > 0 ? split("|", local.openclaw_images[length(local.openclaw_images) - 1])[1] : null
+
+  # 默认情况下 Shared 模式至少需要转发 SSH 端口
+  shared_ports_1 = [22]
+  # expose_dashboard 时需要额外转发 Gateway 端口
+  shared_ports_2 = var.expose_dashboard ? distinct(concat(local.shared_ports_1, [var.gateway_port])) : local.shared_ports_1
+  # 再补充上用户自定义端口
+  shared_ports_3 = distinct(concat(local.shared_ports_2, tolist(var.extra_port_forwards)))
+  # 最终的 Shared 模式端口转发规则列表
+  shared_ports_final = local.shared_ports_3
 }
 
 # ============================================================================
@@ -58,8 +67,24 @@ resource "qiniu_compute_instance" "openclaw" {
   system_disk_size = var.system_disk_size
   system_disk_type = var.system_disk_type
 
-  internet_max_bandwidth = var.internet_max_bandwidth
-  internet_charge_type   = var.internet_charge_type
+  internet_max_bandwidth  = var.internet_max_bandwidth
+  internet_charge_type    = var.internet_charge_type
+  internet_public_ip_type = var.internet_public_ip_type
+
+  # 计费配置
+  cost_charge_type          = var.cost_charge_type
+  cost_period               = var.cost_period
+  cost_period_unit          = var.cost_period_unit
+  cost_discount_activity_id = var.cost_discount_activity_id
+
+  # 端口转发配置：
+  dynamic "port_forwards" {
+    # 仅 Shared 模式且有端口转发规则时配置 port_forwards，Dedicated 模式不使用 port_forwards 进行端口转发
+    for_each = var.internet_public_ip_type == "Shared" ? local.shared_ports_final : []
+    content {
+      internal_port = port_forwards.value
+    }
+  }
 
   # root 用户密码
   password = var.root_password
@@ -100,5 +125,30 @@ resource "qiniu_compute_instance" "openclaw" {
       condition     = local.selected_image_id != null
       error_message = "未找到匹配的 OpenClaw 镜像，请确认当前区域已上架 OpenClaw 社区镜像。"
     }
+
+    precondition {
+      condition     = var.internet_public_ip_type == "Shared" || length(var.extra_port_forwards) == 0
+      error_message = "extra_port_forwards 仅在 internet_public_ip_type 为 Shared 时可配置。请将 internet_public_ip_type 设置为 Shared，或清空 extra_port_forwards。"
+    }
+
+    precondition {
+      condition     = var.cost_charge_type != "PostPaid" || (var.cost_period == null && var.cost_period_unit == null && var.cost_discount_activity_id == null)
+      error_message = "PostPaid 模式下 cost_period、cost_period_unit、cost_discount_activity_id 必须为 null（不设置）。"
+    }
+
+    precondition {
+      condition     = var.cost_charge_type != "PrePaid" || (var.cost_period != null && var.cost_period_unit != null)
+      error_message = "PrePaid 模式下必须设置 cost_period 和 cost_period_unit。"
+    }
   }
+}
+
+# Shared 模式下最后会从资源返回的 port_forwards 中查找外部端口映射
+locals {
+  ssh_port_forward = [
+    for pf in qiniu_compute_instance.openclaw.port_forwards : pf if pf.internal_port == 22
+  ]
+  gateway_port_forward = [
+    for pf in qiniu_compute_instance.openclaw.port_forwards : pf if pf.internal_port == var.gateway_port
+  ]
 }

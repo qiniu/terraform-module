@@ -34,6 +34,10 @@ variable "instance_type" {
       "ecs.c1.c32m64",
       "ecs.g1.c16m120",
       "ecs.g1.c32m240",
+      "69c5fce89e43138e3e5caaa5", # 线上环境 2026_user_acquisition 活动规格 2026_user_acquisition-LAS-2C/2G/20G/200Mbps-SharedIP cn-changshan-1
+      "69c5fcfd9e43138e3e5caaad", # 线上环境 2026_user_acquisition 活动规格 2026_user_acquisition-LAS-2C/2G/20G/200Mbps-SharedIP ap-northeast-1
+      # "69c5fcfd9e43138e3e5caaad", # 线上环境 2026_user_acquisition 活动规格 2026_user_acquisition-LAS-2C/2G/20G/200Mbps-SharedIP ap-southeast-1 （已售馨）
+      
     ], var.instance_type)
     error_message = "instance_type must be one of the allowed ECS instance types."
   }
@@ -83,6 +87,17 @@ variable "internet_charge_type" {
   }
 }
 
+variable "internet_public_ip_type" {
+  type        = string
+  description = "公网 IP 类型，Dedicated 为独立公网 IP，Shared 为共享公网 IP。注意：PrePaid+Dedicated 组合下会自动不传此字段以兼容服务端 bug (qbox/las#3207)"
+  default     = "Dedicated"
+
+  validation {
+    condition     = contains(["Dedicated", "Shared"], var.internet_public_ip_type)
+    error_message = "internet_public_ip_type must be Dedicated or Shared."
+  }
+}
+
 variable "root_password" {
   type        = string
   sensitive   = true
@@ -99,6 +114,64 @@ variable "root_password" {
       can(regex("[^A-Za-z0-9]", var.root_password))
     )
     error_message = "密码不符合要求：必须不少于 8 位，且同时包含字母、数字和特殊符号。"
+  }
+}
+
+# ============================================================================
+# 计费配置
+# ============================================================================
+
+variable "cost_charge_type" {
+  type        = string
+  description = "实例计费类型，PostPaid 为后付费（按量计费），PrePaid 为预付费（包年包月）"
+  default     = "PostPaid"
+
+  validation {
+    condition     = contains(["PostPaid", "PrePaid"], var.cost_charge_type)
+    error_message = "cost_charge_type must be PostPaid or PrePaid."
+  }
+}
+
+variable "cost_period" {
+  type        = number
+  description = "预付费购买时长，仅在 cost_charge_type 为 PrePaid 时生效"
+  default     = null
+
+  validation {
+    condition     = var.cost_period == null || (var.cost_period >= 1 && var.cost_period <= 36)
+    error_message = "cost_period must be between 1 and 36."
+  }
+}
+
+variable "cost_period_unit" {
+  type        = string
+  description = "预付费购买时长单位，仅在 cost_charge_type 为 PrePaid 时生效，支持 Month、Year"
+  default     = null
+
+  validation {
+    condition     = var.cost_period_unit == null || contains(["Month", "Year"], var.cost_period_unit)
+    error_message = "cost_period_unit must be Month or Year."
+  }
+}
+
+variable "cost_discount_activity_id" {
+  type        = string
+  description = "预付费促销活动 ID，仅在 cost_charge_type 为 PrePaid 时生效"
+  default     = null
+}
+
+# ============================================================================
+# 端口转发配置
+# ============================================================================
+
+variable "extra_port_forwards" {
+  type        = set(number)
+  description = "额外的要端口转发的内网端口列表，仅当 internet_public_ip_type 为 Shared 时可配置。SSH(22) 端口会自动添加，expose_dashboard 时 gateway_port 也会自动添加"
+  default     = []
+
+  validation {
+    condition     = alltrue([for p in var.extra_port_forwards : p >= 1 && p <= 65535])
+    error_message = "internal_port 必须在 1 到 65535 之间"
   }
 }
 
@@ -149,6 +222,11 @@ variable "gateway_port" {
   type        = number
   description = "Gateway 端口"
   default     = 18789
+
+  validation {
+    condition     = var.gateway_port >= 1 && var.gateway_port <= 65535
+    error_message = "gateway_port 必须在 1 到 65535 之间。"
+  }
 }
 
 variable "expose_dashboard" {
