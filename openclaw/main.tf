@@ -67,18 +67,15 @@ resource "qiniu_compute_instance" "openclaw" {
   system_disk_size = var.system_disk_size
   system_disk_type = var.system_disk_type
 
-  internet_max_bandwidth = var.internet_max_bandwidth
-  internet_charge_type   = var.internet_charge_type
-
-  # 兼容服务端 bug (qbox/las#3207)：PrePaid 实例显式传 Dedicated 会被拒绝，
-  # 但不传时服务端会自动填充 Dedicated。因此 PrePaid+Dedicated 时传 null 让服务端走默认逻辑。
-  internet_public_ip_type = var.cost_charge_type == "PrePaid" && var.internet_public_ip_type == "Dedicated" ? null : var.internet_public_ip_type
+  internet_max_bandwidth  = var.internet_max_bandwidth
+  internet_charge_type    = var.internet_charge_type
+  internet_public_ip_type = var.internet_public_ip_type
 
   # 计费配置
   cost_charge_type          = var.cost_charge_type
-  cost_period               = var.cost_charge_type == "PrePaid" ? var.cost_period : null
-  cost_period_unit          = var.cost_charge_type == "PrePaid" ? var.cost_period_unit : null
-  cost_discount_activity_id = var.cost_charge_type == "PrePaid" && var.cost_discount_activity_id != "" ? var.cost_discount_activity_id : null
+  cost_period               = var.cost_period
+  cost_period_unit          = var.cost_period_unit
+  cost_discount_activity_id = var.cost_discount_activity_id
 
   # 端口转发配置：
   dynamic "port_forwards" {
@@ -132,6 +129,16 @@ resource "qiniu_compute_instance" "openclaw" {
     precondition {
       condition     = var.internet_public_ip_type == "Shared" || length(var.extra_port_forwards) == 0
       error_message = "extra_port_forwards 仅在 internet_public_ip_type 为 Shared 时可配置。请将 internet_public_ip_type 设置为 Shared，或清空 extra_port_forwards。"
+    }
+
+    precondition {
+      condition     = var.cost_charge_type != "PostPaid" || (var.cost_period == null && var.cost_period_unit == null && var.cost_discount_activity_id == null)
+      error_message = "PostPaid 模式下 cost_period、cost_period_unit、cost_discount_activity_id 必须为 null（不设置）。"
+    }
+
+    precondition {
+      condition     = var.cost_charge_type != "PrePaid" || (var.cost_period != null && var.cost_period_unit != null && var.cost_period >= 1 && var.cost_period <= 36 && contains(["Month", "Year"], var.cost_period_unit))
+      error_message = "PrePaid 模式下必须设置 cost_period（1-36）和 cost_period_unit（Month 或 Year）。"
     }
   }
 }
