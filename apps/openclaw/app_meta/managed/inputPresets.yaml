@@ -1,0 +1,25 @@
+- name: "2026_user_acquisition_cn_changshan_1"
+  tittle: "2026 新客活动 - 中国常山区域"
+  inputs:
+    instance_type: "ecs.t1.c1m2"
+  regionPrices:
+    - regionIDs: [cn-changshan-1]
+      price:
+        - costPeriodUnit: "Month"
+          priceCNY: "1000.00"
+          priceUSD: "140.00"
+          originalPriceCNY: "2000.00"
+          originalPriceUSD: "280.00"
+        - costPeriodUnit: "Year"
+          priceCNY: "10000.00"
+          priceUSD: "1400.00"
+          originalPriceCNY: "20000.00"
+          originalPriceUSD: "2800.00"
+
+    - regionIDs: [ap-northeast-1]
+      price:
+        - costPeriodUnit: "Month"
+          priceCNY: "1100.00"
+          priceUSD: "154.00"
+          originalPriceCNY: "2200.00"
+          originalPriceUSD: "308.00"

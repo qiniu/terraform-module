@@ -1,0 +1,6 @@
+name: "OpenClaw"
+description: "OpenClaw 是一个基于云计算的自动化部署工具，旨在简化应用程序的部署和管理过程。它提供了一个用户友好的界面，使用户能够轻松地配置和部署他们的应用程序，同时支持多种云平台和部署选项。OpenClaw 还具有强大的监控和日志功能，帮助用户实时了解他们的应用程序的运行状态和性能表现。"
+type: "Private"
+disabled: false
+# appVersions: []
+appVersionRef: "./appVersions.yaml"

@@ -1,0 +1,13 @@
+- name: "2026_user_acquisition_cn_changshan_1"
+  tittle: "2026 新客活动 - 中国常山区域"
+  inputs:
+    instance_type: "69c5fce89e43138e3e5caaa5"
+  regions:
+    - cn-changshan-1
+
+- name: "2026_user_acquisition_ap_northeast_1"
+  tittle: "2026 新客活动 - 日本东京区域"
+  inputs:
+    instance_type: "69c5fcfd9e43138e3e5caaad"
+  regions:
+    - ap-northeast-1
