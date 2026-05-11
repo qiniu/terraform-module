@@ -1,5 +1,5 @@
 - version: "0.1.0"
-  description: "这是一个示例应用版本配置文件，包含了应用版本的基本信息和输入参数的定义。"
+  description: "这是一个 OpenClaw 私有应用版本配置文件，包含基础实例规格、网络、计费与密钥等输入参数定义，适用于首次在 LAS 应用市场中创建并发布 private 应用。"
   status: "Published" # 默认是Draft，如果需要发布改为Published
   deployMeta:
     # inputSchemaInline: {}
