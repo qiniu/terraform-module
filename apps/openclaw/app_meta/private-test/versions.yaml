@@ -1,5 +1,5 @@
-- version: "0.0.1"
-  description: "首个版本"
+- version: "0.0.8"
+  description: "OpenClaw 是新一代开源 AI 智能体执行框架，打破传统大模型纯对话局限，具备终端命令执行、脚本运行、文件系统操作、长期记忆、自主任务拆解能力。本应用封装一键部署，自动配置端口、依赖、持久化存储，内置 Web 可视化管理面板。"
   status: "Published" # 默认是Draft，如果需要发布改为 Published
   # status: "Draft" # 默认是Draft，如果需要发布改为 Published
   deployMeta:

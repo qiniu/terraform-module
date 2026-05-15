@@ -28,7 +28,10 @@ properties:
 
   system_disk_type:
     type: string
-    description: "系统盘类型"
+    description: |
+      系统盘类型：
+        1. local.ssd：本地 SSD 磁盘，提供更高的 I/O 性能，适合对性能有较高要求的应用场景。
+        2. cloud.ssd：云盘 SSD 磁盘，提供稳定的性能和数据持久性，适合大多数应用场景。
     default: "local.ssd"
     enum:
       - "local.ssd"
@@ -43,7 +46,11 @@ properties:
 
   internet_charge_type:
     type: string
-    description: "网络计费类型"
+    description: |
+      互联网出网带宽计费方式:
+        1. Bandwidth：按带宽计费，按照实例的公网带宽大小进行计费，适合对带宽需求较为稳定的场景。
+        2. PeakBandwidth：按峰值带宽计费，按照实例的公网带宽峰值进行计费，适合对带宽需求有较大波动的场景。
+        3. Traffic：按流量计费，按照实例的公网流量使用量进行计费，适合对带宽需求不稳定且流量使用量较大的场景。
     default: "PeakBandwidth"
     enum:
       - "Bandwidth"
@@ -108,14 +115,14 @@ properties:
   {% if vars.period_unit == "Month" %}
   cost_period:
     type: number
-    description: "预付费购买时长(月)"
+    description: "购买时长(月)"
     default: 1
     minimum: 1
     maximum: 36
   {% elif vars.period_unit == "Year" %}
   cost_period:
     type: number
-    description: "预付费购买时长(年)"
+    description: "购买时长(年)"
     default: 1
     minimum: 1
     maximum: 3

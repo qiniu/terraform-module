@@ -1,5 +1,5 @@
 - name: "2026_user_acquisition_cn_changshan_1_1_month"
-  title: "2026 新客活动 - 中国常山区域 - 2C/2G/20G/200Mbps 共享IP实例 - 1个月"
+  title: "2026 新客活动 / 中国常山区域 / 2C//2G//20G//200Mbps 共享IP实例 / 1个月"
   inputSchemaTemplateRef: "./schema.yaml.p2"
   inputSchemaTemplateVars:
     preset_type: "activity"
@@ -18,7 +18,7 @@
     - ap-southeast-1
 
 - name: "2026_user_acquisition_cn_changshan_1_12_months"
-  title: "2026 新客活动 - 中国常山区域 - 2C/2G/20G/200Mbps 共享IP实例 - 12个月"
+  title: "2026 新客活动 / 中国常山区域 / 2C//2G//20G//200Mbps 共享IP实例 / 12个月"
   inputSchemaTemplateRef: "./schema.yaml.p2"
   inputSchemaTemplateVars:
     preset_type: "activity"
