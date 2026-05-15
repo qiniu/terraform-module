@@ -1,4 +1,4 @@
-- version: "0.38.0"
+- version: "0.0.1"
   description: "首个版本"
   status: "Published" # 默认是Draft，如果需要发布改为 Published
   # status: "Draft" # 默认是Draft，如果需要发布改为 Published
@@ -7,9 +7,9 @@
       $schema: "https://json-schema.org/draft/2020-12/schema"
       type: object
       properties: {}
-    inputPresetsRef: "./input_presets.yaml"
+    inputPresetsRef: "./presets.yaml"
     terraformModule:
       gitSource:
         repo: "https://github.com/qiniu/terraform-module"
         ref: "main"
-        directory: "openclaw"
+        directory: "apps/openclaw/src"

@@ -3,4 +3,4 @@ name: "OpenClaw"
 description: "OpenClaw 是新一代开源 AI 智能体执行框架，打破传统大模型纯对话局限，具备终端命令执行、脚本运行、文件系统操作、长期记忆、自主任务拆解能力。本镜像深度适配阿里云、腾讯云、华为云轻量服务器，容器化封装一键部署，自动配置端口、依赖、持久化存储，内置 Web 可视化管理面板。"
 type: "Private"
 disabled: false
-appVersionRef: "./app_versions.yaml"
+appVersionRef: "./versions.yaml"
