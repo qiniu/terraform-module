@@ -1,6 +1,61 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 type: object
 properties:
+  instance_type:
+    type: string
+    description: "ECS 实例规格"
+    default: "ecs.t1.c4m8"
+    enum:
+      - "ecs.t1.c1m2"
+      - "ecs.t1.c2m4"
+      - "ecs.t1.c4m8"
+      - "ecs.t1.c8m16"
+      - "ecs.t1.c12m24"
+      - "ecs.t1.c16m32"
+      - "ecs.t1.c24m48"
+      - "ecs.t1.c32m64"
+      - "ecs.c1.c1m2"
+      - "ecs.c1.c2m4"
+      - "ecs.c1.c4m8"
+      - "ecs.c1.c8m16"
+      - "ecs.c1.c12m24"
+      - "ecs.c1.c16m32"
+      - "ecs.c1.c24m48"
+      - "ecs.c1.c32m64"
+      - "ecs.g1.c16m120"
+      - "ecs.g1.c32m240"
+
+  system_disk_type:
+    type: string
+    description: "系统盘类型"
+    default: "local.ssd"
+    enum:
+      - "local.ssd"
+      - "cloud.ssd"
+
+  system_disk_size:
+    type: number
+    description: "系统盘大小（GiB）"
+    default: 50
+    minimum: 10
+    maximum: 500
+
+  internet_charge_type:
+    type: string
+    description: "网络计费类型"
+    default: "PeakBandwidth"
+    enum:
+      - "Bandwidth"
+      - "PeakBandwidth"
+      - "Traffic"
+
+  internet_max_bandwidth:
+    type: number
+    description: "公网最大带宽（Mbps），取值范围 10-200"
+    default: 100
+    minimum: 10
+    maximum: 200
+
   root_password:
     type: string
     description: "实例 root 用户密码（要求：不少于 8 位，必须同时包含字母、数字和特殊符号）"
@@ -9,16 +64,11 @@ properties:
       - pattern: "[A-Za-z]"
       - pattern: "[0-9]"
       - pattern: "[^A-Za-z0-9]"
-    errorMessage:
-      minLength: "密码长度不能少于 8 位"
-      allOf: "密码必须同时包含字母、数字和特殊符号"
 
   qiniu_maas_api_key:
     type: string
     description: "七牛 MaaS API 密钥（从 https://portal.qiniu.com/ai-inference/api-key 获取）"
-    errorMessage:
-      type: "API 密钥必须为字符串"
-      minLength: "API 密钥不能为空"
+    minLength: 1
 
   default_model:
     type: string
@@ -59,6 +109,11 @@ required:
 x-input-groups:
   - name: "七牛 LAS 配置"
     inputs:
+      - instance_type
+      - system_disk_type
+      - system_disk_size
+      - internet_charge_type
+      - internet_max_bandwidth
       - root_password
   - name: "七牛 MaaS 配置"
     inputs:

@@ -24,19 +24,6 @@ properties:
       - "ecs.c1.c32m64"
       - "ecs.g1.c16m120"
       - "ecs.g1.c32m240"
-    not:
-      const: ""
-    errorMessage: "请选择有效的 ECS 实例规格"
-  system_disk_size:
-    type: number
-    description: "系统盘大小（GiB）"
-    default: 50
-    minimum: 10
-    maximum: 500
-    errorMessage:
-      type: "系统盘大小必须为数字"
-      minimum: "系统盘大小不能小于 10 GiB"
-      maximum: "系统盘大小不能超过 500 GiB"
 
   system_disk_type:
     type: string
@@ -45,18 +32,13 @@ properties:
     enum:
       - "local.ssd"
       - "cloud.ssd"
-    errorMessage: "系统盘类型必须为 local.ssd 或 cloud.ssd"
 
-  internet_max_bandwidth:
+  system_disk_size:
     type: number
-    description: "公网最大带宽（Mbps），取值范围 10-200"
-    default: 100
+    description: "系统盘大小（GiB）"
+    default: 50
     minimum: 10
-    maximum: 200
-    errorMessage:
-      type: "公网带宽必须为数字"
-      minimum: "公网带宽不能小于 10 Mbps"
-      maximum: "公网带宽不能超过 200 Mbps"
+    maximum: 500
 
   internet_charge_type:
     type: string
@@ -66,36 +48,13 @@ properties:
       - "Bandwidth"
       - "PeakBandwidth"
       - "Traffic"
-    errorMessage: "网络计费类型必须为 Bandwidth、PeakBandwidth 或 Traffic"
 
-  cost_charge_type:
-    type: string
-    description: "实例计费类型，PostPaid 为后付费（按量计费），PrePaid 为预付费（包年包月）"
-    default: "PostPaid"
-    enum:
-      - "PostPaid"
-      - "PrePaid"
-    errorMessage: "计费类型必须为 PostPaid（按量计费）或 PrePaid（包年包月）"
-
-  cost_period:
-    type: ["number", "null"]
-    description: "预付费购买时长，仅在 cost_charge_type 为 PrePaid 时生效"
-    default: null
-    minimum: 1
-    maximum: 36
-    errorMessage:
-      type: "购买时长必须为数字"
-      minimum: "购买时长不能小于 1"
-      maximum: "购买时长不能超过 36"
-
-  cost_period_unit:
-    type: ["string", "null"]
-    description: "预付费购买时长单位，仅在 cost_charge_type 为 PrePaid 时生效，支持 Month、Year"
-    default: null
-    enum:
-      - "Month"
-      - "Year"
-    errorMessage: "购买时长单位必须为 Month 或 Year"
+  internet_max_bandwidth:
+    type: number
+    description: "公网最大带宽（Mbps），取值范围 10-200"
+    default: 100
+    minimum: 10
+    maximum: 200
 
   root_password:
     type: string
@@ -105,16 +64,11 @@ properties:
       - pattern: "[A-Za-z]"
       - pattern: "[0-9]"
       - pattern: "[^A-Za-z0-9]"
-    errorMessage:
-      minLength: "密码长度不能少于 8 位"
-      allOf: "密码必须同时包含字母、数字和特殊符号"
 
   qiniu_maas_api_key:
     type: string
     description: "七牛 MaaS API 密钥（从 https://portal.qiniu.com/ai-inference/api-key 获取）"
-    errorMessage:
-      type: "API 密钥必须为字符串"
-      minLength: "API 密钥不能为空"
+    minLength: 1
 
   default_model:
     type: string
@@ -130,7 +84,6 @@ properties:
     type: string
     description: "可选的 QQ 机器人凭证，格式为 AppID:AppSecret；为空时跳过 QQ channel 初始化"
     default: ""
-    errorMessage: "QQ 凭证格式错误，应为 AppID:AppSecret 或留空"
 
   gateway_port:
     type: number
@@ -138,10 +91,6 @@ properties:
     default: 18789
     minimum: 1
     maximum: 65535
-    errorMessage:
-      type: "Gateway 端口必须为数字"
-      minimum: "Gateway 端口不能小于 1"
-      maximum: "Gateway 端口不能超过 65535"
 
   expose_dashboard:
     type: boolean
@@ -153,18 +102,25 @@ properties:
     description: "是否禁用设备认证"
     default: false
 
+  cost_period:
+    type: number
+    description: "预付费购买时长(月)"
+    default: 1
+    minimum: 1
+    maximum: 36
+
 required:
   - root_password
   - qiniu_maas_api_key
 
 x-input-groups:
-  - name: "七牛云主机配置"
+  - name: "七牛 LAS 配置"
     inputs:
       - instance_type
-      - system_disk_size
       - system_disk_type
-      - internet_max_bandwidth
+      - system_disk_size
       - internet_charge_type
+      - internet_max_bandwidth
       - root_password
   - name: "七牛 MaaS 配置"
     inputs:
@@ -174,13 +130,17 @@ x-input-groups:
     inputs:
       - wx_secret
       - qq_secret
+    collapsible: true # 可以被折叠
+    defaultCollapsed: true # 默认折叠起来
+
   - name: "OpenClaw Gateway 配置"
     inputs:
       - gateway_port
       - expose_dashboard
       - disable_device_auth
+    collapsible: true # 可以被折叠
+    defaultCollapsed: true # 默认折叠起来
+
   - name: "付费配置"
     inputs:
-      - cost_charge_type
       - cost_period
-      - cost_period_unit

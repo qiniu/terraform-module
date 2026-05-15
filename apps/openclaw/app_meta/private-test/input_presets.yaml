@@ -31,8 +31,19 @@
   regions:
     - ap-southeast-1
 
+- name: "normal_prepaid_instance_month"
+  title: "包年包月实例(月)"
+  inputSchemaRef: "./preset_schema/pre_paid_schema.yaml"
+  inputs:
+    cost_charge_type: "PrePaid"
+    cost_period_unit: "Month"
+  regions:
+    - ap-southeast-1
+
 - name: "normal_postpaid_instance"
-  title: "普通的按量付费实例"
-  inputs: {}
+  title: "按量计费实例"
+  inputSchemaRef: "./preset_schema/post_paid_schema.yaml"
+  inputs:
+    cost_charge_type: "PostPaid"
   regions:
     - ap-southeast-1
