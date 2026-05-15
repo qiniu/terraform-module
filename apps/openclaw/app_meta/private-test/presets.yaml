@@ -1,6 +1,8 @@
 - name: "2026_user_acquisition_cn_changshan_1_1_month"
   title: "2026 新客活动 - 中国常山区域 - 2C/2G/20G/200Mbps 共享IP实例 - 1个月"
-  inputSchemaRef: "./preset_schema/activity_schema.yaml"
+  inputSchemaTemplateRef: "./preset_schema/tpl.yaml.p2"
+  inputSchemaTemplateVars:
+    preset_type: "activity"
   inputs:
     instance_type: "69c5fce89e43138e3e5caaa5"
     system_disk_size: 20
@@ -17,7 +19,9 @@
 
 - name: "2026_user_acquisition_cn_changshan_1_12_months"
   title: "2026 新客活动 - 中国常山区域 - 2C/2G/20G/200Mbps 共享IP实例 - 12个月"
-  inputSchemaRef: "./preset_schema/activity_schema.yaml"
+  inputSchemaTemplateRef: "./preset_schema/tpl.yaml.p2"
+  inputSchemaTemplateVars:
+    preset_type: "activity"
   inputs:
     instance_type: "69c5fce89e43138e3e5caaa5"
     system_disk_size: 20
@@ -33,16 +37,33 @@
 
 - name: "normal_prepaid_instance_month"
   title: "包年包月实例(月)"
-  inputSchemaRef: "./preset_schema/pre_paid_schema.yaml"
+  inputSchemaTemplateRef: "./preset_schema/tpl.yaml.p2"
+  inputSchemaTemplateVars:
+    preset_type: "prepaid"
+    period_unit: "Month"
   inputs:
     cost_charge_type: "PrePaid"
     cost_period_unit: "Month"
   regions:
     - ap-southeast-1
 
+- name: "normal_prepaid_instance_year"
+  title: "包年包月实例(年)"
+  inputSchemaTemplateRef: "./preset_schema/tpl.yaml.p2"
+  inputSchemaTemplateVars:
+    preset_type: "prepaid"
+    period_unit: "Year"
+  inputs:
+    cost_charge_type: "PrePaid"
+    cost_period_unit: "Year"
+  regions:
+    - ap-southeast-1
+
 - name: "normal_postpaid_instance"
   title: "按量计费实例"
-  inputSchemaRef: "./preset_schema/post_paid_schema.yaml"
+  inputSchemaTemplateRef: "./preset_schema/tpl.yaml.p2"
+  inputSchemaTemplateVars:
+    preset_type: "postpaid"
   inputs:
     cost_charge_type: "PostPaid"
   regions:

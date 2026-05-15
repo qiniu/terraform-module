@@ -1,6 +1,7 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 type: object
 properties:
+{% if vars.preset_type != "activity" %}
   instance_type:
     type: string
     description: "ECS 实例规格"
@@ -56,6 +57,7 @@ properties:
     minimum: 10
     maximum: 200
 
+{% endif %}
   root_password:
     type: string
     description: "实例 root 用户密码（要求：不少于 8 位，必须同时包含字母、数字和特殊符号）"
@@ -102,6 +104,24 @@ properties:
     description: "是否禁用设备认证"
     default: false
 
+{% if vars.preset_type == "prepaid" %}
+  {% if vars.period_unit == "Month" %}
+  cost_period:
+    type: number
+    description: "预付费购买时长(月)"
+    default: 1
+    minimum: 1
+    maximum: 36
+  {% elif vars.period_unit == "Year" %}
+  cost_period:
+    type: number
+    description: "预付费购买时长(年)"
+    default: 1
+    minimum: 1
+    maximum: 3
+  {% endif %}
+{% endif %}
+
 required:
   - root_password
   - qiniu_maas_api_key
@@ -109,27 +129,37 @@ required:
 x-input-groups:
   - name: "七牛 LAS 配置"
     inputs:
+{% if vars.preset_type != "activity" %}
       - instance_type
       - system_disk_type
       - system_disk_size
       - internet_charge_type
       - internet_max_bandwidth
+{% endif %}
       - root_password
+
   - name: "七牛 MaaS 配置"
     inputs:
       - qiniu_maas_api_key
       - default_model
+
   - name: "通信平台配置"
     inputs:
       - wx_secret
       - qq_secret
-    collapsible: true # 可以被折叠
-    defaultCollapsed: true # 默认折叠起来
+    collapsible: true
+    defaultCollapsed: true
 
   - name: "OpenClaw Gateway 配置"
     inputs:
       - gateway_port
       - expose_dashboard
       - disable_device_auth
-    collapsible: true # 可以被折叠
-    defaultCollapsed: true # 默认折叠起来
+    collapsible: true
+    defaultCollapsed: true
+
+{% if vars.preset_type == "prepaid" %}
+  - name: "付费配置"
+    inputs:
+      - cost_period
+{% endif %}

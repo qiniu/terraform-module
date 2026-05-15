@@ -3,10 +3,13 @@
   status: "Published" # 默认是Draft，如果需要发布改为 Published
   # status: "Draft" # 默认是Draft，如果需要发布改为 Published
   deployMeta:
-    inputSchemaRef: "./preset_schema/app_version_schema.yaml"
+    inputSchemaInline:
+      $schema: "https://json-schema.org/draft/2020-12/schema"
+      type: object
+      properties: {}
     inputPresetsRef: "./input_presets.yaml"
     terraformModule:
-      gitSource: 
+      gitSource:
         repo: "https://github.com/qiniu/terraform-module"
         ref: "main"
         directory: "openclaw"
