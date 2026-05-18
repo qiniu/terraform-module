@@ -1,0 +1,14 @@
+terraform {
+  required_version = "> 0.12.0"
+
+  required_providers {
+    qiniu = {
+      source  = "qiniu/qiniu"
+      version = "~> 1.0.0"
+    }
+  }
+}
+
+
+
+provider "qiniu" {}
