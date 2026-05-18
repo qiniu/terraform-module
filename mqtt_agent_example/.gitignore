@@ -1,0 +1,9 @@
+.terraform/
+.mqtt__agent_exec_result_cache/
+*.tfstate
+*.tfstate.*
+crash.log
+env.sh
+*.tfvars
+**/__pycache__/
+**/*.pyc
