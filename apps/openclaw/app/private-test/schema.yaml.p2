@@ -4,7 +4,7 @@ properties:
 {% if vars.preset_type != "activity" %}
   instance_type:
     type: string
-    description: "ECS 实例规格"
+    description: "实例规格"
     default: "ecs.t1.c4m8"
     enum:
       - "ecs.t1.c1m2"
@@ -38,7 +38,7 @@ properties:
       - "cloud.ssd"
 
   system_disk_size:
-    type: number
+    type: integer
     description: "系统盘大小（GiB）"
     default: 50
     minimum: 10
@@ -58,7 +58,7 @@ properties:
       - "Traffic"
 
   internet_max_bandwidth:
-    type: number
+    type: integer
     description: "公网最大带宽（Mbps），取值范围 10-200"
     default: 100
     minimum: 10
@@ -67,7 +67,7 @@ properties:
 {% endif %}
   root_password:
     type: string
-    description: "实例 root 用户密码（要求：不少于 8 位，必须同时包含字母、数字和特殊符号）"
+    description: "实例 root 用户密码（至少 8 个字符，需同时包含字母、数字和特殊符号）"
     minLength: 8
     allOf:
       - pattern: "[A-Za-z]"
@@ -86,24 +86,24 @@ properties:
 
   wx_secret:
     type: string
-    description: "可选的微信绑定串，格式为 botid|token|savedAt|baseUrl|userId；为空时跳过微信初始化"
+    description: "微信机器人连接串（可选），格式为 botid|token|savedAt|baseUrl|userId；留空则跳过微信模块初始化"
     default: ""
 
   qq_secret:
     type: string
-    description: "可选的 QQ 机器人凭证，格式为 AppID:AppSecret；为空时跳过 QQ channel 初始化"
+    description: "QQ 机器人凭证（可选），格式为 AppID:AppSecret；留空则跳过 QQ 频道初始化"
     default: ""
 
   gateway_port:
-    type: number
-    description: "Gateway 端口"
+    type: integer
+    description: "Gateway 服务端口"
     default: 18789
     minimum: 1
     maximum: 65535
 
   expose_dashboard:
     type: boolean
-    description: "是否将 Dashboard 暴露到公网"
+    description: "是否将 Dashboard 公开到公网"
     default: false
 
   disable_device_auth:
@@ -111,18 +111,27 @@ properties:
     description: "是否禁用设备认证"
     default: false
 
+  # extra_port_forwards:
+  #   type: array
+  #   description: "要额外转发的内网端口列表"
+  #   items:
+  #     type: integer
+  #     description: "内网端口号"
+  #     minimum: 1
+  #     maximum: 65535
+
 {% if vars.preset_type == "prepaid" %}
   {% if vars.period_unit == "Month" %}
   cost_period:
-    type: number
-    description: "购买时长(月)"
+    type: integer
+    description: "购买时长（月）"
     default: 1
     minimum: 1
     maximum: 36
   {% elif vars.period_unit == "Year" %}
   cost_period:
-    type: number
-    description: "购买时长(年)"
+    type: integer
+    description: "购买时长（年）"
     default: 1
     minimum: 1
     maximum: 3
@@ -144,6 +153,7 @@ x-input-groups:
       - internet_max_bandwidth
 {% endif %}
       - root_password
+      # - extra_port_forwards
 
   - name: "七牛 MaaS 配置"
     inputs:

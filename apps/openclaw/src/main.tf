@@ -140,6 +140,32 @@ resource "qiniu_compute_instance" "openclaw" {
       condition     = var.cost_charge_type != "PrePaid" || (var.cost_period != null && var.cost_period_unit != null)
       error_message = "PrePaid 模式下必须设置 cost_period 和 cost_period_unit。"
     }
+
+    precondition {
+      // 要么 cost_discount_activity_id 不为空，活动规格是预设定好的，而且无法枚举
+      // 要么 instance_type 在允许的列表中
+      condition = var.cost_discount_activity_id != "" || contains([
+        "ecs.t1.c1m2",
+        "ecs.t1.c2m4",
+        "ecs.t1.c4m8",
+        "ecs.t1.c8m16",
+        "ecs.t1.c12m24",
+        "ecs.t1.c16m32",
+        "ecs.t1.c24m48",
+        "ecs.t1.c32m64",
+        "ecs.c1.c1m2",
+        "ecs.c1.c2m4",
+        "ecs.c1.c4m8",
+        "ecs.c1.c8m16",
+        "ecs.c1.c12m24",
+        "ecs.c1.c16m32",
+        "ecs.c1.c24m48",
+        "ecs.c1.c32m64",
+        "ecs.g1.c16m120",
+        "ecs.g1.c32m240",
+      ], var.instance_type)
+      error_message = "instance_type must be one of the allowed ECS instance types."
+    }
   }
 }
 

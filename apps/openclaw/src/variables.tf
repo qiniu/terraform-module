@@ -15,31 +15,9 @@ variable "instance_type" {
   default     = "ecs.t1.c4m8"
 
   validation {
-    condition = var.instance_type != "" && contains([
-      "ecs.t1.c1m2",
-      "ecs.t1.c2m4",
-      "ecs.t1.c4m8",
-      "ecs.t1.c8m16",
-      "ecs.t1.c12m24",
-      "ecs.t1.c16m32",
-      "ecs.t1.c24m48",
-      "ecs.t1.c32m64",
-      "ecs.c1.c1m2",
-      "ecs.c1.c2m4",
-      "ecs.c1.c4m8",
-      "ecs.c1.c8m16",
-      "ecs.c1.c12m24",
-      "ecs.c1.c16m32",
-      "ecs.c1.c24m48",
-      "ecs.c1.c32m64",
-      "ecs.g1.c16m120",
-      "ecs.g1.c32m240",
-      "69c5fce89e43138e3e5caaa5", # 线上环境 2026_user_acquisition 活动规格 2026_user_acquisition-LAS-2C/2G/20G/200Mbps-SharedIP cn-changshan-1
-      "69c5fcfd9e43138e3e5caaad", # 线上环境 2026_user_acquisition 活动规格 2026_user_acquisition-LAS-2C/2G/20G/200Mbps-SharedIP ap-northeast-1
-      # "69c5fcfd9e43138e3e5caaad", # 线上环境 2026_user_acquisition 活动规格 2026_user_acquisition-LAS-2C/2G/20G/200Mbps-SharedIP ap-southeast-1 （已售馨）
-      
-    ], var.instance_type)
-    error_message = "instance_type must be one of the allowed ECS instance types."
+    // 必填参数
+    condition     = var.instance_type != ""
+    error_message = "instance_type is required and cannot be empty."
   }
 }
 
