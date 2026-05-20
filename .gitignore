@@ -8,3 +8,4 @@ custom-plugins/
 *.auto.*
 env.sh
 *.tfvars
+rendered/

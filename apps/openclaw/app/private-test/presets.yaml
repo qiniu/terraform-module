@@ -1,0 +1,91 @@
+- name: "2026_user_acquisition_cn_changshan_1_1_month"
+  title: "2026 新客活动 / 中国常山区域 / 2C//2G//20G//200Mbps 共享 IP 实例 / 1 个月"
+  inputSchemaRef: "./schema.yaml.p2"
+  inputs:
+    instance_type: "69c5fce89e43138e3e5caaa5"
+    system_disk_size: 20
+    system_disk_type: "cloud.ssd"
+    internet_max_bandwidth: 200
+    internet_public_ip_type: "Shared"
+    internet_charge_type: "PeakBandwidth"
+    cost_charge_type: "PrePaid"
+    cost_period: 1
+    cost_period_unit: "Month"
+    cost_discount_activity_id: "2026_user_acquisition"
+  regions:
+    - ap-southeast-1
+  priceEstimateCacheConfig:
+    inputKeys: [] # 价格不受用户输入控制
+    ttlSeconds: 2592000 # 30天
+
+- name: "2026_user_acquisition_cn_changshan_1_12_months"
+  title: "2026 新客活动 / 中国常山区域 / 2C//2G//20G//200Mbps 共享 IP 实例 / 12 个月"
+  inputSchemaRef: "./schema.yaml.p2"
+  inputs:
+    instance_type: "69c5fce89e43138e3e5caaa5"
+    system_disk_size: 20
+    system_disk_type: "cloud.ssd"
+    internet_max_bandwidth: 200
+    internet_public_ip_type: "Shared"
+    internet_charge_type: "PeakBandwidth"
+    cost_charge_type: "PrePaid"
+    cost_period: 12
+    cost_period_unit: "Month"
+    cost_discount_activity_id: "2026_user_acquisition"
+  regions:
+    - ap-southeast-1
+  priceEstimateCacheConfig:
+    inputKeys: [] # 价格不受用户输入控制
+    ttlSeconds: 2592000 # 30天
+
+- name: "normal_prepaid_instance_month"
+  title: "包年包月实例（月付）"
+  inputSchemaRef: "./schema.yaml.p2"
+  inputs:
+    cost_charge_type: "PrePaid"
+    cost_period_unit: "Month"
+  regions:
+    - ap-southeast-1
+  priceEstimateCacheConfig:
+    inputKeys:
+      - instance_type
+      - system_disk_type
+      - system_disk_size
+      - internet_charge_type
+      - internet_max_bandwidth
+      - cost_period
+    ttlSeconds: 2592000 # 30天
+
+- name: "normal_prepaid_instance_year"
+  title: "包年包月实例（年付）"
+  inputSchemaRef: "./schema.yaml.p2"
+  inputs:
+    cost_charge_type: "PrePaid"
+    cost_period_unit: "Year"
+  regions:
+    - ap-southeast-1
+  priceEstimateCacheConfig:
+    inputKeys:
+      - instance_type
+      - system_disk_type
+      - system_disk_size
+      - internet_charge_type
+      - internet_max_bandwidth
+      - cost_period
+    ttlSeconds: 2592000 # 30天
+
+- name: "normal_postpaid_instance"
+  title: "按量计费实例"
+  inputSchemaRef: "./schema.yaml.p2"
+  inputs:
+    cost_charge_type: "PostPaid"
+  regions:
+    - ap-southeast-1
+  priceEstimateCacheConfig:
+    inputKeys:
+      - instance_type
+      - system_disk_type
+      - system_disk_size
+      - internet_charge_type
+      - internet_max_bandwidth
+    ttlSeconds: 2592000 # 30天

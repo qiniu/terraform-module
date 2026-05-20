@@ -1,0 +1,11 @@
+- version: "0.0.17"
+  description: "OpenClaw 新一代开源 AI 智能体执行框架，突破传统大模型纯对话局限，支持终端命令执行、脚本运行、文件系统操作、长期记忆与自主任务拆解。一键部署，自动配置端口、依赖及持久化存储，内置 Web 可视化管理面板。"
+  # status: "Published" # 默认是Draft，如果需要发布改为 Published
+  status: "Draft" # 默认是Draft，如果需要发布改为 Published
+  deployMeta:
+    inputPresetsRef: "./presets.yaml"
+    terraformModule:
+      gitSource:
+        repo: "https://github.com/zhangzqs/terraform-module"
+        ref: "feat/openclaw-jsonschema"
+        directory: "apps/openclaw/src"
