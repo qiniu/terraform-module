@@ -25,6 +25,7 @@ properties:
       - "ecs.c1.c32m64"
       - "ecs.g1.c16m120"
       - "ecs.g1.c32m240"
+    x-immutable: true
 {% endif %}
 
 {% if not preset.inputs["system_disk_type"] %}
@@ -38,6 +39,7 @@ properties:
     enum:
       - "local.ssd"
       - "cloud.ssd"
+    x-immutable: true
 {% endif %}
 
 {% if not preset.inputs["system_disk_size"] %}
@@ -47,6 +49,7 @@ properties:
     default: 50
     minimum: 10
     maximum: 500
+    x-immutable: true
 {% endif %}
 
 {% if not preset.inputs["internet_charge_type"] %}
@@ -62,6 +65,7 @@ properties:
       - "Bandwidth"
       - "PeakBandwidth"
       - "Traffic"
+    x-immutable: true
 {% endif %}
 
 {% if not preset.inputs["internet_max_bandwidth"] %}
@@ -71,6 +75,7 @@ properties:
     default: 100
     minimum: 10
     maximum: 200
+    x-immutable: true
 {% endif %}
 
   root_password:
@@ -118,6 +123,7 @@ properties:
     default: 1
     minimum: 1
     maximum: 36
+    x-immutable: true
     {% elif preset.inputs["cost_period_unit"] == "Year" %}
   cost_period:
     type: integer
@@ -125,6 +131,7 @@ properties:
     default: 1
     minimum: 1
     maximum: 3
+    x-immutable: true
     {% endif %}
   {% endif %}
 {% endif %}
