@@ -14,6 +14,9 @@
     cost_discount_activity_id: "2026_user_acquisition"
   regions:
     - ap-southeast-1
+  priceEstimateCacheConfig:
+    inputKeys: [] # 价格不受用户输入控制
+    ttlSeconds: 2592000 # 30天
 
 - name: "2026_user_acquisition_cn_changshan_1_12_months"
   title: "2026 新客活动 / 中国常山区域 / 2C//2G//20G//200Mbps 共享 IP 实例 / 12 个月"
@@ -31,6 +34,9 @@
     cost_discount_activity_id: "2026_user_acquisition"
   regions:
     - ap-southeast-1
+  priceEstimateCacheConfig:
+    inputKeys: [] # 价格不受用户输入控制
+    ttlSeconds: 2592000 # 30天
 
 - name: "normal_prepaid_instance_month"
   title: "包年包月实例（月付）"
@@ -40,6 +46,15 @@
     cost_period_unit: "Month"
   regions:
     - ap-southeast-1
+  priceEstimateCacheConfig:
+    inputKeys:
+      - instance_type
+      - system_disk_type
+      - system_disk_size
+      - internet_charge_type
+      - internet_max_bandwidth
+      - cost_period
+    ttlSeconds: 2592000 # 30天
 
 - name: "normal_prepaid_instance_year"
   title: "包年包月实例（年付）"
@@ -49,6 +64,15 @@
     cost_period_unit: "Year"
   regions:
     - ap-southeast-1
+  priceEstimateCacheConfig:
+    inputKeys:
+      - instance_type
+      - system_disk_type
+      - system_disk_size
+      - internet_charge_type
+      - internet_max_bandwidth
+      - cost_period
+    ttlSeconds: 2592000 # 30天
 
 - name: "normal_postpaid_instance"
   title: "按量计费实例"
@@ -57,3 +81,11 @@
     cost_charge_type: "PostPaid"
   regions:
     - ap-southeast-1
+  priceEstimateCacheConfig:
+    inputKeys:
+      - instance_type
+      - system_disk_type
+      - system_disk_size
+      - internet_charge_type
+      - internet_max_bandwidth
+    ttlSeconds: 2592000 # 30天
