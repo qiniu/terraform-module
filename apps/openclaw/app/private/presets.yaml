@@ -1,0 +1,151 @@
+- name: "2026_user_acquisition_cn_1_month"
+  title: "2026 新客活动 / 中国 / 2C//2G//20G//200Mbps 共享 IP 实例 / 1 个月"
+  inputSchemaRef: "./schema.yaml"
+  inputs:
+    instance_type: "69c5fce89e43138e3e5caaa5"
+    system_disk_size: 20
+    system_disk_type: "cloud.ssd"
+    internet_max_bandwidth: 200
+    internet_public_ip_type: "Shared"
+    internet_charge_type: "PeakBandwidth"
+    cost_charge_type: "PrePaid"
+    cost_period: 1
+    cost_period_unit: "Month"
+    cost_discount_activity_id: "2026_user_acquisition"
+  regions:
+    - cn-changshan-1
+  priceEstimateCacheConfig:
+    inputKeys: [] # 价格不受用户输入控制
+    ttlSeconds: 2592000 # 30天
+
+- name: "2026_user_acquisition_cn_12_months"
+  title: "2026 新客活动 / 中国 / 2C//2G//20G//200Mbps 共享 IP 实例 / 12 个月"
+  inputSchemaRef: "./schema.yaml.p2"
+  inputs:
+    instance_type: "69c5fce89e43138e3e5caaa5"
+    system_disk_size: 20
+    system_disk_type: "cloud.ssd"
+    internet_max_bandwidth: 200
+    internet_public_ip_type: "Shared"
+    internet_charge_type: "PeakBandwidth"
+    cost_charge_type: "PrePaid"
+    cost_period: 12
+    cost_period_unit: "Month"
+    cost_discount_activity_id: "2026_user_acquisition"
+  regions:
+    - cn-changshan-1
+  priceEstimateCacheConfig:
+    inputKeys: [] # 价格不受用户输入控制
+    ttlSeconds: 2592000 # 30天
+
+- name: "2026_user_acquisition_ap_1_months"
+  title: "2026 新客活动 / 亚太 / 2C//2G//20G//200Mbps 共享 IP 实例 / 1 个月"
+  inputSchemaRef: "./schema.yaml.p2"
+  inputs:
+    instance_type: "69c5fcfd9e43138e3e5caaad"
+    system_disk_size: 20
+    system_disk_type: "local.ssd"
+    internet_max_bandwidth: 200
+    internet_public_ip_type: "Shared"
+    internet_charge_type: "PeakBandwidth"
+    cost_charge_type: "PrePaid"
+    cost_period: 1
+    cost_period_unit: "Month"
+    cost_discount_activity_id: "2026_user_acquisition"
+  regions:
+    - ap-northeast-1
+    - ap-southeast-1
+  priceEstimateCacheConfig:
+    inputKeys: [] # 价格不受用户输入控制
+    ttlSeconds: 2592000 # 30天
+
+- name: "2026_user_acquisition_ap_12_months"
+  title: "2026 新客活动 / 亚太 / 2C//2G//20G//200Mbps 共享 IP 实例 / 12 个月"
+  inputSchemaRef: "./schema.yaml.p2"
+  inputs:
+    instance_type: "69c5fcfd9e43138e3e5caaad"
+    system_disk_size: 20
+    system_disk_type: "local.ssd"
+    internet_max_bandwidth: 200
+    internet_public_ip_type: "Shared"
+    internet_charge_type: "PeakBandwidth"
+    cost_charge_type: "PrePaid"
+    cost_period: 12
+    cost_period_unit: "Month"
+    cost_discount_activity_id: "2026_user_acquisition"
+  regions:
+    - ap-northeast-1
+    - ap-southeast-1
+  priceEstimateCacheConfig:
+    inputKeys: [] # 价格不受用户输入控制
+    ttlSeconds: 2592000 # 30天
+
+# - name: "normal_prepaid_instance_month"
+#   title: "包年包月实例（月付）"
+#   inputSchemaRef: "./schema.yaml.p2"
+#   inputs:
+#     cost_charge_type: "PrePaid"
+#     cost_period_unit: "Month"
+#   regions:
+#     - ap-northeast-1 # 日本东京
+#     - ap-southeast-1 # 新加坡
+#     - cn-hongkong-1 # 香港
+#     - cn-shaoxing-1 # 绍兴
+#     - cn-changshan-1 # 常山
+#     - cn-changshan-2 # 常山 lf2
+#     - us-south-1 # 北美达拉斯
+#   priceEstimateCacheConfig:
+#     inputKeys:
+#       - instance_type
+#       - system_disk_type
+#       - system_disk_size
+#       - internet_charge_type
+#       - internet_max_bandwidth
+#       - cost_period
+#     ttlSeconds: 2592000 # 30天
+
+# - name: "normal_prepaid_instance_year"
+#   title: "包年包月实例（年付）"
+#   inputSchemaRef: "./schema.yaml.p2"
+#   inputs:
+#     cost_charge_type: "PrePaid"
+#     cost_period_unit: "Year"
+#   regions:
+#     - ap-northeast-1 # 日本东京
+#     - ap-southeast-1 # 新加坡
+#     - cn-hongkong-1 # 香港
+#     - cn-shaoxing-1 # 绍兴
+#     - cn-changshan-1 # 常山
+#     - cn-changshan-2 # 常山 lf2
+#     - us-south-1 # 北美达拉斯
+#   priceEstimateCacheConfig:
+#     inputKeys:
+#       - instance_type
+#       - system_disk_type
+#       - system_disk_size
+#       - internet_charge_type
+#       - internet_max_bandwidth
+#       - cost_period
+#     ttlSeconds: 2592000 # 30天
+
+# - name: "normal_postpaid_instance"
+#   title: "按量计费实例"
+#   inputSchemaRef: "./schema.yaml.p2"
+#   inputs:
+#     cost_charge_type: "PostPaid"
+#   regions:
+#     - ap-northeast-1 # 日本东京
+#     - ap-southeast-1 # 新加坡
+#     - cn-hongkong-1 # 香港
+#     - cn-shaoxing-1 # 绍兴
+#     - cn-changshan-1 # 常山
+#     - cn-changshan-2 # 常山 lf2
+#     - us-south-1 # 北美达拉斯
+#   priceEstimateCacheConfig:
+#     inputKeys:
+#       - instance_type
+#       - system_disk_type
+#       - system_disk_size
+#       - internet_charge_type
+#       - internet_max_bandwidth
+#     ttlSeconds: 2592000 # 30天
