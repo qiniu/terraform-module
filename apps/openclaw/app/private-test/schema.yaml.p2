@@ -1,7 +1,7 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 type: object
 properties:
-{% if not preset.inputs["instance_type"] %}
+{% if vars.show_instance_type %}
   instance_type:
     type: string
     description: "实例规格"
@@ -25,34 +25,38 @@ properties:
       - "ecs.c1.c32m64"
       - "ecs.g1.c16m120"
       - "ecs.g1.c32m240"
-    x-immutable: true
 {% endif %}
 
-{% if not preset.inputs["system_disk_type"] %}
   system_disk_type:
     type: string
     description: |
       系统盘类型：
         1. local.ssd：本地 SSD 磁盘，提供更高的 I/O 性能，适合对性能有较高要求的应用场景。
         2. cloud.ssd：云盘 SSD 磁盘，提供稳定的性能和数据持久性，适合大多数应用场景。
-    default: "local.ssd"
+{% if vars.system_disk_type_const != nil %}
+    readOnly: true
+    default: "{{ vars.system_disk_type_const }}"
     enum:
-      - "local.ssd"
+      - "{{ vars.system_disk_type_const }}"
+{% else %}
+    default: "cloud.ssd"
+    enum:
       - "cloud.ssd"
-    x-immutable: true
+      - "local.ssd"
 {% endif %}
 
-{% if not preset.inputs["system_disk_size"] %}
   system_disk_size:
     type: integer
     description: "系统盘大小（GiB）"
+{% if vars.system_disk_size_const == nil %}
     default: 50
     minimum: 10
     maximum: 500
-    x-immutable: true
+{% else %}
+    readOnly: true
+    default: {{ vars.system_disk_size_const }}
 {% endif %}
 
-{% if not preset.inputs["internet_charge_type"] %}
   internet_charge_type:
     type: string
     description: |
@@ -60,26 +64,34 @@ properties:
         1. Bandwidth：按带宽计费，按照实例的公网带宽大小进行计费，适合对带宽需求较为稳定的场景。
         2. PeakBandwidth：按峰值带宽计费，按照实例的公网带宽峰值进行计费，适合对带宽需求有较大波动的场景。
         3. Traffic：按流量计费，按照实例的公网流量使用量进行计费，适合对带宽需求不稳定且流量使用量较大的场景。
+{% if vars.internet_charge_type_const != nil %}
+    default: "{{ vars.internet_charge_type_const }}"
+    enum:
+      - "{{ vars.internet_charge_type_const }}"
+    readOnly: true
+{% else %}
     default: "PeakBandwidth"
     enum:
       - "Bandwidth"
       - "PeakBandwidth"
       - "Traffic"
-    x-immutable: true
 {% endif %}
 
-{% if not preset.inputs["internet_max_bandwidth"] %}
   internet_max_bandwidth:
     type: integer
     description: "公网最大带宽（Mbps），取值范围 10-200"
+{% if vars.internet_max_bandwidth_const != nil %}
+    default: {{ vars.internet_max_bandwidth_const }}
+    readOnly: true
+{% else %}
     default: 100
     minimum: 10
     maximum: 200
-    x-immutable: true
 {% endif %}
 
   root_password:
     type: string
+    format: "password"
     description: "实例 root 用户密码（至少 8 个字符，需同时包含字母、数字和特殊符号）"
     minLength: 8
     allOf:
@@ -89,6 +101,7 @@ properties:
 
   qiniu_maas_api_key:
     type: string
+    format: "password"
     description: "七牛 MaaS API 密钥（从 https://portal.qiniu.com/ai-inference/api-key 获取）"
     minLength: 1
 
@@ -114,9 +127,9 @@ properties:
     description: "是否禁用设备认证"
     default: false
 
-{% if preset.inputs["cost_charge_type"] == "PrePaid" %}
-  {% if not preset.inputs["cost_period"] %}
-    {% if preset.inputs["cost_period_unit"] == "Month" %}
+{% if preset_inputs["cost_charge_type"] == "PrePaid" %}
+  {% if not preset_inputs["cost_period"] %}
+    {% if preset_inputs["cost_period_unit"] == "Month" %}
   cost_period:
     type: integer
     description: "购买时长（月）"
@@ -124,7 +137,7 @@ properties:
     minimum: 1
     maximum: 36
     x-immutable: true
-    {% elif preset.inputs["cost_period_unit"] == "Year" %}
+    {% elif preset_inputs["cost_period_unit"] == "Year" %}
   cost_period:
     type: integer
     description: "购买时长（年）"
@@ -144,21 +157,13 @@ required:
 x-input-groups:
   - name: "七牛 LAS 配置"
     inputs:
-{% if not preset.inputs["instance_type"] %}
+{% if vars.show_instance_type %}
       - instance_type
 {% endif %}
-{% if not preset.inputs["system_disk_type"] %}
       - system_disk_type
-{% endif %}
-{% if not preset.inputs["system_disk_size"] %}
       - system_disk_size
-{% endif %}
-{% if not preset.inputs["internet_charge_type"] %}
       - internet_charge_type
-{% endif %}
-{% if not preset.inputs["internet_max_bandwidth"] %}
       - internet_max_bandwidth
-{% endif %}
       - root_password
 
   - name: "七牛 MaaS 配置"
@@ -174,8 +179,8 @@ x-input-groups:
     collapsible: true
     defaultCollapsed: true
 
-{% if preset.inputs["cost_charge_type"] == "PrePaid" %}
-  {% if not preset.inputs["cost_period"] %}
+{% if preset_inputs["cost_charge_type"] == "PrePaid" %}
+  {% if not preset_inputs["cost_period"] %}
   - name: "付费配置"
     inputs:
       - cost_period

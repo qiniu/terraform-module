@@ -3,7 +3,7 @@
   # status: "Published" # 默认是Draft，如果需要发布改为 Published
   status: "Draft" # 默认是Draft，如果需要发布改为 Published
   deployMeta:
-    inputPresetsRef: "./presets.yaml"
+    inputPresetsRef: "./presets.yaml.p2"
     terraformModule:
       gitSource:
         repo: "https://github.com/zhangzqs/terraform-module"
