@@ -224,7 +224,7 @@ variable "cost_discount_activity_id" {
 
 variable "extra_port_forwards" {
   type        = set(number)
-  description = "额外的要端口转发的内网端口列表，仅当 internet_public_ip_type 为 Shared 时可配置。SSH(22) 端口会自动添加"
+  description = "额外的要端口转发的内网端口列表，仅当 internet_public_ip_type 为 Shared 时可配置。SSH(22), Gateway(默认 18789) 等常用端口会自动添加到转发列表中，无需用户额外配置。"
   default     = []
 
   validation {
