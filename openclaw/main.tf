@@ -47,7 +47,7 @@ locals {
 
   # 默认情况下 Shared 模式至少需要转发 SSH 端口
   shared_ports_1 = [22]
-  # expose_dashboard 时需要额外转发 Gateway 端口
+  # 默认情况下需要额外转发 Gateway 端口
   shared_ports_2 = distinct(concat(local.shared_ports_1, [var.gateway_port]))
   # 再补充上用户自定义端口
   shared_ports_3 = distinct(concat(local.shared_ports_2, tolist(var.extra_port_forwards)))
