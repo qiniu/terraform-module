@@ -297,18 +297,6 @@ variable "gateway_port" {
   }
 }
 
-variable "expose_dashboard" {
-  type        = bool
-  description = "是否将 Dashboard 暴露到公网（true: 监听 0.0.0.0 并设置 allowedOrigins:[*]，false: 仅监听 127.0.0.1 需 SSH 隧道访问）"
-  default     = false
-}
-
-variable "disable_device_auth" {
-  type        = bool
-  description = "是否禁用设备认证（设置 dangerouslyDisableDeviceAuth:true）"
-  default     = false
-}
-
 # ============================================================================
 # 镜像与命名
 # ============================================================================

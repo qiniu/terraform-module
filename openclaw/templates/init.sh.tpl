@@ -117,16 +117,12 @@ EOF_OPENCLAW_QQ
 fi
 
 GATEWAY_JSON=$(cat <<ENDJSON
-{"port":${gateway_port},"mode":"local","bind":"${gateway_bind}","auth":{"mode":"token","token":"${dashboard_token}"}}
+{"port":${gateway_port},"mode":"local","bind":"lan","auth":{"mode":"token","token":"${dashboard_token}"}}
 ENDJSON
 )
 run_as_openclaw openclaw config set gateway --strict-json "$GATEWAY_JSON"
-%{ if gateway_bind == "lan" ~}
 run_as_openclaw openclaw config set gateway.controlUi.allowedOrigins --strict-json '["*"]'
-%{ endif ~}
-%{ if disable_device_auth ~}
 run_as_openclaw openclaw config set gateway.controlUi.dangerouslyDisableDeviceAuth true
-%{ endif ~}
 
 # 3. 启动 OpenClaw Gateway
 log "Starting OpenClaw gateway..."

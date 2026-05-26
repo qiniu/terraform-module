@@ -44,33 +44,17 @@ output "ssh_command" {
   description = "SSH 连接命令（openclaw 用户）"
 }
 
-output "ssh_tunnel_command" {
-  value = !var.expose_dashboard ? (
-    var.internet_public_ip_type == "Shared" ? (
-      length(local.ssh_port_forward) > 0 ? (
-        "ssh -p ${local.ssh_port_forward[0].external_port} -N -L ${var.gateway_port}:127.0.0.1:${var.gateway_port} openclaw@${local.ssh_port_forward[0].public_ip}"
-      ) : null
-      ) : (
-      length(qiniu_compute_instance.openclaw.public_ip_addresses) > 0 ? (
-        "ssh -N -L ${var.gateway_port}:127.0.0.1:${var.gateway_port} openclaw@${qiniu_compute_instance.openclaw.public_ip_addresses[0].ipv4}"
-      ) : null
-    )
-  ) : null
-  description = "SSH 隧道转发命令（用于访问 Dashboard，仅 expose_dashboard=false 时输出）"
-}
-
 output "dashboard_url" {
-  value = var.expose_dashboard ? (
-    var.internet_public_ip_type == "Shared" ? (
-      length(local.gateway_port_forward) > 0 ? (
-        "http://${local.gateway_port_forward[0].public_ip}:${local.gateway_port_forward[0].external_port}/?token=${random_password.dashboard_token.result}"
-      ) : null
-      ) : (
-      length(qiniu_compute_instance.openclaw.public_ip_addresses) > 0 ? (
-        "http://${qiniu_compute_instance.openclaw.public_ip_addresses[0].ipv4}:${var.gateway_port}/?token=${random_password.dashboard_token.result}"
-      ) : null
-    )
-  ) : null
+  value = var.internet_public_ip_type == "Shared" ? (
+    length(local.gateway_port_forward) > 0 ? (
+      "http://${local.gateway_port_forward[0].public_ip}:${local.gateway_port_forward[0].external_port}/?token=${random_password.dashboard_token.result}"
+    ) : null
+    ) : (
+    length(qiniu_compute_instance.openclaw.public_ip_addresses) > 0 ? (
+      "http://${qiniu_compute_instance.openclaw.public_ip_addresses[0].ipv4}:${var.gateway_port}/?token=${random_password.dashboard_token.result}"
+    ) : null
+  )
+
   sensitive   = true
   description = "Dashboard 访问 URL（Shared 模式从 port_forwards 获取外部端口，Dedicated 模式使用 gateway_port）"
 }
