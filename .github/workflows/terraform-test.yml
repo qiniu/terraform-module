@@ -31,24 +31,41 @@ jobs:
         with:
           terraform_version: '1.14'
 
+      - name: Cache qiniu provider
+        id: cache-provider
+        uses: actions/cache@v4
+        with:
+          path: ~/.terraform.d/plugin-mirror
+          key: qiniu-provider-1.0.0-linux-amd64
+
       - name: Install qiniu provider
+        if: steps.cache-provider.outputs.cache-hit != 'true'
         run: |
           MIRROR_DIR="${HOME}/.terraform.d/plugin-mirror/registry.terraform.io/qiniu/qiniu/1.0.0/linux_amd64"
           mkdir -p "${MIRROR_DIR}"
 
-          curl -fsSL -o "${MIRROR_DIR}/terraform-provider-qiniu" \
+          curl -fsSL \
+            --retry 5 \
+            --retry-delay 10 \
+            --retry-max-time 300 \
+            --retry-all-errors \
+            --connect-timeout 30 \
+            --max-time 600 \
+            -o "${MIRROR_DIR}/terraform-provider-qiniu" \
             "http://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/qiniu/qiniu/1.0.0/linux_amd64/terraform-provider-qiniu"
 
           chmod +x "${MIRROR_DIR}/terraform-provider-qiniu"
 
       - name: Configure Terraform provider mirror
         run: |
-          cat > "${HOME}/.terraformrc" << 'EOF'
-          plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"
+          mkdir -p "${HOME}/.terraform.d/plugin-cache"
+
+          cat > "${HOME}/.terraformrc" << EOF
+          plugin_cache_dir = "${HOME}/.terraform.d/plugin-cache"
 
           provider_installation {
             filesystem_mirror {
-              path    = "$HOME/.terraform.d/plugin-mirror"
+              path    = "${HOME}/.terraform.d/plugin-mirror"
               include = ["registry.terraform.io/qiniu/qiniu"]
             }
             direct {
