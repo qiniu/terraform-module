@@ -125,21 +125,6 @@ resource "qiniu_compute_instance" "openclaw" {
       condition     = local.selected_image_id != null
       error_message = "未找到匹配的 OpenClaw 镜像，请确认当前区域已上架 OpenClaw 社区镜像。"
     }
-
-    precondition {
-      condition     = var.internet_public_ip_type == "Shared" || length(var.extra_port_forwards) == 0
-      error_message = "extra_port_forwards 仅在 internet_public_ip_type 为 Shared 时可配置。请将 internet_public_ip_type 设置为 Shared，或清空 extra_port_forwards。"
-    }
-
-    precondition {
-      condition     = var.cost_charge_type != "PostPaid" || (var.cost_period == null && var.cost_period_unit == null && var.cost_discount_activity_id == null)
-      error_message = "PostPaid 模式下 cost_period、cost_period_unit、cost_discount_activity_id 必须为 null（不设置）。"
-    }
-
-    precondition {
-      condition     = var.cost_charge_type != "PrePaid" || (var.cost_period != null && var.cost_period_unit != null)
-      error_message = "PrePaid 模式下必须设置 cost_period 和 cost_period_unit。"
-    }
   }
 }
 
