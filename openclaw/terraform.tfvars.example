@@ -55,9 +55,3 @@ default_model = "minimax/minimax-m2.5"
 
 # 镜像名称前缀（用于筛选匹配的社区镜像）
 # image_name_prefix = "OpenClaw-v2026.5.18"
-
-# 是否将 Dashboard 暴露到公网
-# expose_dashboard = false
-
-# 是否禁用设备认证
-# disable_device_auth = false
