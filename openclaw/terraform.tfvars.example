@@ -54,7 +54,7 @@ default_model = "minimax/minimax-m2.5"
 # instance_name_prefix = "openclaw"
 
 # 镜像名称前缀（用于筛选匹配的社区镜像）
-# image_name_prefix = "OpenClaw-v2026.3.8"
+# image_name_prefix = "OpenClaw-v2026.5.18"
 
 # 是否将 Dashboard 暴露到公网
 # expose_dashboard = false
