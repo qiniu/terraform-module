@@ -1,0 +1,68 @@
+name: Terraform Module Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/*.tf'
+      - '**/*.tftest.hcl'
+      - '.github/workflows/terraform-test.yml'
+  pull_request:
+    paths:
+      - '**/*.tf'
+      - '**/*.tftest.hcl'
+      - '.github/workflows/terraform-test.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: 'Test ${{ matrix.module }}'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - openclaw
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.14'
+
+      - name: Install qiniu provider
+        run: |
+          MIRROR_DIR="${HOME}/.terraform.d/plugin-mirror/registry.terraform.io/qiniu/qiniu/1.0.0/linux_amd64"
+          mkdir -p "${MIRROR_DIR}"
+
+          curl -fsSL -o "${MIRROR_DIR}/terraform-provider-qiniu" \
+            "http://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/qiniu/qiniu/1.0.0/linux_amd64/terraform-provider-qiniu"
+
+          chmod +x "${MIRROR_DIR}/terraform-provider-qiniu"
+
+      - name: Configure Terraform provider mirror
+        run: |
+          cat > "${HOME}/.terraformrc" << 'EOF'
+          plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"
+
+          provider_installation {
+            filesystem_mirror {
+              path    = "$HOME/.terraform.d/plugin-mirror"
+              include = ["registry.terraform.io/qiniu/qiniu"]
+            }
+            direct {
+              exclude = ["registry.terraform.io/qiniu/qiniu"]
+            }
+          }
+          EOF
+
+      - name: Run terraform test
+        working-directory: ${{ matrix.module }}
+        run: |
+          if ls *.tftest.hcl 1>/dev/null 2>&1; then
+            terraform init
+            terraform test -no-color
+          else
+            echo "::notice::No test files in ${{ matrix.module }}, skipping"
+          fi

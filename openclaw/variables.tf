@@ -17,7 +17,7 @@ variable "instance_type" {
   validation {
     # 当 cost_discount_activity_id 没有填写时，instance_type 必须是给定的枚举规格
     condition = (
-      var.cost_discount_activity_id != "" ||
+      (var.cost_discount_activity_id != null && var.cost_discount_activity_id != "") ||
       contains([
         "ecs.t1.c1m2",
         "ecs.t1.c2m4",
