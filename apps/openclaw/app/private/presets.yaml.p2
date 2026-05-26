@@ -3,7 +3,8 @@
   title:
     - 2026 新客特惠
     - 中国（常山1）
-    - 2C/2G/20G/200Mbps 共享 IP 实例
+    - 2C/2G/20G/200Mbps
+    - 共享 IP 实例
     - {{ month_num }} 个月
   inputSchemaRef: "./schema.yaml.p2"
   vars:
@@ -30,15 +31,16 @@
     ttlSeconds: 2592000 # 30天
 {% endmacro %}
 
-{{ tpl_2026_user_acquisition_changshan(1) }}
-{{ tpl_2026_user_acquisition_changshan(12) }}
+{{ tpl_2026_user_acquisition_changshan_1(1) }}
+{{ tpl_2026_user_acquisition_changshan_1(12) }}
 
 {% macro tpl_2026_user_acquisition_ap_southeast_1(month_num) %}
 - name: "2026_user_acquisition_ap_southeast_1_{{ month_num }}_month"
   title:
     - 2026 新客特惠
     - 新加坡
-    - 2C/2G/20G/200Mbps 共享 IP 实例
+    - 2C/2G/20G/200Mbps 
+    - 共享 IP 实例
     - {{ month_num }} 个月
   inputSchemaRef: "./schema.yaml.p2"
   vars:
@@ -73,31 +75,10 @@
   inputSchemaRef: "./schema.yaml.p2"
   vars:
     show_instance_type: true
+    show_cost_period_month: true
   inputs:
     cost_charge_type: "PrePaid"
     cost_period_unit: "Month"
-  regions:
-    - ap-northeast-1 # 日本东京
-    - ap-southeast-1 # 新加坡
-    - cn-changshan-1 # 常山
-  priceEstimateCacheConfig:
-    inputKeys:
-      - instance_type
-      - system_disk_type
-      - system_disk_size
-      - internet_charge_type
-      - internet_max_bandwidth
-      - cost_period
-    ttlSeconds: 2592000 # 30天
-
-- name: "normal_prepaid_instance_year"
-  title: "包年包月实例（年付）"
-  inputSchemaRef: "./schema.yaml.p2"
-  vars:
-    show_instance_type: true
-  inputs:
-    cost_charge_type: "PrePaid"
-    cost_period_unit: "Year"
   regions:
     - ap-northeast-1 # 日本东京
     - ap-southeast-1 # 新加坡
