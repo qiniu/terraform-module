@@ -58,12 +58,14 @@ jobs:
 
       - name: Configure Terraform provider mirror
         run: |
-          cat > "${HOME}/.terraformrc" << 'EOF'
-          plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"
+          mkdir -p "${HOME}/.terraform.d/plugin-cache"
+
+          cat > "${HOME}/.terraformrc" << EOF
+          plugin_cache_dir = "${HOME}/.terraform.d/plugin-cache"
 
           provider_installation {
             filesystem_mirror {
-              path    = "$HOME/.terraform.d/plugin-mirror"
+              path    = "${HOME}/.terraform.d/plugin-mirror"
               include = ["registry.terraform.io/qiniu/qiniu"]
             }
             direct {
