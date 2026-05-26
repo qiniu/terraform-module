@@ -122,12 +122,17 @@ properties:
 
   expose_dashboard:
     type: boolean
-    description: "是否将 Dashboard 公开到公网"
+    description: |
+      是否将 Dashboard 公开到公网
+      - 部署完成后，将直接输出 Dashboard 的公网访问地址，用户可以直接访问和管理 OpenClaw。
     default: false
 
   disable_device_auth:
     type: boolean
-    description: "是否禁用设备认证"
+    description: |
+      是否禁用设备认证
+      - false（默认）：启用设备认证，只有通过认证的设备才能访问 OpenClaw Gateway，提供更高的安全性。
+      - true：禁用设备认证，任何设备都可以直接访问进 OpenClaw Gateway，适合对安全性要求不高且需要快速部署的场景。
     default: false
 
 {% if vars.show_cost_period_month %}
@@ -194,8 +199,6 @@ x-input-groups:
       - gateway_port
       - expose_dashboard
       - disable_device_auth
-    collapsible: true
-    defaultCollapsed: true
 
 {% if vars.show_cost_period_month or vars.show_cost_period_year %}
   - name: "付费配置"
