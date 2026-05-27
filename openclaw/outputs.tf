@@ -71,8 +71,9 @@ output "dashboard_url" {
       ) : null
     )
   ) : null
+
   sensitive   = true
-  description = "Dashboard 访问 URL（Shared 模式从 port_forwards 获取外部端口，Dedicated 模式使用 gateway_port）"
+  description = "Dashboard 访问 URL（仅 expose_dashboard=true 时输出；Shared 模式从 port_forwards 获取外部端口，Dedicated 模式使用 gateway_port）"
 }
 
 output "port_forwards" {

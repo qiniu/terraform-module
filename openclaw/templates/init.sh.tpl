@@ -124,9 +124,7 @@ run_as_openclaw openclaw config set gateway --strict-json "$GATEWAY_JSON"
 %{ if gateway_bind == "lan" ~}
 run_as_openclaw openclaw config set gateway.controlUi.allowedOrigins --strict-json '["*"]'
 %{ endif ~}
-%{ if disable_device_auth ~}
 run_as_openclaw openclaw config set gateway.controlUi.dangerouslyDisableDeviceAuth true
-%{ endif ~}
 
 # 3. 启动 OpenClaw Gateway
 log "Starting OpenClaw gateway..."

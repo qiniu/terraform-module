@@ -58,6 +58,3 @@ default_model = "minimax/minimax-m2.5"
 
 # 是否将 Dashboard 暴露到公网
 # expose_dashboard = false
-
-# 是否禁用设备认证
-# disable_device_auth = false
