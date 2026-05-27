@@ -47,8 +47,8 @@ locals {
 
   # 默认情况下 Shared 模式至少需要转发 SSH 端口
   shared_ports_1 = [22]
-  # 默认情况下需要额外转发 Gateway 端口
-  shared_ports_2 = distinct(concat(local.shared_ports_1, [var.gateway_port]))
+  # expose_dashboard 时需要额外转发 Gateway 端口
+  shared_ports_2 = var.expose_dashboard ? distinct(concat(local.shared_ports_1, [var.gateway_port])) : local.shared_ports_1
   # 再补充上用户自定义端口
   shared_ports_3 = distinct(concat(local.shared_ports_2, tolist(var.extra_port_forwards)))
   # 最终的 Shared 模式端口转发规则列表
@@ -105,6 +105,7 @@ resource "qiniu_compute_instance" "openclaw" {
 
     # Gateway 配置
     gateway_port = var.gateway_port
+    gateway_bind = var.expose_dashboard ? "lan" : "loopback"
   }))
 
   description = "OpenClaw AI Assistant - Managed by Terraform"

@@ -224,7 +224,7 @@ variable "cost_discount_activity_id" {
 
 variable "extra_port_forwards" {
   type        = set(number)
-  description = "额外的要端口转发的内网端口列表，仅当 internet_public_ip_type 为 Shared 时可配置。SSH(22), Gateway(默认 18789) 等常用端口会自动添加到转发列表中，无需用户额外配置。"
+  description = "额外的要端口转发的内网端口列表，仅当 internet_public_ip_type 为 Shared 时可配置。SSH(22) 端口会自动添加，expose_dashboard 时 gateway_port 也会自动添加。"
   default     = []
 
   validation {
@@ -295,6 +295,12 @@ variable "gateway_port" {
     condition     = var.gateway_port >= 1 && var.gateway_port <= 65535
     error_message = "gateway_port 必须在 1 到 65535 之间。"
   }
+}
+
+variable "expose_dashboard" {
+  type        = bool
+  description = "是否将 Dashboard 暴露到公网（true: 监听 0.0.0.0 并设置 allowedOrigins:[*]，false: 仅监听 127.0.0.1 需 SSH 隧道访问）"
+  default     = false
 }
 
 # ============================================================================
