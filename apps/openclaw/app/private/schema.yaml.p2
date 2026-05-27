@@ -3,6 +3,7 @@ type: object
 properties:
 {% if vars.show_instance_type %}
   instance_type:
+    title: "实例规格"
     type: string
     description: "实例规格"
     default: "ecs.t1.c4m8"
@@ -28,6 +29,7 @@ properties:
 {% endif %}
 
   system_disk_type:
+    title: "系统盘类型"
     type: string
     description: |
       系统盘类型：
@@ -46,6 +48,7 @@ properties:
 {% endif %}
 
   system_disk_size:
+    title: "系统盘大小（GiB）"
     type: integer
     description: "系统盘大小（GiB）"
 {% if vars.system_disk_size_const == nil %}
@@ -59,6 +62,7 @@ properties:
 {% endif %}
 
   internet_charge_type:
+    title: "互联网出网带宽计费方式"
     type: string
     description: |
       互联网出网带宽计费方式:
@@ -79,6 +83,7 @@ properties:
 {% endif %}
 
   internet_max_bandwidth:
+    title: "公网最大带宽（Mbps）"
     type: integer
     description: |
       公网最大带宽（Mbps），取值范围 1-300
@@ -93,9 +98,10 @@ properties:
 {% endif %}
 
   root_password:
+    title: "实例登录密码"
     type: string
     format: "password"
-    description: "实例 root 用户密码（至少 8 个字符，需同时包含字母、数字和特殊符号）"
+    description: "实例 root 和 openclaw 用户的密码（至少 8 个字符，需同时包含字母、数字和特殊符号）"
     minLength: 8
     allOf:
       - pattern: "[A-Za-z]"
@@ -103,17 +109,20 @@ properties:
       - pattern: "[^A-Za-z0-9]"
 
   qiniu_maas_api_key:
+    title: "七牛 MaaS API 密钥"
     type: string
     format: "password"
     description: "七牛 MaaS API 密钥（从 https://portal.qiniu.com/ai-inference/api-key 获取）"
     minLength: 1
 
   default_model:
+    title: "默认使用的 AI 模型"
     type: string
-    description: "使用的 AI 模型（如 minimax/minimax-m2.5、deepseek/deepseek-chat、qwen/qwen-max 等）"
+    description: "默认使用的 AI 模型（如 minimax/minimax-m2.5、deepseek/deepseek-chat、qwen/qwen-max 等）"
     default: "minimax/minimax-m2.5"
 
   gateway_port:
+    title: "Gateway 服务端口"
     type: integer
     description: "Gateway 服务端口"
     default: 18789
@@ -121,22 +130,16 @@ properties:
     maximum: 65535
 
   expose_dashboard:
+    title: "是否公开 Dashboard 到公网"
     type: boolean
     description: |
       是否将 Dashboard 公开到公网
       - 部署完成后，将直接输出 Dashboard 的公网访问地址，用户可以直接访问和管理 OpenClaw。
     default: false
 
-  disable_device_auth:
-    type: boolean
-    description: |
-      是否禁用设备认证
-      - false（默认）：启用设备认证，只有通过认证的设备才能访问 OpenClaw Gateway，提供更高的安全性。
-      - true：禁用设备认证，任何设备都可以直接访问进 OpenClaw Gateway，适合对安全性要求不高且需要快速部署的场景。
-    default: false
-
 {% if vars.show_cost_period_month %}
   cost_period:
+    title: "购买时长（月）"
     type: integer
     description: "购买时长（月）"
     default: 1
@@ -147,6 +150,7 @@ properties:
 {% if vars.show_cost_period_year %}
   # 当前portal暂不支持年付
   cost_period:
+    title: "购买时长（年）"
     type: integer
     description: "购买时长（年）"
     default: 1
@@ -198,7 +202,6 @@ x-input-groups:
     inputs:
       - gateway_port
       - expose_dashboard
-      - disable_device_auth
 
 {% if vars.show_cost_period_month or vars.show_cost_period_year %}
   - name: "付费配置"
