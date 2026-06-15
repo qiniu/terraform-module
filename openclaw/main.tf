@@ -1,90 +1,26 @@
 # ============================================================================
-# OpenClaw Terraform Module - Main Resources
-# ============================================================================
-# 本模块在七牛云 LAS 上部署 OpenClaw 个人 AI 助手
-# 基于七牛云 LAS 社区镜像 OpenClaw，开箱即用
-# ============================================================================
-
-# ============================================================================
-# 随机后缀（用于资源命名唯一性）
-# ============================================================================
-
-resource "random_string" "suffix" {
-  length  = 6
-  upper   = false
-  lower   = true
-  special = false
-}
-
-# 生成 dashboard token
-resource "random_password" "dashboard_token" {
-  length  = 48
-  special = false
-  lower   = true
-  upper   = true
-  numeric = true
-}
-
-# ============================================================================
-# 数据源：查询 OpenClaw 社区镜像
-# ============================================================================
-
-data "qiniu_compute_images" "openclaw" {
-  type  = "CustomPublic"
-  state = "Available"
-}
-
-locals {
-  name_prefix = "${var.instance_name_prefix}-${random_string.suffix.result}"
-
-  # 筛选 OpenClaw 镜像，按创建时间降序排序后取最新的
-  openclaw_images = sort([
-    for img in data.qiniu_compute_images.openclaw.items :
-    "${img.created_at}|${img.id}" if startswith(img.name, var.image_name_prefix)
-  ])
-
-  selected_image_id = length(local.openclaw_images) > 0 ? split("|", local.openclaw_images[length(local.openclaw_images) - 1])[1] : null
-
-  # 默认情况下 Shared 模式至少需要转发 SSH 端口
-  shared_ports_1 = [22]
-  # expose_dashboard 时需要额外转发 Gateway 端口
-  shared_ports_2 = var.expose_dashboard ? distinct(concat(local.shared_ports_1, [var.gateway_port])) : local.shared_ports_1
-  # 再补充上用户自定义端口
-  shared_ports_3 = distinct(concat(local.shared_ports_2, tolist(var.extra_port_forwards)))
-  # 最终的 Shared 模式端口转发规则列表
-  shared_ports_final = local.shared_ports_3
-}
-
-# ============================================================================
 # 计算实例
 # ============================================================================
 
 resource "qiniu_compute_instance" "openclaw" {
-  name          = local.name_prefix
+  name          = local.instance_name
   instance_type = var.instance_type
   image_id      = local.selected_image_id
 
   system_disk_size = var.system_disk_size
   system_disk_type = var.system_disk_type
 
-  internet_max_bandwidth  = var.internet_max_bandwidth
-  internet_charge_type    = var.internet_charge_type
-  internet_public_ip_type = var.internet_public_ip_type
+  internet_max_bandwidth = var.internet_max_bandwidth
+  internet_charge_type   = var.internet_charge_type
+
+  internet_public_ip_type = "Shared" # OpenClaw 目前只支持标准网络实例
+  disable_public_ip       = true     # OpenClaw 目前只支持标准网络实例
 
   # 计费配置
   cost_charge_type          = var.cost_charge_type
   cost_period               = var.cost_period
   cost_period_unit          = var.cost_period_unit
   cost_discount_activity_id = var.cost_discount_activity_id
-
-  # 端口转发配置：
-  dynamic "port_forwards" {
-    # 仅 Shared 模式且有端口转发规则时配置 port_forwards，Dedicated 模式不使用 port_forwards 进行端口转发
-    for_each = var.internet_public_ip_type == "Shared" ? local.shared_ports_final : []
-    content {
-      internal_port = port_forwards.value
-    }
-  }
 
   # root 用户密码
   password = var.root_password
@@ -101,11 +37,10 @@ resource "qiniu_compute_instance" "openclaw" {
     qq_secret     = var.qq_secret
 
     # Dashboard token
-    dashboard_token = random_password.dashboard_token.result
+    dashboard_token = local.dashboard_token
 
     # Gateway 配置
-    gateway_port = var.gateway_port
-    gateway_bind = var.expose_dashboard ? "lan" : "loopback"
+    gateway_port = local.gateway_port
   }))
 
   description = "OpenClaw AI Assistant - Managed by Terraform"
@@ -118,7 +53,11 @@ resource "qiniu_compute_instance" "openclaw" {
 
   lifecycle {
     # 防止因配置变更导致实例被销毁重建
-    ignore_changes = [user_data, instance_type, system_disk_size]
+    ignore_changes = [
+      instance_type,
+      system_disk_type,
+      system_disk_size,
+    ]
 
     precondition {
       condition     = local.selected_image_id != null
@@ -127,12 +66,18 @@ resource "qiniu_compute_instance" "openclaw" {
   }
 }
 
-# Shared 模式下最后会从资源返回的 port_forwards 中查找外部端口映射
-locals {
-  ssh_port_forward = [
-    for pf in qiniu_compute_instance.openclaw.port_forwards : pf if pf.internal_port == 22
-  ]
-  gateway_port_forward = [
-    for pf in qiniu_compute_instance.openclaw.port_forwards : pf if pf.internal_port == var.gateway_port
-  ]
+# SSH 端口转发访问
+resource "qiniu_compute_instance_public_access" "ssh_port_forward" {
+  instance_id   = qiniu_compute_instance.openclaw.id
+  internal_port = 22
+  type          = "PortForward"
 }
+
+# Dashboard HTTP 访问
+resource "qiniu_compute_instance_public_access" "gateway_http_proxy" {
+  count         = var.expose_dashboard ? 1 : 0
+  instance_id   = qiniu_compute_instance.openclaw.id
+  internal_port = local.gateway_port
+  type          = "HTTPProxy"
+}
+
