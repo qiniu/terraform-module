@@ -12,12 +12,16 @@ resource "random_password" "dashboard_token" {
   numeric = true
 }
 
+output "dashboard_token" {
+  value = random_password.dashboard_token.result
+}
+
 locals {
   gateway_config_json = jsonencode({
     mode = "local"
     auth = {
       mode  = "token"
-      token = random_password.dashboard_token.result
+      token = nonsensitive(random_password.dashboard_token.result)
     }
     port = var.gateway_port
     bind = "lan"
@@ -31,10 +35,13 @@ locals {
 output "gateway_config_script" {
   value = <<-EOT
 #!/bin/bash
+set -euo pipefail
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
 }
+
+log "Configuring OpenClaw gateway..."
 
 GATEWAY_JSON=$(cat <<ENDJSON
 ${local.gateway_config_json}
@@ -67,5 +74,7 @@ done
 if [ $ELAPSED -ge 60 ]; then
     log "WARNING: Gateway did not start within 60 seconds."
 fi
+
+log "OpenClaw gateway configuration completed."
 EOT
 }

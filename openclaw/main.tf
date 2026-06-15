@@ -4,6 +4,7 @@
 
 resource "qiniu_compute_instance" "openclaw" {
   name          = local.instance_name
+  description   = "OpenClaw AI Assistant - Managed by Terraform"
   instance_type = var.instance_type
   image_id      = local.selected_image_id
 
@@ -24,26 +25,6 @@ resource "qiniu_compute_instance" "openclaw" {
 
   # root 用户密码
   password = var.root_password
-
-  # 初始化脚本 - 配置用户密码、生成配置文件并启动 Gateway
-  user_data = base64encode(templatefile("${path.module}/templates/init.sh.tpl", {
-    # openclaw 用户使用与 root 相同的密码
-    openclaw_password = var.root_password
-
-    # MaaS 配置（固定使用七牛 MaaS）
-    maas_api_key  = var.qiniu_maas_api_key
-    default_model = var.default_model
-    wx_secret     = var.wx_secret
-    qq_secret     = var.qq_secret
-
-    # Dashboard token
-    dashboard_token = local.dashboard_token
-
-    # Gateway 配置
-    gateway_port = local.gateway_port
-  }))
-
-  description = "OpenClaw AI Assistant - Managed by Terraform"
 
   timeouts {
     create = "30m"
@@ -71,6 +52,10 @@ resource "qiniu_compute_instance_public_access" "ssh_port_forward" {
   instance_id   = qiniu_compute_instance.openclaw.id
   internal_port = 22
   type          = "PortForward"
+}
+
+locals {
+  ssh_endpoint = split(":", qiniu_compute_instance_public_access.ssh_port_forward.endpoints[0].endpoint)
 }
 
 # Dashboard HTTP 访问

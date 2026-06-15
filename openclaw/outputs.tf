@@ -8,10 +8,6 @@ output "expired_at" {
   description = "实例过期时间（RFC3339 格式），仅预付费实例返回"
 }
 
-locals {
-  ssh_endpoint = split(":", qiniu_compute_instance_public_access.ssh_port_forward.endpoints[0].endpoint)
-}
-
 output "ssh_command" {
   value = join(" ", [
     "ssh",
@@ -23,7 +19,7 @@ output "ssh_command" {
 
 output "public_dashboard_url" {
   value = var.expose_dashboard ? (
-    "https://${qiniu_compute_instance_public_access.gateway_http_proxy[0].endpoint}?token=${local.dashboard_token}"
+    "https://${qiniu_compute_instance_public_access.gateway_http_proxy[0].endpoint}?token=${module.openclaw_scripts.dashboard_token}"
   ) : null
   sensitive   = true
   description = "公网 Dashboard 访问 URL（仅 expose_dashboard=true 时输出）"
@@ -44,7 +40,7 @@ output "internal_ssh_tunnel_command" {
 }
 
 output "internal_dashboard_url" {
-  value       = "http://127.0.0.1:${local.gateway_port}?token=${local.dashboard_token}"
+  value       = "http://127.0.0.1:${local.gateway_port}?token=${module.openclaw_scripts.dashboard_token}"
   description = "本地 Dashboard 访问 URL，需要先执行 internal_ssh_tunnel_command 命令建立隧道后才能访问"
   sensitive   = true
 }
