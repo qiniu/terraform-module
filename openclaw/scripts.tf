@@ -28,7 +28,7 @@ resource "terraform_data" "script_init" {
 
 resource "terraform_data" "script_model_config" {
   depends_on = [
-    script_init
+    terraform_data.script_init
   ]
 
   triggers_replace = {
@@ -53,7 +53,7 @@ resource "terraform_data" "script_model_config" {
 resource "terraform_data" "script_gateway_config" {
   depends_on = [
     # 这几个配置资源要串行执行，并发执行可能导致openclaw一些命令执行失败
-    script_model_config
+    terraform_data.script_model_config
   ]
 
   triggers_replace = {
