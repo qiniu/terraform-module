@@ -28,19 +28,19 @@ output "public_dashboard_url" {
 output "internal_ssh_tunnel_command" {
   value = join(" ", [
     "ssh",
-    "-p", local.ssh_endpoint[1],                                # 端口
-    "-N",                                                       # 只建立隧道，不进入shell执行命令
-    "-L ${local.gateway_port}:127.0.0.1:${local.gateway_port}", # 在本地端口上监听，转发流量到远程端口
-    "openclaw@${local.ssh_endpoint[0]}",                        # 主机
-    "-o StrictHostKeyChecking=no",                              # 不询问新主机的密钥
-    "-o UserKnownHostsFile=/dev/null",                          # 不记录到已知主机密钥
+    "-p", local.ssh_endpoint[1],                                                  # 端口
+    "-N",                                                                         # 只建立隧道，不进入shell执行命令
+    "-L ${local.internal_gateway_port}:127.0.0.1:${local.internal_gateway_port}", # 在本地端口上监听，转发流量到远程端口
+    "openclaw@${local.ssh_endpoint[0]}",                                          # 主机
+    "-o StrictHostKeyChecking=no",                                                # 不询问新主机的密钥
+    "-o UserKnownHostsFile=/dev/null",                                            # 不记录到已知主机密钥
   ])
   description = "基于 SSH 隧道转发命令用于访问 Dashboard"
   sensitive   = true
 }
 
 output "internal_dashboard_url" {
-  value       = "http://127.0.0.1:${local.gateway_port}?token=${module.openclaw_scripts.dashboard_token}"
+  value       = "http://127.0.0.1:${local.internal_gateway_port}?token=${module.openclaw_scripts.dashboard_token}"
   description = "本地 Dashboard 访问 URL，需要先执行 internal_ssh_tunnel_command 命令建立隧道后才能访问"
   sensitive   = true
 }

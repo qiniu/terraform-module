@@ -3,9 +3,9 @@ variable "qiniu_maas_api_key" {
   description = "Qiniu MAAS API Key"
 }
 
-
 # apply 时自动精简 models.json，只保留 model.tf 实际使用的字段。
 # 脚本自检：若 models.json 已是精简形态则跳过，避免反复重写导致 trigger hash 漂移。
+# models.json 来源于 https://portal.qiniu.com/ai-inference/model 模型广场的接口返回 JSON
 resource "terraform_data" "minify_models_json" {
   triggers_replace = {
     source_hash = filesha256("${path.module}/models.json")

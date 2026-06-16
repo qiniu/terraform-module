@@ -33,24 +33,9 @@ root_password = "YourSecurePassword123!"
 # 七牛 MaaS API Key（从 https://portal.qiniu.com/ai-inference/api-key 获取）
 qiniu_maas_api_key = "sk-your-qiniu-api-key"
 
-# 可选微信绑定串，格式：botid|token|savedAt|baseUrl|userId
-# wx_secret = "xxxxxx-im-bot|xxxxxx-im-bot@im.bot:0xxxx|2026-01-01T00:00:00.000Z|https://ilinkai.weixin.qq.com|xxxxxx@im.wechat"
-
-# 可选 QQ 机器人凭证，格式：AppID:AppSecret
-# qq_secret = "1903681131:bFtYDtZGxfN6...skcVO"
-
 # ============================================================================
 # 高级配置（可选）
 # ============================================================================
-
-# Gateway 端口
-# gateway_port = 18789
-
-# 实例名称前缀
-# instance_name_prefix = "openclaw"
-
-# 镜像名称前缀（用于筛选匹配的社区镜像）
-# image_name_prefix = "OpenClaw-v2026.5.18"
 
 # 是否将 Dashboard 暴露到公网
 # expose_dashboard = false

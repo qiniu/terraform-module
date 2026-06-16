@@ -2,6 +2,7 @@ module "openclaw_scripts" {
   source             = "./openclaw_scripts"
   openclaw_password  = var.root_password
   qiniu_maas_api_key = var.qiniu_maas_api_key
+  gateway_port       = local.internal_gateway_port
 }
 
 resource "terraform_data" "script_init" {
@@ -19,7 +20,7 @@ resource "terraform_data" "script_init" {
 
   provisioner "remote-exec" {
     inline = [
-      module.openclaw_scripts.init_script
+      nonsensitive(module.openclaw_scripts.init_script),
     ]
   }
 }
@@ -70,7 +71,7 @@ resource "terraform_data" "script_gateway_config" {
 
   provisioner "remote-exec" {
     inline = [
-      module.openclaw_scripts.gateway_config_script
+      nonsensitive(module.openclaw_scripts.gateway_config_script),
     ]
   }
 }

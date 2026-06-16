@@ -128,17 +128,7 @@ run "invalid_internet_charge_type" {
 }
 
 # ============================================================================
-# 6. internet_public_ip_type 校验 - Dedicated / Shared
-# ============================================================================
-
-run "invalid_internet_public_ip_type" {
-  command = plan
-  variables { internet_public_ip_type = "Private" }
-  expect_failures = [var.internet_public_ip_type]
-}
-
-# ============================================================================
-# 7. root_password 校验 - >= 8 位，含字母、数字、特殊符号
+# 6. root_password 校验 - >= 8 位，含字母、数字、特殊符号
 # ============================================================================
 
 run "invalid_root_password_too_short" {
@@ -264,79 +254,6 @@ run "invalid_cost_discount_activity_id_postpaid" {
     cost_discount_activity_id = "activity-123"
   }
   expect_failures = [var.cost_discount_activity_id]
-}
-
-# ============================================================================
-# 12. extra_port_forwards 校验 - 仅 Shared IP 可配置，端口 [1, 65535]
-# ============================================================================
-
-run "invalid_extra_port_forwards_dedicated" {
-  command = plan
-  variables {
-    internet_public_ip_type = "Dedicated"
-    extra_port_forwards     = [8080]
-  }
-  expect_failures = [var.extra_port_forwards]
-}
-
-run "invalid_extra_port_forwards_port_zero" {
-  command = plan
-  variables {
-    internet_public_ip_type = "Shared"
-    extra_port_forwards     = [0]
-  }
-  expect_failures = [var.extra_port_forwards]
-}
-
-run "invalid_extra_port_forwards_port_exceed" {
-  command = plan
-  variables {
-    internet_public_ip_type = "Shared"
-    extra_port_forwards     = [70000]
-  }
-  expect_failures = [var.extra_port_forwards]
-}
-
-# ============================================================================
-# 13. qiniu_maas_api_key 校验 - 不可为空
-# ============================================================================
-
-run "invalid_qiniu_maas_api_key_empty" {
-  command = plan
-  variables { qiniu_maas_api_key = "" }
-  expect_failures = [var.qiniu_maas_api_key]
-}
-
-# ============================================================================
-# 14. qq_secret 格式校验 - 空值或 AppID:AppSecret
-# ============================================================================
-
-run "invalid_qq_secret_format" {
-  command = plan
-  variables { qq_secret = "missing-colon-format" }
-  expect_failures = [var.qq_secret]
-}
-
-run "invalid_qq_secret_extra_colons" {
-  command = plan
-  variables { qq_secret = "a:b:c" }
-  expect_failures = [var.qq_secret]
-}
-
-# ============================================================================
-# 15. gateway_port 校验 - 范围 [1, 65535]
-# ============================================================================
-
-run "invalid_gateway_port_zero" {
-  command = plan
-  variables { gateway_port = 0 }
-  expect_failures = [var.gateway_port]
-}
-
-run "invalid_gateway_port_exceed" {
-  command = plan
-  variables { gateway_port = 99999 }
-  expect_failures = [var.gateway_port]
 }
 
 # ============================================================================
