@@ -44,7 +44,8 @@ locals {
     baseUrl = "https://api.qnaigc.com/v1"
     apiKey  = var.qiniu_maas_api_key
     api     = "openai-completions"
-    models  = slice(local.openclaw_models, 0, 10)
+    # 这里只取前20个最新模型，实测模型太多了 openclaw 设置页面会直接崩溃掉
+    models = slice(local.openclaw_models, 0, 20)
   })
 }
 
