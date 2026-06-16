@@ -25,7 +25,7 @@ fi
 
 # 2. 设置密码（幂等：统一执行 chpasswd，重复执行无害）
 # 注：chpasswd 重复设置相同密码也安全，如需严格判断密码一致再跳过可额外加固
-printf '%s:%s\n' "$OPENCLAW_USER" "${ var.openclaw_password }" | chpasswd
+printf '%s:%s\n' "$OPENCLAW_USER" "${ openclaw_password }" | chpasswd
 log "Password set for $OPENCLAW_USER"
 
 # 3. 开启 linger（幂等：已开启执行也无报错，加 || true 兜底）

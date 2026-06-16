@@ -51,25 +51,8 @@ locals {
 }
 
 output "model_config_script" {
-  value = <<-EOT
-#!/bin/bash
-set -euo pipefail
-
-log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
-}
-
-log "Configuring OpenClaw model..."
-
-PROVIDER_JSON=$(cat <<ENDJSON
-${local.provider_json}
-ENDJSON
-)
-
-openclaw config set models.mode merge
-openclaw config set "models.providers.qiniu" --strict-json "$PROVIDER_JSON"
-openclaw models set "qiniu/${var.default_model}"
-
-log "OpenClaw model configuration."
-EOT
+  value = templatefile("${path.module}/templates/model.sh.tmpl", {
+    provider_json = local.provider_json
+    default_model = var.default_model
+  })
 }

@@ -8,9 +8,11 @@ log() {
 log "Configuring OpenClaw gateway..."
 
 GATEWAY_JSON=$(cat <<ENDJSON
-${ var.gateway_config_json }
+${ gateway_config_json }
 ENDJSON
 )
+
+echo "GATEWAY_JSON: $GATEWAY_JSON"
 
 openclaw config set gateway --strict-json "$GATEWAY_JSON"
 
@@ -27,8 +29,8 @@ openclaw gateway restart || {
 # 4. 等待服务就绪
 ELAPSED=0
 while [ $ELAPSED -lt 60 ]; do
-    if ss -lntp | grep -q ":${ var.gateway_port }"; then
-        log "OpenClaw gateway is ready on port ${ var.gateway_port }."
+    if ss -lntp | grep -q ":${ gateway_port }"; then
+        log "OpenClaw gateway is ready on port ${ gateway_port }."
         break
     fi
     sleep 5

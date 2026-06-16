@@ -21,7 +21,7 @@ locals {
     mode = "local"
     auth = {
       mode  = "token"
-      token = nonsensitive(random_password.dashboard_token.result)
+      token = random_password.dashboard_token.result
     }
     port = var.gateway_port
     bind = "lan"
@@ -33,48 +33,8 @@ locals {
 }
 
 output "gateway_config_script" {
-  value = <<-EOT
-#!/bin/bash
-set -euo pipefail
-
-log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
-}
-
-log "Configuring OpenClaw gateway..."
-
-GATEWAY_JSON=$(cat <<ENDJSON
-${local.gateway_config_json}
-ENDJSON
-)
-
-openclaw config set gateway --strict-json "$GATEWAY_JSON"
-
-openclaw gateway install || {
-    log "WARNING: Failed to install openclaw gateway service."
-    exit 1
-}
-
-openclaw gateway restart || {
-    log "WARNING: Failed to restart openclaw gateway."
-    exit 1
-}
-
-# 4. 等待服务就绪
-ELAPSED=0
-while [ $ELAPSED -lt 60 ]; do
-    if ss -lntp | grep -q ":${var.gateway_port}"; then
-        log "OpenClaw gateway is ready on port ${var.gateway_port}."
-        break
-    fi
-    sleep 5
-    ELAPSED=$((ELAPSED + 5))
-done
-
-if [ $ELAPSED -ge 60 ]; then
-    log "WARNING: Gateway did not start within 60 seconds."
-fi
-
-log "OpenClaw gateway configuration completed."
-EOT
+  value = templatefile("${path.module}/templates/gateway.sh.tmpl", {
+    gateway_config_json = local.gateway_config_json
+    gateway_port        = var.gateway_port
+  })
 }

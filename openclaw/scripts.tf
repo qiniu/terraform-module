@@ -32,7 +32,7 @@ resource "terraform_data" "script_model_config" {
   ]
 
   triggers_replace = {
-    script_content_hash = sha256(module.openclaw_scripts.model_config_script)
+    script_content = module.openclaw_scripts.model_config_script
   }
 
   connection {
@@ -57,7 +57,7 @@ resource "terraform_data" "script_gateway_config" {
   ]
 
   triggers_replace = {
-    script_content_hash = sha256(module.openclaw_scripts.gateway_config_script)
+    script_content = module.openclaw_scripts.gateway_config_script
   }
 
   connection {

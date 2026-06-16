@@ -8,12 +8,12 @@ log() {
 log "Configuring OpenClaw model..."
 
 PROVIDER_JSON=$(cat <<ENDJSON
-${ var.provider_json }
+${ provider_json }
 ENDJSON
 )
 
 openclaw config set models.mode merge
 openclaw config set "models.providers.qiniu" --strict-json "$PROVIDER_JSON"
-openclaw models set "qiniu/${ var.default_model }"
+openclaw models set "qiniu/${ default_model }"
 
 log "OpenClaw model configuration."
