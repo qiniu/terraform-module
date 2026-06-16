@@ -2,7 +2,6 @@ module "openclaw_scripts" {
   source             = "./openclaw_scripts"
   openclaw_password  = var.root_password
   qiniu_maas_api_key = var.qiniu_maas_api_key
-  default_model      = var.default_model
 }
 
 resource "terraform_data" "script_init" {
@@ -45,7 +44,7 @@ resource "terraform_data" "script_model_config" {
 
   provisioner "remote-exec" {
     inline = [
-      module.openclaw_scripts.model_config_script
+      nonsensitive(module.openclaw_scripts.model_config_script),
     ]
   }
 }
@@ -58,6 +57,7 @@ resource "terraform_data" "script_gateway_config" {
 
   triggers_replace = {
     script_content = module.openclaw_scripts.gateway_config_script
+    version        = 1
   }
 
   connection {
