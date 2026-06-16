@@ -49,6 +49,7 @@ Read-Only:
 - `cpu` (Number) 主机核心数量
 - `created_at` (String) 实例创建时间，格式为RFC3339
 - `description` (String) 实例描述
+- `disable_public_ip` (Boolean) 是否禁用独立公网 IP。配置 public_access 时必须为 true。
 - `expired_at` (String) 实例过期时间，格式为RFC3339，仅在预付费实例时返回
 - `id` (String) 实例ID
 - `image_id` (String) 镜像ID
@@ -59,28 +60,20 @@ Read-Only:
 - `internet_public_ip_type` (String) 公网 IP 类型，取值范围：Dedicated（独立公网 IP）、Shared（共享公网 IP）
 - `memory` (Number) 主机内存大小，单位是GiB
 - `name` (String) 实例名称，指定实例的名称
+- `network_type` (String) 实例网络类型，取值为 Standard、VPC 或 Isolated
 - `placement_group_id` (String) 置放组ID，指定实例所属的置放组，如果不指定，则不加入任何置放组
-- `port_forwards` (Attributes Set) 端口转发列表，端口转发实例通过共享公网 IP 的特定端口映射到实例内部端口 (see [below for nested schema](#nestedatt--instances--port_forwards))
 - `private_ip_addresses` (Attributes List) (see [below for nested schema](#nestedatt--instances--private_ip_addresses))
+- `public_access` (Attributes List) 公网访问列表，支持 HTTPProxy 域名访问和 PortForward 端口转发 (see [below for nested schema](#nestedatt--instances--public_access))
 - `public_ip_addresses` (Attributes List) (see [below for nested schema](#nestedatt--instances--public_ip_addresses))
 - `region_id` (String) 实例所在的区域ID
 - `region_name` (String) 区域名称
+- `security_group_ids` (Set of String) 安全组 ID 集合
 - `state` (String) 实例状态
+- `subnet_id` (String) 实例所属子网 ID，VPC 网络时回填
 - `system_disk_id` (String) 系统盘ID
 - `system_disk_size` (Number) 系统盘大小，单位是GiB
 - `system_disk_type` (String) 系统盘类型，指定系统盘的存储类型
-
-<a id="nestedatt--instances--port_forwards"></a>
-### Nested Schema for `instances.port_forwards`
-
-Read-Only:
-
-- `external_port` (Number) 公网端口
-- `id` (String) 端口转发资源 ID
-- `internal_port` (Number) 实例内网端口
-- `public_ip` (String) 公网 IP
-- `state` (String) 端口转发状态
-
+- `vpc_id` (String) 实例所属 VPC ID，VPC 网络时回填
 
 <a id="nestedatt--instances--private_ip_addresses"></a>
 ### Nested Schema for `instances.private_ip_addresses`
@@ -88,6 +81,28 @@ Read-Only:
 Read-Only:
 
 - `ipv4` (String) 内网IPv4地址
+
+
+<a id="nestedatt--instances--public_access"></a>
+### Nested Schema for `instances.public_access`
+
+Read-Only:
+
+- `endpoint` (String) 公网访问端点。HTTPProxy 返回平台分配域名；PortForward 为空。
+- `endpoints` (Attributes List) PortForward 多线路公网访问端点列表；HTTPProxy 为空。 (see [below for nested schema](#nestedatt--instances--public_access--endpoints))
+- `internal_port` (Number) 实例内网端口
+- `public_access_id` (String) 公网访问资源 ID
+- `state` (String) 公网访问状态
+- `type` (String) 公网访问类型
+
+<a id="nestedatt--instances--public_access--endpoints"></a>
+### Nested Schema for `instances.public_access.endpoints`
+
+Read-Only:
+
+- `endpoint` (String) 公网访问端点，格式为 IP:Port
+- `isp` (String) 线路运营商
+
 
 
 <a id="nestedatt--instances--public_ip_addresses"></a>

@@ -31,18 +31,20 @@ description: |-
 - `cost_period` (Number) 预付费购买时长，仅在 cost_charge_type 为 PrePaid 时生效；未显式指定时默认值为 1
 - `cost_period_unit` (String) 预付费购买时长单位，仅在 cost_charge_type 为 PrePaid 时生效，支持 Month、Year；未显式指定时默认值为 Month
 - `description` (String) 实例描述
+- `disable_public_ip` (Boolean) 是否启用公网带宽但不分配独立公网 IP。未配置时由服务端推断：internet_public_ip_type 为 Shared 时为 true，否则为 false。
 - `hostname` (String) 主机名称，指定实例的主机名
 - `internet_charge_type` (String) 网络计费类型，取值范围：Bandwidth（按固定带宽计费）、PeakBandwidth（按峰值带宽计费）、Traffic（按流量计费）
-- `internet_max_bandwidth` (Number) 公网最大带宽，单位是Mbps，取值范围0-200，默认值为0，表示不分配公网IP
-- `internet_public_ip_type` (String) 公网 IP 类型，取值范围：Dedicated（独立公网 IP）、Shared（共享公网 IP）
+- `internet_max_bandwidth` (Number) 公网最大带宽，单位是Mbps，取值范围0-300，默认值为0，表示不分配公网IP
+- `internet_public_ip_type` (String) 公网 IP 类型，取值范围：Dedicated（独立公网 IP）、Shared（共享公网 IP）、Elastic（弹性公网 IP）。
 - `name` (String) 实例名称，指定实例的名称
 - `password` (String, Sensitive) 实例密码，如果未指定则随机生成。
 - `placement_group_id` (String) 置放组ID，指定实例所属的置放组，如果不指定，则不加入任何置放组
-- `port_forwards` (Block Set) 端口转发规则列表，仅当 internet_public_ip_type 为 Shared 且 internet_max_bandwidth 大于 0 时可配置；应用后会回填映射公网 IP、映射公网端口和状态 (see [below for nested schema](#nestedblock--port_forwards))
-- `state` (String) 实例状态
+- `security_group_ids` (Set of String) 安全组 ID 集合，实例一旦设置过安全组了，后续必须至少绑定一个安全组，不能是空安全组了
+- `state` (String) 实例状态，取值为 Running 或 Shutdown
+- `subnet_id` (String) 实例所属子网 ID。配置后实例将以 VPC 网络创建。
 - `system_disk_type` (String) 系统盘类型，指定系统盘的存储类型
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
-- `user_data` (String) 用户数据，指定实例的初始化脚本或配置
+- `user_data` (String, Sensitive) 用户数据，指定实例的初始化脚本或配置
 
 ### Read-Only
 
@@ -52,6 +54,7 @@ description: |-
 - `id` (String) 实例ID
 - `image_name` (String) 镜像名称
 - `memory` (Number) 主机内存大小，单位是GiB
+- `network_type` (String) 实例网络类型，取值为 Standard、VPC 或 Isolated
 - `order_id` (String) 实例创建订单 ID，仅在预付费实例时返回
 - `order_state` (String) 实例创建订单状态，仅在预付费实例时返回
 - `private_ip_addresses` (Attributes List) (see [below for nested schema](#nestedatt--private_ip_addresses))
@@ -59,21 +62,7 @@ description: |-
 - `region_id` (String) 实例所在的区域ID
 - `region_name` (String) 区域名称
 - `system_disk_id` (String) 系统盘ID
-
-<a id="nestedblock--port_forwards"></a>
-### Nested Schema for `port_forwards`
-
-Required:
-
-- `internal_port` (Number) 实例内网端口，取值范围 1-65535
-
-Read-Only:
-
-- `external_port` (Number) 公网端口
-- `id` (String) 端口转发资源 ID
-- `public_ip` (String) 公网 IP
-- `state` (String) 端口转发状态（Unallocated/Pending/Available/Deleting）
-
+- `vpc_id` (String) 实例所属 VPC ID，VPC 网络时回填
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
