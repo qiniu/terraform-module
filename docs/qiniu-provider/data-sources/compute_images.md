@@ -17,7 +17,7 @@ description: |-
 
 ### Required
 
-- `type` (String) 镜像类型过滤，Official、Custom、CustomPublic、CustomShared
+- `type` (String) 镜像类型过滤，Official、Application、Custom、CustomPublic、CustomShared
 
 ### Optional
 
