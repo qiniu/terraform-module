@@ -53,12 +53,13 @@ variable "system_disk_size" {
 variable "system_disk_type" {
   type        = string
   description = "系统盘类型"
-  default     = "cloud.ssd"
+  default     = "auto"
 
   validation {
-    # 系统盘类型必须是 local.ssd 或 cloud.ssd
-    condition     = contains(["local.ssd", "cloud.ssd"], var.system_disk_type)
-    error_message = "system_disk_type must be local.ssd or cloud.ssd."
+    # 系统盘类型必须是 auto、 local.ssd 或 cloud.ssd
+    # 当使用auto时，将按需优先使用 cloud.ssd，若 cloud.ssd 不存在，则使用 local.ssd
+    condition     = contains(["auto", "local.ssd", "cloud.ssd"], var.system_disk_type)
+    error_message = "system_disk_type must be auto, local.ssd or cloud.ssd. (default: auto)"
   }
 }
 

@@ -18,6 +18,20 @@ data "qiniu_compute_images" "openclaw" {
   state = "Available"
 }
 
+
+# 获取区域信息
+data "qiniu_compute_region" "current" {
+  id       = data.qiniu_compute_images.openclaw.region_id
+  language = "zh-CN"
+}
+
+locals {
+  # 当前区域是否支持 public_access_http_proxy
+  public_access_http_proxy_supported = data.qiniu_compute_region.current.region.features.public_access_http_proxy.supported
+  # 当前区域是否支持ebs云盘
+  ebs_supported = data.qiniu_compute_region.current.region.features.ebs.supported
+}
+
 locals {
   image_name_prefix = "OpenClaw-v2026.5.18"
   # 筛选 OpenClaw 应用镜像，按创建时间降序排序后取最新的
@@ -35,7 +49,9 @@ resource "qiniu_compute_instance" "openclaw" {
   image_id      = local.selected_image_id
 
   system_disk_size = var.system_disk_size
-  system_disk_type = var.system_disk_type
+  system_disk_type = var.system_disk_type == "auto" ? (
+    local.ebs_supported ? "cloud.ssd" : "local.ssd"
+  ) : var.system_disk_type
 
   internet_max_bandwidth = var.internet_max_bandwidth
   internet_charge_type   = var.internet_charge_type
@@ -82,16 +98,6 @@ resource "qiniu_compute_instance_public_access" "ssh_port_forward" {
 
 locals {
   ssh_endpoint = split(":", qiniu_compute_instance_public_access.ssh_port_forward.endpoints[0].endpoint)
-}
-
-# 获取区域信息
-data "qiniu_compute_region" "current" {
-  id       = qiniu_compute_instance.openclaw.region_id
-  language = "zh-CN"
-}
-
-locals {
-  public_access_http_proxy_supported = data.qiniu_compute_region.current.region.features.public_access_http_proxy.supported
 }
 
 # Dashboard HTTP/端口转发 访问
