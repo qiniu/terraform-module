@@ -214,15 +214,15 @@ variable "qiniu_maas_api_key" {
 # QQ 机器人配置
 # ============================================================================
 
-variable "qq_secret" {
+variable "channel_qq_token" {
   type        = string
   sensitive   = true
   default     = ""
   description = "可选的 QQ 机器人凭证，格式为 AppID:AppSecret；为空时跳过 QQ channel 初始化"
 
   validation {
-    condition     = var.qq_secret == "" || can(regex("^[^:]+:[^:]+$", var.qq_secret))
-    error_message = "qq_secret must be empty or in AppID:AppSecret format."
+    condition     = var.channel_qq_token == "" || can(regex("^[^:]+:[^:]+$", var.channel_qq_token))
+    error_message = "channel_qq_token must be empty or in AppID:AppSecret format."
   }
 }
 

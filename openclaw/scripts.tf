@@ -3,7 +3,7 @@ module "openclaw_scripts" {
   openclaw_password  = var.root_password
   qiniu_maas_api_key = var.qiniu_maas_api_key
   gateway_port       = local.internal_gateway_port
-  qq_secret          = var.qq_secret
+  channel_qq_token   = var.channel_qq_token
 }
 
 resource "terraform_data" "script_init" {
@@ -86,8 +86,8 @@ resource "terraform_data" "script_gateway_config" {
   }
 }
 
-resource "terraform_data" "script_qq_config" {
-  count = var.qq_secret != "" ? 1 : 0
+resource "terraform_data" "script_channel_qq_config" {
+  count = var.channel_qq_token != "" ? 1 : 0
 
   depends_on = [
     # 这几个配置资源要串行执行，并发执行可能导致openclaw一些命令执行失败
@@ -96,8 +96,8 @@ resource "terraform_data" "script_qq_config" {
 
   # destroy provisioner 只能引用 self，所以销毁所需信息（脚本 + ssh 连接参数）全部塞进 triggers_replace
   triggers_replace = {
-    apply_script   = module.openclaw_scripts.qq_apply_script
-    destroy_script = module.openclaw_scripts.qq_destroy_script
+    channel_qq_apply_script   = module.openclaw_scripts.channel_qq_apply_script
+    channel_qq_destroy_script = module.openclaw_scripts.channel_qq_destroy_script
     ssh_host       = local.ssh_endpoint[0]
     ssh_port       = local.ssh_endpoint[1]
     ssh_password   = var.root_password
@@ -113,7 +113,7 @@ resource "terraform_data" "script_qq_config" {
 
   provisioner "remote-exec" {
     inline = [
-      nonsensitive(self.triggers_replace.apply_script),
+      nonsensitive(self.triggers_replace.channel_qq_apply_script),
     ]
   }
 
@@ -123,7 +123,7 @@ resource "terraform_data" "script_qq_config" {
     when       = destroy
     on_failure = continue
     inline = [
-      nonsensitive(self.triggers_replace.destroy_script),
+      nonsensitive(self.triggers_replace.channel_qq_destroy_script),
     ]
   }
 }
