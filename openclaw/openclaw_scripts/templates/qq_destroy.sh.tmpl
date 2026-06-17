@@ -1,0 +1,13 @@
+#!/bin/bash
+set -euo pipefail
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
+}
+
+log "Removing OpenClaw QQ bot channel..."
+
+# 非交互式移除配置项；幂等：不存在也会成功
+openclaw channels remove --channel qqbot --delete 2>/dev/null || true
+
+log "OpenClaw QQ bot channel removed."

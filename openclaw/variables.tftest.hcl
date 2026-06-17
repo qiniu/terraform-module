@@ -8,6 +8,11 @@
 # - 使用 mock_provider 跳过 qiniu provider 凭证验证，Provider 配置阶段不再失败。
 # - Terraform 执行顺序：变量校验 → data source → precondition，因此变量校验
 #   失败后不会走到 precondition，无需真实数据源。
+#   例外：当被测变量的无效值类型本身合法（例如 qq_secret = "missing-colon-format"
+#   仍是合法 string，只是不通过 regex 校验）时，plan 会继续往下走，触发
+#   precondition "未找到镜像" 错误，与变量校验错误一起被收集；而 expect_failures
+#   只能列变量，precondition 无法列出，导致测试误判失败。因此 qq_secret 的格式
+#   校验不在本文件覆盖，改为依赖手动 plan / 集成测试验证。
 # - 本测试文件仅覆盖变量校验失败（expect_failures）场景。校验通过的合法输入
 #   场景会因 mock 空数据源触发 precondition "未找到镜像" 而失败，需在具备
 #   真实 qiniu 凭证的集成测试环境中运行。

@@ -1,0 +1,23 @@
+#!/bin/bash
+set -euo pipefail
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
+}
+
+log "Configuring OpenClaw QQ bot channel..."
+
+# AppID:AppSecret
+QQ_SECRET=$(cat <<'EOF_OPENCLAW_QQ'
+${ qq_secret }
+EOF_OPENCLAW_QQ
+)
+
+# 先清掉旧配置（幂等：不存在时 --delete 也会成功；非交互模式）
+# 文档：channels remove 默认仅禁用，加 --delete 才会无交互地移除配置项
+openclaw channels remove --channel qqbot --delete 2>/dev/null || true
+
+# 再 add（强制覆盖语义，避免 add 同账号时返回已存在错误）
+openclaw channels add --channel qqbot --token "$${QQ_SECRET}"
+
+log "OpenClaw QQ bot channel configured."
