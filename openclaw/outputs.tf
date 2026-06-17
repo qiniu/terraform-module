@@ -19,7 +19,9 @@ output "ssh_command" {
 
 output "public_dashboard_url" {
   value = var.expose_dashboard ? (
-    "https://${qiniu_compute_instance_public_access.gateway_http_proxy[0].endpoint}?token=${module.openclaw_scripts.dashboard_token}"
+    local.public_access_http_proxy_supported ?
+    "https://${qiniu_compute_instance_public_access.gateway[0].endpoint}?token=${module.openclaw_scripts.dashboard_token}" :
+    "http://${qiniu_compute_instance_public_access.gateway[0].endpoints[0].endpoint}?token=${module.openclaw_scripts.dashboard_token}"
   ) : null
   sensitive   = true
   description = "公网 Dashboard 访问 URL（仅 expose_dashboard=true 时输出）"

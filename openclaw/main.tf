@@ -84,11 +84,20 @@ locals {
   ssh_endpoint = split(":", qiniu_compute_instance_public_access.ssh_port_forward.endpoints[0].endpoint)
 }
 
-# Dashboard HTTP 访问
-resource "qiniu_compute_instance_public_access" "gateway_http_proxy" {
+# 获取区域信息
+data "qiniu_compute_region" "current" {
+  id       = qiniu_compute_instance.openclaw.region_id
+  language = "zh-CN"
+}
+
+locals {
+  public_access_http_proxy_supported = data.qiniu_compute_region.current.region.features.public_access_http_proxy.supported
+}
+
+# Dashboard HTTP/端口转发 访问
+resource "qiniu_compute_instance_public_access" "gateway" {
   count         = var.expose_dashboard ? 1 : 0
   instance_id   = qiniu_compute_instance.openclaw.id
   internal_port = local.internal_gateway_port
-  type          = "HTTPProxy"
+  type          = local.public_access_http_proxy_supported ? "HTTPProxy" : "PortForward"
 }
-
