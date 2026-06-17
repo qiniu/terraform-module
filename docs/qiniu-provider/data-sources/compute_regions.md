@@ -3,12 +3,12 @@
 page_title: "qiniu_compute_regions Data Source - qiniu"
 subcategory: ""
 description: |-
-  用于查询 Qiniu LAS 区域列表的数据源
+  用于查询 Qiniu LAS 区域列表的数据源，仅返回区域元数据；如需查询某区域能力详情请使用 qiniu_compute_region 数据源
 ---
 
 # qiniu_compute_regions (Data Source)
 
-用于查询 Qiniu LAS 区域列表的数据源
+用于查询 Qiniu LAS 区域列表的数据源，仅返回区域元数据；如需查询某区域能力详情请使用 qiniu_compute_region 数据源
 
 
 
@@ -18,7 +18,6 @@ description: |-
 ### Optional
 
 - `language` (String) 返回区域名称的语言，默认为 zh-CN
-- `resource` (String) 资源类型过滤字段，仅支持 cpu 或 gpu
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
@@ -41,29 +40,3 @@ Read-Only:
 - `id` (String) 区域 ID
 - `is_china_mainland` (Boolean) 是否为中国大陆区域
 - `name` (String) 区域名称
-- `resource` (Attributes) (see [below for nested schema](#nestedatt--regions--resource))
-
-<a id="nestedatt--regions--resource"></a>
-### Nested Schema for `regions.resource`
-
-Read-Only:
-
-- `cpu` (Attributes) (see [below for nested schema](#nestedatt--regions--resource--cpu))
-- `gpu` (Attributes) (see [below for nested schema](#nestedatt--regions--resource--gpu))
-
-<a id="nestedatt--regions--resource--cpu"></a>
-### Nested Schema for `regions.resource.cpu`
-
-Read-Only:
-
-- `state` (String) CPU 资源状态
-- `support` (Boolean) 是否支持 CPU 资源
-
-
-<a id="nestedatt--regions--resource--gpu"></a>
-### Nested Schema for `regions.resource.gpu`
-
-Read-Only:
-
-- `state` (String) GPU 资源状态
-- `support` (Boolean) 是否支持 GPU 资源
