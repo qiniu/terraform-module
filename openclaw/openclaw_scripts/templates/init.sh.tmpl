@@ -1,0 +1,45 @@
+#!/bin/bash
+set -euo pipefail
+
+OPENCLAW_USER="openclaw"
+COMPLETE_FLAG="/var/log/openclaw-init-complete"
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
+}
+
+# 已完成初始化则直接退出
+if [[ -f "$COMPLETE_FLAG" ]]; then
+    log "OpenClaw init already done, skip all steps."
+    exit 0
+fi
+
+# 1. 创建用户（幂等：存在则跳过）
+if ! id -u "$OPENCLAW_USER" &>/dev/null; then
+    useradd -m -s /bin/bash "$OPENCLAW_USER"
+    usermod -aG sudo "$OPENCLAW_USER"
+    log "Created user: $OPENCLAW_USER"
+else
+    log "User $OPENCLAW_USER already exists, skip create."
+fi
+
+# 2. 设置密码（幂等：统一执行 chpasswd，重复执行无害）
+# 注：chpasswd 重复设置相同密码也安全，如需严格判断密码一致再跳过可额外加固
+printf '%s:%s\n' "$OPENCLAW_USER" "${ openclaw_password }" | chpasswd
+log "Password set for $OPENCLAW_USER"
+
+# 3. 开启 linger（幂等：已开启执行也无报错，加 || true 兜底）
+if ! loginctl show-user "$OPENCLAW_USER" | grep -q "Linger=yes"; then
+    loginctl enable-linger "$OPENCLAW_USER"
+    log "Enabled linger for $OPENCLAW_USER"
+else
+    log "Linger already enabled, skip."
+fi
+
+# 4. 标记初始化完成（幂等：存在则不重复 touch）
+if [[ ! -f "$COMPLETE_FLAG" ]]; then
+    touch "$COMPLETE_FLAG"
+    log "Created init complete flag file."
+fi
+
+log "OpenClaw initialization completed."
