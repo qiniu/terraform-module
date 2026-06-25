@@ -28,7 +28,25 @@ fi
 printf '%s:%s\n' "$OPENCLAW_USER" "${ openclaw_password }" | chpasswd
 log "Password set for $OPENCLAW_USER"
 
-# 3. 开启 linger（幂等：已开启执行也无报错，加 || true 兜底）
+# 3. 注入 SSH 公钥（幂等：公钥已存在则跳过写入）
+OPENCLAW_HOME="$(getent passwd "$OPENCLAW_USER" | cut -d: -f6)"
+SSH_DIR="$OPENCLAW_HOME/.ssh"
+AUTH_KEYS="$SSH_DIR/authorized_keys"
+OPENCLAW_PUBKEY="${ openclaw_public_key }"
+
+install -d -m 700 -o "$OPENCLAW_USER" -g "$OPENCLAW_USER" "$SSH_DIR"
+touch "$AUTH_KEYS"
+chmod 600 "$AUTH_KEYS"
+chown "$OPENCLAW_USER":"$OPENCLAW_USER" "$AUTH_KEYS"
+
+if grep -qF "$OPENCLAW_PUBKEY" "$AUTH_KEYS" 2>/dev/null; then
+    log "SSH public key already present, skip."
+else
+    printf '%s\n' "$OPENCLAW_PUBKEY" >> "$AUTH_KEYS"
+    log "SSH public key injected for $OPENCLAW_USER"
+fi
+
+# 4. 开启 linger（幂等：已开启执行也无报错，加 || true 兜底）
 if ! loginctl show-user "$OPENCLAW_USER" | grep -q "Linger=yes"; then
     loginctl enable-linger "$OPENCLAW_USER"
     log "Enabled linger for $OPENCLAW_USER"
@@ -36,7 +54,7 @@ else
     log "Linger already enabled, skip."
 fi
 
-# 4. 标记初始化完成（幂等：存在则不重复 touch）
+# 5. 标记初始化完成（幂等：存在则不重复 touch）
 if [[ ! -f "$COMPLETE_FLAG" ]]; then
     touch "$COMPLETE_FLAG"
     log "Created init complete flag file."
