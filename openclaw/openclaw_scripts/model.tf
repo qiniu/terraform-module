@@ -56,8 +56,8 @@ locals {
 
 # 将精简后的 JSON 写回 models.json。content 与磁盘内容一致时 local_file 不会重写，
 # 因此即便 file() 在 plan 阶段读到的是已精简版本，也不会产生循环写入。
-resource "local_file" "minify_models_json" {
-  content = jsonencode({
+locals {
+  minified_models_json = jsonencode({
     data = [
       for m in local.sorted_models : {
         id           = m.id
@@ -74,7 +74,15 @@ resource "local_file" "minify_models_json" {
       }
     ]
   })
-  filename = "${path.module}/models.json"
+}
+
+resource "terraform_data" "write_back_minified_models_json" {
+  triggers_replace = {
+    script = "echo '${local.minified_models_json}' > ${path.module}/models.json"
+  }
+  provisioner "local-exec" {
+    command = self.triggers_replace.script
+  }
 }
 
 output "model_config_script" {
