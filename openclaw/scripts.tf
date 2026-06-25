@@ -24,6 +24,8 @@ resource "terraform_data" "script_model_config" {
 
   provisioner "remote-exec" {
     inline = [
+      # user_data 异步执行，等待初始化脚本完成后再执行后续配置
+      "for i in $(seq 1 120); do [ -f /var/log/openclaw-init-complete ] && break; echo 'Waiting for OpenClaw initialization to complete...'; sleep 5; done; [ -f /var/log/openclaw-init-complete ] || { echo 'OpenClaw init not completed within 10 minutes'; exit 1; }",
       nonsensitive(self.triggers_replace.script_content),
     ]
   }
