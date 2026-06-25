@@ -6,7 +6,34 @@ module "openclaw_scripts" {
   channel_qq_token   = var.channel_qq_token
 }
 
+resource "terraform_data" "wait_init_done" {
+  triggers_replace = {
+    script_content = "for i in $(seq 1 120); do [ -f /var/log/openclaw-init-complete ] && break; echo 'Waiting for OpenClaw initialization to complete...'; sleep 5; done; [ -f /var/log/openclaw-init-complete ] || { echo 'OpenClaw init not completed within 10 minutes'; exit 1; }"
+    ssh_host       = local.ssh_endpoint[0]
+    ssh_port       = local.ssh_endpoint[1]
+    private_key    = module.openclaw_scripts.openclaw_private_key
+  }
+
+  connection {
+    type        = "ssh"
+    host        = self.triggers_replace.ssh_host
+    user        = "openclaw"
+    port        = self.triggers_replace.ssh_port
+    private_key = self.triggers_replace.private_key
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      self.triggers_replace.script_content,
+    ]
+  }
+}
+
 resource "terraform_data" "script_model_config" {
+  depends_on = [
+    terraform_data.wait_init_done
+  ]
+
   triggers_replace = {
     script_content = module.openclaw_scripts.model_config_script
     ssh_host       = local.ssh_endpoint[0]
@@ -24,8 +51,6 @@ resource "terraform_data" "script_model_config" {
 
   provisioner "remote-exec" {
     inline = [
-      # user_data 异步执行，等待初始化脚本完成后再执行后续配置
-      "for i in $(seq 1 120); do [ -f /var/log/openclaw-init-complete ] && break; echo 'Waiting for OpenClaw initialization to complete...'; sleep 5; done; [ -f /var/log/openclaw-init-complete ] || { echo 'OpenClaw init not completed within 10 minutes'; exit 1; }",
       nonsensitive(self.triggers_replace.script_content),
     ]
   }
