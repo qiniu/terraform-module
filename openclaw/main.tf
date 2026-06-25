@@ -65,6 +65,9 @@ resource "qiniu_compute_instance" "openclaw" {
   # root 用户密码
   password = var.root_password
 
+  # 初始化系统与配置 OpenClaw 用户
+  user_data = base64encode(module.openclaw_scripts.init_script)
+
   timeouts {
     create = "30m"
     update = "20m"
