@@ -20,10 +20,7 @@ data "qiniu_compute_images" "openclaw" {
 
 
 # 获取区域信息
-data "qiniu_compute_region" "current" {
-  id       = data.qiniu_compute_images.openclaw.region_id
-  language = "zh-CN"
-}
+data "qiniu_compute_region" "current" {}
 
 locals {
   # 当前区域是否支持 public_access_http_proxy
