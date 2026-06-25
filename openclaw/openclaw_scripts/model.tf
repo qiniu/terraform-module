@@ -3,23 +3,28 @@ variable "qiniu_maas_api_key" {
   description = "Qiniu MAAS API Key"
 }
 
-# apply 时自动精简 models.json，只保留 model.tf 实际使用的字段。
-# 脚本自检：若 models.json 已是精简形态则跳过，避免反复重写导致 trigger hash 漂移。
 # models.json 来源于 https://portal.qiniu.com/ai-inference/model 模型广场的接口返回 JSON
-resource "terraform_data" "minify_models_json" {
-  triggers_replace = {
-    source_hash = filesha256("${path.module}/models.json")
-  }
-
-  provisioner "local-exec" {
-    command = "python3 ${path.module}/scripts/minify_models.py ${path.module}/models.json"
-  }
-
-  input = jsondecode(file("${path.module}/models.json"))
-}
-
-
+# apply 时自动精简 models.json（按 created_time 倒序、只保留必要字段）并写回原文件。
+# 全程在 Terraform 内完成，不依赖任何外部脚本（如 python）。
+# 精简逻辑幂等：已精简的 models.json 再精简结果不变，local_file 不会反复重写。
 locals {
+  raw_models = jsondecode(file("${path.module}/models.json"))
+
+  # 以 id 建立索引，便于排序后按 id 找回完整对象
+  model_by_id = {
+    for m in local.raw_models.data : m.id => m
+  }
+
+  # 按 created_time 倒序排序（ISO 8601 字典序 = 时间序），
+  # created_time 为 null 时 coalesce 兜底为空串，排到末尾。
+  sorted_ids = [
+    for key in reverse(sort([
+      for m in local.raw_models.data : "${coalesce(m.created_time, "")}\t${m.id}"
+    ])) : split("\t", key)[1]
+  ]
+
+  sorted_models = [for id in local.sorted_ids : local.model_by_id[id]]
+
   # 构造 openclaw 兼容的 models 数组
   # 字段映射：id/name <-> models.json 原值；
   #   input      <- architecture.input_modalities
@@ -27,7 +32,7 @@ locals {
   #   contextWindow <- model_constraints.context_length（>0 时输出）
   #   maxTokens     <- model_constraints.max_tokens（>0 时输出）
   openclaw_models = [
-    for m in terraform_data.minify_models_json.input.data : merge(
+    for m in local.sorted_models : merge(
       {
         id        = m.id
         name      = m.name
@@ -47,6 +52,29 @@ locals {
     # 这里只取前20个最新模型，实测模型太多了 openclaw 设置页面会直接崩溃掉
     models = slice(local.openclaw_models, 0, 20)
   })
+}
+
+# 将精简后的 JSON 写回 models.json。content 与磁盘内容一致时 local_file 不会重写，
+# 因此即便 file() 在 plan 阶段读到的是已精简版本，也不会产生循环写入。
+resource "local_file" "minify_models_json" {
+  content = jsonencode({
+    data = [
+      for m in local.sorted_models : {
+        id           = m.id
+        name         = m.name
+        created_time = m.created_time
+        architecture = {
+          input_modalities = m.architecture.input_modalities
+          reasoning        = { supported = m.architecture.reasoning.supported }
+        }
+        model_constraints = {
+          context_length = m.model_constraints.context_length
+          max_tokens     = m.model_constraints.max_tokens
+        }
+      }
+    ]
+  })
+  filename = "${path.module}/models.json"
 }
 
 output "model_config_script" {
