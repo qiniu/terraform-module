@@ -32,9 +32,13 @@ locals {
   })
 }
 
-output "gateway_config_script" {
-  value = templatefile("${path.module}/templates/gateway.sh.tmpl", {
+locals {
+  gateway_config_script = templatefile("${path.module}/templates/gateway.sh.tmpl", {
     gateway_config_json = local.gateway_config_json
     gateway_port        = var.gateway_port
   })
+}
+
+output "gateway_config_script" {
+  value = local.gateway_config_script
 }
