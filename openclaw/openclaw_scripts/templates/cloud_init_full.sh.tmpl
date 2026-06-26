@@ -1,0 +1,49 @@
+#!/bin/bash
+set -euo pipefail
+
+# ============================================================================
+# OpenClaw 全量初始化脚本（cloud_init_only=true 时作为 user_data 注入）
+# 由 init（root 执行）+ model/gateway/channel_qq（openclaw 用户执行）拼接而成，
+# 等价于 SSH 模式下 wait_init_done → model → gateway → channel_qq 的串行流程。
+#
+# 重要：七牛 LAS 平台会把 user_data 用 "base64 -d | bash -s --" 管道方式执行，
+# 因此脚本本身不能再依赖 heredoc 重定向 stdin（会与外层 stdin 管道冲突，导致
+# "cannot execute binary file"）。各子脚本统一用 base64 编码后写临时文件、
+# 再以文件参数执行，彻底避开 stdin 争用。
+# ============================================================================
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
+}
+
+# 渲染一段子脚本到临时文件并执行。
+#   $1 name   临时文件名标识
+#   $2 b64    子脚本的 base64
+#   $3 user   为空则以 root 执行；否则用 runuser -l <user> -c 切换身份。
+# 注意：必须用 "runuser -l <user> -c 'bash 文件'" 而非 "runuser -l <user> -- bash"，
+# 后者会把 bash 二进制当脚本 source，导致 "cannot execute binary file"。
+run_stage() {
+    local name="$1" b64="$2" user="$${3:-}"
+    local script="/tmp/openclaw-$name.sh"
+    printf '%s' "$b64" | base64 -d > "$script"
+    if [ -n "$user" ]; then
+        runuser -l "$user" -c "bash $script"
+    else
+        bash "$script"
+    fi
+    rm -f "$script"
+}
+
+# init 段以 root 执行；用文件方式而非 inline，隔离 init 脚本里"已完成则 exit 0"的早退逻辑。
+run_stage init '${init_script_b64}'
+log "OpenClaw init stage completed."
+
+# 配置段以 openclaw 用户串行执行（model → gateway → channel_qq），
+# 与 SSH 模式（user="openclaw"）身份一致；串行避免 openclaw 命令并发失败。
+run_stage model   '${model_script_b64}'   openclaw
+run_stage gateway '${gateway_script_b64}' openclaw
+%{ if channel_qq_enabled }
+run_stage channel-qq '${channel_qq_script_b64}' openclaw
+%{ endif }
+
+log "OpenClaw cloud-init full setup completed."

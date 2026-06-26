@@ -236,3 +236,13 @@ variable "expose_dashboard" {
   default     = false
 }
 
+# ============================================================================
+# 部署模式配置
+# ============================================================================
+
+variable "cloud_init_only" {
+  type        = bool
+  description = "是否仅通过 cloud-init 一次性注入全量配置脚本（true: 跳过所有 SSH remote-exec 动态执行，适用于 Terraform 执行端无法直连虚拟机 SSH 的网络环境；false: 走 SSH remote-exec 动态配置，支持后续分步变更）。注意：true 模式下配置在实例首次启动时一次性写入，后续修改变量需重建实例；channel_qq 的销毁清理（依赖 SSH）在 true 模式下不可用。"
+  default     = false
+}
+

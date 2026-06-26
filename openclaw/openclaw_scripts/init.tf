@@ -6,11 +6,15 @@ resource "tls_private_key" "keypair" {
   algorithm = "ED25519"
 }
 
-output "init_script" {
-  value = templatefile("${path.module}/templates/init.sh.tmpl", {
+locals {
+  init_script = templatefile("${path.module}/templates/init.sh.tmpl", {
     openclaw_password   = var.openclaw_password
     openclaw_public_key = chomp(tls_private_key.keypair.public_key_openssh)
   })
+}
+
+output "init_script" {
+  value = local.init_script
 }
 
 output "openclaw_private_key" {
