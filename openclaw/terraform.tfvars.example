@@ -42,3 +42,8 @@ qiniu_maas_api_key = "sk-your-qiniu-api-key"
 
 # 是否将 Dashboard 暴露到公网
 # expose_dashboard = false
+
+# 部署模式：无法直连虚拟机 SSH 的网络环境下设为 true，
+# 全量配置脚本将通过 cloud-init 一次性注入，跳过 SSH remote-exec 动态执行。
+# 默认 false 走 SSH 动态配置，支持后续分步变更。
+# cloud_init_only = false
