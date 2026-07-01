@@ -53,8 +53,8 @@ resource "qiniu_compute_instance" "openclaw" {
   internet_max_bandwidth = var.internet_max_bandwidth
   internet_charge_type   = var.internet_charge_type
 
-  internet_public_ip_type = "Shared" # OpenClaw 目前只支持标准网络实例
-  disable_public_ip       = true     # OpenClaw 目前只支持标准网络实例
+  internet_public_ip_type = var.internet_public_ip_type
+  disable_public_ip       = true # OpenClaw 目前只支持标准网络实例
 
   # 计费配置
   cost_charge_type          = var.cost_charge_type

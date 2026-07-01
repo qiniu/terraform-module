@@ -246,3 +246,12 @@ variable "cloud_init_only" {
   default     = false
 }
 
+variable "internet_public_ip_type" {
+  type    = string
+  default = null
+
+  validation {
+    condition     = var.internet_public_ip_type == null || contains(["Shared", "Dedicated"], var.internet_public_ip_type)
+    error_message = "internet_public_ip_type must be Shared or Dedicated."
+  }
+}
