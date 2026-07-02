@@ -15,7 +15,21 @@ resource "qiniu_compute_instance_exec" "init" {
   private_key = qiniu_compute_key_pair.openclaw.private_key
 
   shell   = "bash"
-  command = "for i in $(seq 1 120); do [ -f /var/log/openclaw-init-complete ] && break; echo 'Waiting for OpenClaw initialization to complete...'; sleep 5; done; [ -f /var/log/openclaw-init-complete ] || { echo 'OpenClaw init not completed within 10 minutes'; exit 1; }"
+  command = <<-EOT
+      for i in $(seq 1 120); do
+        if [ -f /var/log/openclaw-init-complete ]; then
+          break
+        fi
+
+        echo 'Waiting for OpenClaw initialization to complete...'
+        sleep 5
+      done
+
+      if [ ! -f /var/log/openclaw-init-complete ]; then
+        echo 'OpenClaw init not completed within 10 minutes'
+        exit 1
+      fi
+    EOT
 }
 
 resource "qiniu_compute_instance_exec" "script_model_config" {
