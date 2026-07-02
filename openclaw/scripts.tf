@@ -59,4 +59,6 @@ resource "qiniu_compute_instance_exec" "script_channel_qq_config" {
   shell           = "bash"
   command         = module.openclaw_scripts.channel_qq_apply_script
   destroy_command = module.openclaw_scripts.channel_qq_destroy_script
+
+  continue_on_destroy_failure = false // 销毁失败时，直接报错停下来
 }
