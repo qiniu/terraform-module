@@ -1,10 +1,9 @@
 module "openclaw_scripts" {
-  source              = "./openclaw_scripts"
-  openclaw_password   = var.openclaw_user_password
-  openclaw_public_key = qiniu_compute_key_pair.openclaw.public_key
-  qiniu_maas_api_key  = var.qiniu_maas_api_key
-  gateway_port        = local.internal_gateway_port
-  channel_qq_token    = var.channel_qq_token
+  source             = "./openclaw_scripts"
+  openclaw_password  = var.password
+  qiniu_maas_api_key = var.qiniu_maas_api_key
+  gateway_port       = local.internal_gateway_port
+  channel_qq_token   = var.channel_qq_token
 }
 
 
@@ -12,7 +11,7 @@ resource "qiniu_compute_instance_exec" "init" {
   instance_id = qiniu_compute_instance.openclaw.id
   user        = "openclaw"
   port        = "22"
-  private_key = qiniu_compute_key_pair.openclaw.private_key
+  private_key = module.openclaw_scripts.openclaw_private_key
 
   shell   = "bash"
   command = <<-EOT
@@ -36,7 +35,7 @@ resource "qiniu_compute_instance_exec" "script_model_config" {
   instance_id = qiniu_compute_instance.openclaw.id
   user        = "openclaw"
   port        = "22"
-  private_key = qiniu_compute_key_pair.openclaw.private_key
+  private_key = module.openclaw_scripts.openclaw_private_key
 
   shell   = "bash"
   command = module.openclaw_scripts.model_config_script
@@ -51,7 +50,7 @@ resource "qiniu_compute_instance_exec" "script_gateway_config" {
   instance_id = qiniu_compute_instance.openclaw.id
   user        = "openclaw"
   port        = "22"
-  private_key = qiniu_compute_key_pair.openclaw.private_key
+  private_key = module.openclaw_scripts.openclaw_private_key
 
   shell   = "bash"
   command = module.openclaw_scripts.gateway_config_script
@@ -68,7 +67,7 @@ resource "qiniu_compute_instance_exec" "script_channel_qq_config" {
   instance_id = qiniu_compute_instance.openclaw.id
   user        = "openclaw"
   port        = "22"
-  private_key = qiniu_compute_key_pair.openclaw.private_key
+  private_key = module.openclaw_scripts.openclaw_private_key
 
   shell           = "bash"
   command         = module.openclaw_scripts.channel_qq_apply_script

@@ -96,21 +96,21 @@ variable "internet_charge_type" {
   }
 }
 
-variable "openclaw_user_password" {
+variable "password" {
   type        = string
   sensitive   = true
-  description = "实例 OpenClaw 用户密码（要求：不少于 8 位，必须同时包含字母、数字和特殊符号。"
+  description = "实例 root 用户和 openclaw 用户的密码（要求：不少于 8 位，必须同时包含字母、数字和特殊符号）。"
 
   validation {
     condition = (
       # 必须不少于 8 位
-      length(var.openclaw_user_password) >= 8 &&
+      length(var.password) >= 8 &&
       # 必须包含字母（大写或小写）
-      can(regex("[A-Za-z]", var.openclaw_user_password)) &&
+      can(regex("[A-Za-z]", var.password)) &&
       # 必须包含数字
-      can(regex("[0-9]", var.openclaw_user_password)) &&
+      can(regex("[0-9]", var.password)) &&
       # 必须包含特殊符号
-      can(regex("[^A-Za-z0-9]", var.openclaw_user_password))
+      can(regex("[^A-Za-z0-9]", var.password))
     )
     error_message = "密码不符合要求：必须不少于 8 位，且同时包含字母、数字和特殊符号。"
   }
