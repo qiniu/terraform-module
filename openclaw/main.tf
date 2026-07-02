@@ -9,6 +9,7 @@ resource "random_string" "suffix" {
 locals {
   # 实例名称
   instance_name         = "openclaw-${random_string.suffix.result}"
+  keypair_name          = "openclaw-${random_string.suffix.result}"
   internal_gateway_port = 18789
 }
 
@@ -39,6 +40,11 @@ locals {
   selected_image_id = length(local.openclaw_images) > 0 ? split("|", local.openclaw_images[length(local.openclaw_images) - 1])[1] : null
 }
 
+resource "qiniu_compute_key_pair" "openclaw" {
+  name        = local.keypair_name
+  description = "OpenClaw AI Assistant Key Pair - Managed by Terraform"
+}
+
 resource "qiniu_compute_instance" "openclaw" {
   name          = local.instance_name
   description   = "OpenClaw AI Assistant - Managed by Terraform"
@@ -62,8 +68,7 @@ resource "qiniu_compute_instance" "openclaw" {
   cost_period_unit          = var.cost_period_unit
   cost_discount_activity_id = var.cost_discount_activity_id
 
-  # root 用户密码
-  password = var.root_password
+  key_pair_id = qiniu_compute_key_pair.openclaw.id
 
   # 初始化系统与配置 OpenClaw 用户
   user_data = base64encode(module.openclaw_scripts.init_script)

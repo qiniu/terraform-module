@@ -2,19 +2,13 @@ variable "openclaw_password" {
   type = string
 }
 
-resource "tls_private_key" "keypair" {
-  algorithm = "ED25519"
+variable "openclaw_public_key" {
+  type = string
 }
 
 output "init_script" {
   value = templatefile("${path.module}/templates/init.sh.tmpl", {
     openclaw_password   = var.openclaw_password
-    openclaw_public_key = chomp(tls_private_key.keypair.public_key_openssh)
+    openclaw_public_key = var.openclaw_public_key
   })
-}
-
-output "openclaw_private_key" {
-  description = "ED25519 私钥（OpenSSH 格式），用于 SSH 登录 openclaw 用户"
-  sensitive   = true
-  value       = tls_private_key.keypair.private_key_openssh
 }

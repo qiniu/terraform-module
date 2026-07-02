@@ -46,9 +46,3 @@ output "internal_dashboard_url" {
   description = "本地 Dashboard 访问 URL，需要先执行 internal_ssh_tunnel_command 命令建立隧道后才能访问"
   sensitive   = true
 }
-
-output "ssh_openclaw_password" {
-  value       = var.root_password
-  description = "实例 openclaw 用户密码"
-  sensitive   = true
-}
