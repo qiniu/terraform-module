@@ -85,12 +85,8 @@ resource "terraform_data" "write_back_minified_models_json" {
   }
 }
 
-locals {
-  model_config_script = templatefile("${path.module}/templates/model.sh.tmpl", {
+output "model_config_script" {
+  value = templatefile("${path.module}/templates/model.sh.tmpl", {
     provider_json = local.provider_json
   })
-}
-
-output "model_config_script" {
-  value = local.model_config_script
 }
