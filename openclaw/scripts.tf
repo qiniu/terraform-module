@@ -32,6 +32,10 @@ resource "qiniu_compute_instance_exec" "init" {
 }
 
 resource "qiniu_compute_instance_exec" "script_model_config" {
+  depends_on = [
+    qiniu_compute_instance_exec.init
+  ]
+
   instance_id = qiniu_compute_instance.openclaw.id
   user        = "openclaw"
   port        = "22"
