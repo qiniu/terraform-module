@@ -36,6 +36,7 @@ description: |-
 - `internet_charge_type` (String) 网络计费类型，取值范围：Bandwidth（按固定带宽计费）、PeakBandwidth（按峰值带宽计费）、Traffic（按流量计费）
 - `internet_max_bandwidth` (Number) 公网最大带宽，单位是Mbps，取值范围0-300，默认值为0，表示不分配公网IP
 - `internet_public_ip_type` (String) 公网 IP 类型，取值范围：Dedicated（独立公网 IP）、Shared（共享公网 IP）、Elastic（弹性公网 IP）。
+- `key_pair_id` (String) 密钥对 ID，指定后实例使用 SSH 密钥认证，仅支持 Linux 实例。
 - `name` (String) 实例名称，指定实例的名称
 - `password` (String, Sensitive) 实例密码，如果未指定则随机生成。
 - `placement_group_id` (String) 置放组ID，指定实例所属的置放组，如果不指定，则不加入任何置放组
