@@ -58,6 +58,7 @@ Read-Only:
 - `internet_charge_type` (String) 网络计费类型，取值范围：Bandwidth（按固定带宽计费）、PeakBandwidth（按峰值带宽计费）、Traffic（按流量计费）
 - `internet_max_bandwidth` (Number) 公网最大带宽，单位Mbps，指定实例的公网带宽
 - `internet_public_ip_type` (String) 公网 IP 类型，取值范围：Dedicated（独立公网 IP）、Shared（共享公网 IP）
+- `key_pair_id` (String) 实例绑定的密钥对 ID
 - `memory` (Number) 主机内存大小，单位是GiB
 - `name` (String) 实例名称，指定实例的名称
 - `network_type` (String) 实例网络类型，取值为 Standard、VPC 或 Isolated

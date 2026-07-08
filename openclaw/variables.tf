@@ -96,21 +96,21 @@ variable "internet_charge_type" {
   }
 }
 
-variable "root_password" {
+variable "password" {
   type        = string
   sensitive   = true
-  description = "实例 root 用户密码（要求：不少于 8 位，必须同时包含字母、数字和特殊符号）。openclaw 用户密码也使用该密码。"
+  description = "实例 root 用户和 openclaw 用户的密码（要求：不少于 8 位，必须同时包含字母、数字和特殊符号）。"
 
   validation {
     condition = (
       # 必须不少于 8 位
-      length(var.root_password) >= 8 &&
+      length(var.password) >= 8 &&
       # 必须包含字母（大写或小写）
-      can(regex("[A-Za-z]", var.root_password)) &&
+      can(regex("[A-Za-z]", var.password)) &&
       # 必须包含数字
-      can(regex("[0-9]", var.root_password)) &&
+      can(regex("[0-9]", var.password)) &&
       # 必须包含特殊符号
-      can(regex("[^A-Za-z0-9]", var.root_password))
+      can(regex("[^A-Za-z0-9]", var.password))
     )
     error_message = "密码不符合要求：必须不少于 8 位，且同时包含字母、数字和特殊符号。"
   }
@@ -233,16 +233,6 @@ variable "channel_qq_token" {
 variable "expose_dashboard" {
   type        = bool
   description = "是否将 Dashboard 暴露到公网（true: 监听 0.0.0.0 并设置 allowedOrigins:[*]，false: 仅监听 127.0.0.1 需 SSH 隧道访问）"
-  default     = false
-}
-
-# ============================================================================
-# 部署模式配置
-# ============================================================================
-
-variable "cloud_init_only" {
-  type        = bool
-  description = "是否仅通过 cloud-init 一次性注入全量配置脚本（true: 跳过所有 SSH remote-exec 动态执行，适用于 Terraform 执行端无法直连虚拟机 SSH 的网络环境；false: 走 SSH remote-exec 动态配置，支持后续分步变更）。注意：true 模式下配置在实例首次启动时一次性写入，后续修改变量需重建实例；channel_qq 的销毁清理（依赖 SSH）在 true 模式下不可用。"
   default     = false
 }
 

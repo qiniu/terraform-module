@@ -27,4 +27,5 @@ description: |-
 
 Optional:
 
+- `instance_connect_proxy` (String) LAS InstanceConnect Proxy API 服务地址
 - `manager` (String) LAS Manager API 服务地址

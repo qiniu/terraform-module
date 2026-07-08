@@ -62,15 +62,10 @@ resource "qiniu_compute_instance" "openclaw" {
   cost_period_unit          = var.cost_period_unit
   cost_discount_activity_id = var.cost_discount_activity_id
 
-  # root 用户密码
-  password = var.root_password
+  password = var.password
 
   # 初始化系统与配置 OpenClaw 用户
-  # cloud_init_only=true 时注入全量脚本，由 cloud-init 一次性完成，跳过 SSH remote-exec；
-  # 否则只注入 init 脚本，后续配置由 scripts.tf 通过 SSH remote-exec 动态执行。
-  user_data = base64encode(
-    var.cloud_init_only ? module.openclaw_scripts.cloud_init_full_script : module.openclaw_scripts.init_script
-  )
+  user_data = base64encode(module.openclaw_scripts.init_script)
 
   timeouts {
     create = "30m"
