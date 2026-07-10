@@ -1,25 +1,29 @@
-variable "name_prefix" {
+variable "vpc_id" {
   type        = string
-  description = "Resource name prefix."
-  default     = "mysql-innodb-demo"
+  description = "Existing VPC ID."
 }
 
-variable "vpc_cidr_block" {
+variable "subnet_id" {
   type        = string
-  description = "VPC CIDR block."
-  default     = "192.168.7.0/24"
-}
-
-variable "subnet_cidr_block" {
-  type        = string
-  description = "Subnet CIDR block."
-  default     = "192.168.7.0/24"
+  description = "Existing subnet ID."
 }
 
 variable "mysql_node_count" {
   type        = number
   description = "Number of MySQL InnoDB Cluster nodes."
   default     = 4
+}
+
+variable "security_group_ids" {
+  type        = list(string)
+  description = "Existing security groups in the demo VPC that allow InnoDB Cluster and Router traffic."
+}
+
+variable "image_id" {
+  type        = string
+  description = "Optional preinstalled image ID for subnets without package repository egress."
+  default     = null
+  nullable    = true
 }
 
 variable "mysql_admin_password" {

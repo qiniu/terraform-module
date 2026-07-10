@@ -10,7 +10,3 @@ output "mysql_node_passwords" {
   }
   sensitive = true
 }
-
-output "security_group_id" {
-  value = qiniu_compute_security_group.mysql.id
-}

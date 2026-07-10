@@ -49,7 +49,7 @@ resource "qiniu_compute_instance_exec" "mysql_router" {
 }
 
 resource "qiniu_compute_instance_exec" "member_lifecycle" {
-  for_each                    = toset([for node_key, node in nonsensitive(var.mysql_nodes) : node_key if node.index > 0])
+  for_each                    = toset([for node_key in keys(nonsensitive(var.mysql_nodes)) : node_key if node_key != "01"])
   depends_on                  = [qiniu_compute_instance_exec.cluster_reconcile]
   instance_id                 = var.mysql_nodes[each.key].id
   password                    = var.mysql_nodes[each.key].password

@@ -21,7 +21,6 @@ variable "image_id" {
 
 variable "mysql_nodes" {
   type = map(object({
-    index    = number
     hostname = string
   }))
 }
@@ -39,6 +38,6 @@ variable "instance_system_disk_type" {
   nullable = true
 }
 
-variable "additional_security_group_ids" {
+variable "security_group_ids" {
   type = list(string)
 }

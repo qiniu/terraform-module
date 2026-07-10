@@ -1,14 +1,9 @@
 variable "mysql_nodes" {
   type = map(object({
-    index    = number
     hostname = string
     id       = string
     password = string
   }))
-}
-
-variable "mysql_member_hostnames" {
-  type = list(string)
 }
 
 variable "mysql_private_ips" {

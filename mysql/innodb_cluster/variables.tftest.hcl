@@ -29,13 +29,13 @@ override_module {
       "06" = "InstancePass@06"
       "07" = "InstancePass@07"
     }
-    security_group_id = "security-group"
   }
 }
 
 variables {
-  vpc_id    = "vpc-test"
-  subnet_id = "subnet-test"
+  vpc_id             = "vpc-test"
+  subnet_id          = "subnet-test"
+  security_group_ids = ["sg-test"]
 }
 
 run "invalid_mysql_node_count_too_small" {
@@ -76,6 +76,16 @@ run "invalid_subnet_id_empty" {
   }
 
   expect_failures = [var.subnet_id]
+}
+
+run "invalid_security_group_ids_empty" {
+  command = plan
+
+  variables {
+    security_group_ids = []
+  }
+
+  expect_failures = [var.security_group_ids]
 }
 
 run "invalid_mysql_admin_password_too_short" {

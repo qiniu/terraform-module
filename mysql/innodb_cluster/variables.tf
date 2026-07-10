@@ -18,6 +18,13 @@ variable "subnet_id" {
   }
 }
 
+variable "image_id" {
+  type        = string
+  description = "Optional custom image ID. Use a preinstalled image when the subnet has no package repository egress."
+  default     = null
+  nullable    = true
+}
+
 variable "mysql_node_count" {
   type        = number
   description = "Number of MySQL server nodes in the InnoDB Cluster."
@@ -133,8 +140,12 @@ variable "install_mysql_router_on_db_nodes" {
   default     = true
 }
 
-variable "additional_security_group_ids" {
+variable "security_group_ids" {
   type        = list(string)
-  description = "Additional security group IDs to attach to every MySQL node."
-  default     = []
+  description = "Existing security group IDs to attach to every MySQL node. They must allow cluster and approved Router client traffic."
+
+  validation {
+    condition     = length(var.security_group_ids) > 0 && alltrue([for security_group_id in var.security_group_ids : can(regex("^sg-", security_group_id))])
+    error_message = "security_group_ids must contain at least one security group ID beginning with sg-."
+  }
 }

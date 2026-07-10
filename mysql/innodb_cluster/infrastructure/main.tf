@@ -4,30 +4,6 @@ resource "qiniu_compute_placement_group" "mysql" {
   strategy    = "Spread"
 }
 
-resource "qiniu_compute_security_group" "mysql" {
-  vpc_id      = var.vpc_id
-  name        = format("mysql-innodb-%s", var.cluster_suffix)
-  description = format("Security group for MySQL InnoDB Cluster %s", var.cluster_suffix)
-}
-
-resource "qiniu_compute_security_group_rule_set" "mysql" {
-  security_group_id = qiniu_compute_security_group.mysql.id
-
-  ingress {
-    ip_protocol    = "tcp"
-    port_range     = "3306,33060,33061,6446,6447,6448,6449"
-    source_cidr_ip = "0.0.0.0/0"
-    description    = "Allow MySQL, Group Replication, and Router traffic in routable networks"
-  }
-
-  egress {
-    ip_protocol  = "all"
-    port_range   = "all"
-    dest_cidr_ip = "0.0.0.0/0"
-    description  = "Allow outbound traffic"
-  }
-}
-
 resource "random_password" "mysql_instance_password" {
   for_each = var.mysql_nodes
   length   = 16
@@ -44,7 +20,7 @@ resource "qiniu_compute_instance" "mysql_nodes" {
 
   name               = each.value.hostname
   hostname           = each.value.hostname
-  description        = format("MySQL InnoDB Cluster node %02d (%s)", each.value.index + 1, var.cluster_name)
+  description        = format("MySQL InnoDB Cluster node %s (%s)", each.key, var.cluster_name)
   instance_type      = var.instance_type
   placement_group_id = qiniu_compute_placement_group.mysql.id
   image_id           = var.image_id
@@ -54,10 +30,7 @@ resource "qiniu_compute_instance" "mysql_nodes" {
   subnet_id          = var.subnet_id
   password           = random_password.mysql_instance_password[each.key].result
 
-  security_group_ids = concat(
-    [qiniu_compute_security_group.mysql.id],
-    var.additional_security_group_ids,
-  )
+  security_group_ids = var.security_group_ids
 
   timeouts {
     create = "30m"

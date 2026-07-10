@@ -1,7 +1,8 @@
-name_prefix       = "mysql-innodb-demo"
-vpc_cidr_block    = "192.168.7.0/24"
-subnet_cidr_block = "192.168.7.0/24"
-mysql_node_count  = 4
-enable_validation = false
+vpc_id             = "vpc-xxxxxxxx"
+subnet_id          = "subnet-xxxxxxxx"
+security_group_ids = ["sg-xxxxxxxx"]
+mysql_node_count   = 4
+enable_validation  = false
 
 # mysql_admin_password = "ChangeMe@123"
+# image_id = "img-xxxxxxxx"

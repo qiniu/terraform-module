@@ -27,14 +27,9 @@ locals {
     for i in range(var.mysql_node_count) :
     format("%02d", i + 1)
   ]
-  mysql_member_hostnames = [
-    for i in range(var.mysql_node_count) :
-    format("mysql-innodb-%02d-%s", i + 1, local.cluster_suffix)
-  ]
   mysql_nodes = {
     for index, node_key in local.mysql_node_keys : node_key => {
-      index    = index
-      hostname = local.mysql_member_hostnames[index]
+      hostname = format("mysql-innodb-%02d-%s", index + 1, local.cluster_suffix)
     }
   }
   mysql_execution_nodes = {

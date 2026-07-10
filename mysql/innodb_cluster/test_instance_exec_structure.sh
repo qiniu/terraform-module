@@ -17,6 +17,16 @@ if rg -q 'internet_(max_bandwidth|charge_type|public_ip_type)|disable_public_ip|
   exit 1
 fi
 
+if rg -q 'source_cidr_ip\s*=\s*"0\.0\.0\.0/0"' "$module_dir/infrastructure" --glob '*.tf'; then
+  echo "The MySQL security group must not expose database ports to every CIDR." >&2
+  exit 1
+fi
+
+if rg -q 'resource "qiniu_compute_security_group' "$module_dir/infrastructure" --glob '*.tf'; then
+  echo "The MySQL module must consume caller-managed security groups." >&2
+  exit 1
+fi
+
 if rg -q 'resource "qiniu_compute_eip"' "$module_dir/examples/with_vpc_nat" --glob '*.tf'; then
   echo "InstanceConnect end-to-end validation must not require an EIP." >&2
   exit 1
