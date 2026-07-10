@@ -16,18 +16,6 @@ variable "subnet_cidr_block" {
   default     = "192.168.7.0/24"
 }
 
-variable "nat_eip_bandwidth" {
-  type        = number
-  description = "NAT EIP bandwidth in Mbps."
-  default     = 100
-}
-
-variable "enable_nat" {
-  type        = bool
-  description = "Whether to create NAT/EIP/SNAT for subnet outbound access."
-  default     = true
-}
-
 variable "mysql_node_count" {
   type        = number
   description = "Number of MySQL InnoDB Cluster nodes."
@@ -44,6 +32,6 @@ variable "mysql_admin_password" {
 
 variable "enable_validation" {
   type        = bool
-  description = "Whether to create a temporary validator instance and run end-to-end MySQL HA checks."
+  description = "Whether to run end-to-end MySQL HA checks through InstanceConnect."
   default     = false
 }

@@ -28,18 +28,3 @@ output "subnet_id" {
   value       = qiniu_compute_subnet.default.id
   description = "Created subnet ID."
 }
-
-output "validation_router_read_write_endpoints" {
-  value       = var.enable_validation ? compact([for ip in module.mysql_innodb_cluster.mysql_node_public_ips : ip != null ? format("%s:6446", ip) : ""]) : []
-  description = "Temporary public MySQL Router read/write endpoints for validation."
-}
-
-output "validation_router_read_only_endpoints" {
-  value       = var.enable_validation ? compact([for ip in module.mysql_innodb_cluster.mysql_node_public_ips : ip != null ? format("%s:6447", ip) : ""]) : []
-  description = "Temporary public MySQL Router read-only endpoints for validation."
-}
-
-output "validation_ssh_endpoints" {
-  value       = var.enable_validation ? compact([for ip in module.mysql_innodb_cluster.mysql_node_public_ips : ip != null ? format("%s:22", ip) : ""]) : []
-  description = "Temporary public SSH endpoints for validation."
-}

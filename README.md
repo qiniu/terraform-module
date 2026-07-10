@@ -182,13 +182,17 @@ terraform apply
 
 该模块默认部署 4 个 MySQL 节点，使用 InnoDB Cluster Single-Primary 模式，并在每个数据库节点上启动 MySQL Router。模块只消费已有 `vpc_id` 和 `subnet_id`，不默认创建 EIP、NAT、SNAT 或 DNAT。
 
-如需完整创建 VPC/Subnet/NAT/SNAT 的试用环境，可参考：
+集群安装和编排通过 `qiniu_compute_instance_exec` 经 InstanceConnect 在私网节点执行，不依赖 `user_data`、公网 SSH 或数据库节点公网 IP。
+
+如需一并创建 VPC/Subnet 的试用环境，可参考：
 
 ```bash
 cd mysql/innodb_cluster/examples/with_vpc_nat
 terraform init
 terraform apply
 ```
+
+该示例不创建公网出口；首次安装 MySQL 软件包前，需要由调用方为子网提供 NAT/SNAT，或使用预装镜像。
 
 > Tips: 也可以同目录创建一个 `.tfvars.json` 后缀结尾的 json 文件，里面放入所有 `variables.tf`中定义的变量值作为输入，apply 时将自动读取。
 

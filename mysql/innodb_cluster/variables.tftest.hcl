@@ -7,6 +7,33 @@
 
 mock_provider "qiniu" {}
 
+override_module {
+  target = module.mysql_infrastructure
+
+  outputs = {
+    mysql_node_ids = {
+      "01" = "instance-01"
+      "02" = "instance-02"
+      "03" = "instance-03"
+      "04" = "instance-04"
+      "05" = "instance-05"
+      "06" = "instance-06"
+      "07" = "instance-07"
+    }
+    mysql_node_passwords = {
+      "01" = "InstancePass@01"
+      "02" = "InstancePass@02"
+      "03" = "InstancePass@03"
+      "04" = "InstancePass@04"
+      "05" = "InstancePass@05"
+      "06" = "InstancePass@06"
+      "07" = "InstancePass@07"
+    }
+    mysql_node_public_ips = {}
+    security_group_id     = "security-group"
+  }
+}
+
 variables {
   vpc_id    = "vpc-test"
   subnet_id = "subnet-test"

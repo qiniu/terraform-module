@@ -1,9 +1,7 @@
 name_prefix       = "mysql-innodb-demo"
 vpc_cidr_block    = "192.168.7.0/24"
 subnet_cidr_block = "192.168.7.0/24"
-nat_eip_bandwidth = 100
 mysql_node_count  = 4
-enable_nat        = true
 enable_validation = false
 
 # mysql_admin_password = "ChangeMe@123"

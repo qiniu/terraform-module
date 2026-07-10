@@ -8,7 +8,7 @@
 
 - 创建 MySQL 数据库云主机。
 - 创建置放组与安全组。
-- 通过 `user_data` 安装 MySQL Server、MySQL Shell、MySQL Router。
+- 通过 InstanceConnect 和 `qiniu_compute_instance_exec` 安装 MySQL Server、MySQL Shell、MySQL Router。
 - 初始化 InnoDB Cluster，并将其余节点加入集群。
 - 在每台数据库节点上启动 MySQL Router，输出 `6446` 读写入口和 `6447` 只读入口。
 
@@ -19,12 +19,12 @@
 - 暴露公网访问入口。
 - 在业务服务器侧安装 Router。
 
-如需一键创建 VPC 和 NAT 出网，可参考 `examples/with_vpc_nat`。
+如需一键创建 VPC/Subnet 并通过 InstanceConnect 执行验收，可参考 `examples/with_vpc_nat`。该示例同样不创建网络出口。
 
 ## 前置条件
 
 - 子网内实例需要能出网安装 `mysql-server-8.0`、`mysql-shell`、`mysql-router` 等包。可由调用方提前配置 NAT/SNAT，或使用预装镜像。
-- VPC 内需要能解析实例 hostname。本模块按固定 hostname 创建节点，并通过 hostname 创建 InnoDB Cluster。
+- 模块会采集节点私网 IP 并在数据库节点内维护 hostname 到 IP 的映射。
 - 模块默认不创建公网入口。业务侧推荐自行部署 MySQL Router 并连接本地 `127.0.0.1:6446/6447`；本模块在 DB 节点上部署的 Router 可作为开箱即用入口或兜底入口。
 
 ## 使用方式
@@ -71,13 +71,13 @@ terraform test
 
 ```bash
 cd examples/with_vpc_nat
-terraform apply -var='enable_validation=true' -var='enable_nat=false'
+terraform apply -var='enable_validation=true'
 ```
 
-启用后示例会给 MySQL 节点临时分配独立公网 IP；本地脚本通过 Docker MySQL 客户端验证 Router 写读、只读查询和停止当前 primary 后的自动切主。验收完成后应执行 `terraform destroy` 清理资源。
+启用后示例通过 InstanceConnect 在首节点验证 Router 写读、只读查询、停止当前 primary 后的自动切主及原主重新加入；不分配数据库节点公网 IP。示例仅创建 VPC 和子网，首次安装前仍需为子网提供 NAT/SNAT，或改用包含所需 MySQL 软件包的预装镜像。验收完成后应执行 `terraform destroy` 清理资源。
 
 实例初始化日志位于：
 
 ```text
-/var/log/mysql-innodb-init.log
+/var/log/mysql-innodb-node-setup.log
 ```
