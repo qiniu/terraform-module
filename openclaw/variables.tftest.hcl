@@ -26,7 +26,7 @@ mock_provider "qiniu" {}
 # ============================================================================
 
 variables {
-  root_password      = "Test@12345"
+  password      = "Test@12345"
   qiniu_maas_api_key = "test-api-key-0123456789"
 }
 
@@ -133,31 +133,31 @@ run "invalid_internet_charge_type" {
 }
 
 # ============================================================================
-# 6. root_password 校验 - >= 8 位，含字母、数字、特殊符号
+# 6. password 校验 - >= 8 位，含字母、数字、特殊符号
 # ============================================================================
 
-run "invalid_root_password_too_short" {
+run "invalid_password_too_short" {
   command = plan
-  variables { root_password = "Ab@123" }
-  expect_failures = [var.root_password]
+  variables { password = "Ab@123" }
+  expect_failures = [var.password]
 }
 
-run "invalid_root_password_no_letter" {
+run "invalid_password_no_letter" {
   command = plan
-  variables { root_password = "12345678@" }
-  expect_failures = [var.root_password]
+  variables { password = "12345678@" }
+  expect_failures = [var.password]
 }
 
-run "invalid_root_password_no_digit" {
+run "invalid_password_no_digit" {
   command = plan
-  variables { root_password = "Abcdefgh@" }
-  expect_failures = [var.root_password]
+  variables { password = "Abcdefgh@" }
+  expect_failures = [var.password]
 }
 
-run "invalid_root_password_no_special" {
+run "invalid_password_no_special" {
   command = plan
-  variables { root_password = "Abcdef123" }
-  expect_failures = [var.root_password]
+  variables { password = "Abcdef123" }
+  expect_failures = [var.password]
 }
 
 # ============================================================================

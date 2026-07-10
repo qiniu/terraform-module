@@ -53,8 +53,8 @@ resource "qiniu_compute_instance" "openclaw" {
   internet_max_bandwidth = var.internet_max_bandwidth
   internet_charge_type   = var.internet_charge_type
 
-  internet_public_ip_type = "Shared" # OpenClaw 目前只支持标准网络实例
-  disable_public_ip       = true     # OpenClaw 目前只支持标准网络实例
+  internet_public_ip_type = var.internet_public_ip_type
+  disable_public_ip       = true # OpenClaw 目前只支持标准网络实例
 
   # 计费配置
   cost_charge_type          = var.cost_charge_type
@@ -62,8 +62,7 @@ resource "qiniu_compute_instance" "openclaw" {
   cost_period_unit          = var.cost_period_unit
   cost_discount_activity_id = var.cost_discount_activity_id
 
-  # root 用户密码
-  password = var.root_password
+  password = var.password
 
   # 初始化系统与配置 OpenClaw 用户
   user_data = base64encode(module.openclaw_scripts.init_script)
