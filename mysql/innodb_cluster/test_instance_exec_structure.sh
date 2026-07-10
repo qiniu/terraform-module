@@ -9,8 +9,8 @@ test ! -f "$module_dir/command_execution.tf"
 rg -q 'output "mysql_node_instance_ids"' "$module_dir/outputs.tf"
 test -f "$module_dir/scripts/templates/mysql_innodb_node.sh"
 test -f "$module_dir/scripts/templates/mysql_cluster_reconcile.sh"
-if rg -q 'internet_(max_bandwidth|charge_type|public_ip_type)' "$module_dir/examples/with_vpc_nat/main.tf"; then
-  echo "The example must not configure public internet access for database nodes." >&2
+if rg -q 'internet_(max_bandwidth|charge_type|public_ip_type)|disable_public_ip|public_ip_addresses' "$module_dir" --glob '*.tf'; then
+  echo "The MySQL module must not configure or expose public IP resources." >&2
   exit 1
 fi
 

@@ -3,14 +3,6 @@ output "mysql_node_private_ips" {
   description = "Private IPv4 addresses of MySQL InnoDB Cluster nodes."
 }
 
-output "mysql_node_public_ips" {
-  value = [
-    for node_key in local.mysql_node_keys :
-    try(module.mysql_infrastructure.mysql_node_public_ips[node_key], null)
-  ]
-  description = "Public IPv4 addresses of MySQL nodes when internet_max_bandwidth is greater than 0."
-}
-
 output "mysql_node_instance_ids" {
   value       = [for node_key in local.mysql_node_keys : module.mysql_infrastructure.mysql_node_ids[node_key]]
   description = "Instance IDs of MySQL InnoDB Cluster nodes."

@@ -93,48 +93,6 @@ variable "instance_system_disk_type" {
   }
 }
 
-variable "internet_max_bandwidth" {
-  type        = number
-  description = "Public internet bandwidth in Mbps for each MySQL node. Keep 0 by default."
-  default     = 0
-
-  validation {
-    condition     = var.internet_max_bandwidth >= 0 && var.internet_max_bandwidth <= 300
-    error_message = "internet_max_bandwidth must be between 0 and 300."
-  }
-
-  validation {
-    condition = (
-      var.internet_charge_type != "PeakBandwidth" ||
-      var.internet_max_bandwidth == 0 ||
-      contains([50, 100, 200], var.internet_max_bandwidth)
-    )
-    error_message = "internet_max_bandwidth must be 50, 100, or 200 when internet_charge_type is PeakBandwidth."
-  }
-}
-
-variable "internet_charge_type" {
-  type        = string
-  description = "Internet charge type when internet_max_bandwidth is greater than 0."
-  default     = "PeakBandwidth"
-
-  validation {
-    condition     = contains(["Bandwidth", "PeakBandwidth", "Traffic"], var.internet_charge_type)
-    error_message = "internet_charge_type must be Bandwidth, PeakBandwidth, or Traffic."
-  }
-}
-
-variable "internet_public_ip_type" {
-  type        = string
-  description = "Public IP type when internet_max_bandwidth is greater than 0."
-  default     = "Dedicated"
-
-  validation {
-    condition     = contains(["Dedicated", "Shared", "Elastic"], var.internet_public_ip_type)
-    error_message = "internet_public_ip_type must be Dedicated, Shared, or Elastic."
-  }
-}
-
 variable "mysql_admin_username" {
   type        = string
   description = "MySQL administrator account used by MySQL Shell AdminAPI and applications."

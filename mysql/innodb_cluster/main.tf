@@ -12,9 +12,6 @@ module "mysql_infrastructure" {
   instance_type                 = var.instance_type
   instance_system_disk_size     = var.instance_system_disk_size
   instance_system_disk_type     = var.instance_system_disk_type
-  internet_max_bandwidth        = var.internet_max_bandwidth
-  internet_charge_type          = var.internet_charge_type
-  internet_public_ip_type       = var.internet_public_ip_type
   additional_security_group_ids = var.additional_security_group_ids
 }
 

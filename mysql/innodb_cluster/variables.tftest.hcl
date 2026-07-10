@@ -29,8 +29,7 @@ override_module {
       "06" = "InstancePass@06"
       "07" = "InstancePass@07"
     }
-    mysql_node_public_ips = {}
-    security_group_id     = "security-group"
+    security_group_id = "security-group"
   }
 }
 
@@ -97,15 +96,4 @@ run "invalid_mysql_admin_password_no_special" {
   }
 
   expect_failures = [var.mysql_admin_password]
-}
-
-run "invalid_peak_bandwidth_value" {
-  command = plan
-
-  variables {
-    internet_charge_type   = "PeakBandwidth"
-    internet_max_bandwidth = 10
-  }
-
-  expect_failures = [var.internet_max_bandwidth]
 }

@@ -39,18 +39,6 @@ variable "instance_system_disk_type" {
   nullable = true
 }
 
-variable "internet_max_bandwidth" {
-  type = number
-}
-
-variable "internet_charge_type" {
-  type = string
-}
-
-variable "internet_public_ip_type" {
-  type = string
-}
-
 variable "additional_security_group_ids" {
   type = list(string)
 }

@@ -42,21 +42,17 @@ resource "random_password" "mysql_instance_password" {
 resource "qiniu_compute_instance" "mysql_nodes" {
   for_each = var.mysql_nodes
 
-  name                    = each.value.hostname
-  hostname                = each.value.hostname
-  description             = format("MySQL InnoDB Cluster node %02d (%s)", each.value.index + 1, var.cluster_name)
-  instance_type           = var.instance_type
-  placement_group_id      = qiniu_compute_placement_group.mysql.id
-  image_id                = var.image_id
-  system_disk_size        = var.instance_system_disk_size
-  system_disk_type        = var.instance_system_disk_type
-  state                   = "Running"
-  subnet_id               = var.subnet_id
-  internet_max_bandwidth  = var.internet_max_bandwidth
-  internet_charge_type    = var.internet_charge_type
-  internet_public_ip_type = var.internet_max_bandwidth > 0 ? var.internet_public_ip_type : null
-  disable_public_ip       = var.internet_max_bandwidth == 0 || var.internet_public_ip_type == "Shared"
-  password                = random_password.mysql_instance_password[each.key].result
+  name               = each.value.hostname
+  hostname           = each.value.hostname
+  description        = format("MySQL InnoDB Cluster node %02d (%s)", each.value.index + 1, var.cluster_name)
+  instance_type      = var.instance_type
+  placement_group_id = qiniu_compute_placement_group.mysql.id
+  image_id           = var.image_id
+  system_disk_size   = var.instance_system_disk_size
+  system_disk_type   = var.instance_system_disk_type
+  state              = "Running"
+  subnet_id          = var.subnet_id
+  password           = random_password.mysql_instance_password[each.key].result
 
   security_group_ids = concat(
     [qiniu_compute_security_group.mysql.id],
