@@ -1,11 +1,11 @@
 resource "qiniu_compute_instance_exec" "node_private_ip" {
-  for_each = var.mysql_nodes
+  for_each = toset(keys(nonsensitive(var.mysql_nodes)))
 
-  instance_id = var.mysql_node_ids[each.key]
-  password    = var.mysql_node_passwords[each.key]
+  instance_id = var.mysql_nodes[each.key].id
+  password    = var.mysql_nodes[each.key].password
   user        = "root"
   shell       = "bash"
-  command     = "hostname -I | awk '{print $1}'"
+  command     = local.node_private_ip_command
 
   store_stdout = true
 

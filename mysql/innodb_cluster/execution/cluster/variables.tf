@@ -2,40 +2,34 @@ variable "mysql_nodes" {
   type = map(object({
     index    = number
     hostname = string
+    id       = string
+    password = string
   }))
 }
 
-variable "mysql_node_ids" {
-  type = map(string)
+variable "mysql_member_hostnames" {
+  type = list(string)
 }
 
-variable "mysql_node_passwords" {
+variable "mysql_private_ips" {
   type      = map(string)
   sensitive = true
 }
 
-variable "node_network_commands" {
-  type      = map(string)
-  sensitive = true
+variable "cluster_name" {
+  type = string
 }
 
-variable "node_setup_commands" {
-  type      = map(string)
-  sensitive = true
+variable "group_replication_uuid" {
+  type = string
 }
 
-variable "cluster_reconcile_command" {
+variable "mysql_admin_username" {
+  type = string
+}
+
+variable "mysql_admin_password" {
   type      = string
-  sensitive = true
-}
-
-variable "router_bootstrap_commands" {
-  type      = map(string)
-  sensitive = true
-}
-
-variable "member_remove_commands" {
-  type      = map(string)
   sensitive = true
 }
 

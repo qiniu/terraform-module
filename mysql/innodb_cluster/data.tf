@@ -37,6 +37,12 @@ locals {
       hostname = local.mysql_member_hostnames[index]
     }
   }
+  mysql_execution_nodes = {
+    for node_key, node in local.mysql_nodes : node_key => merge(node, {
+      id       = module.mysql_infrastructure.mysql_node_ids[node_key]
+      password = module.mysql_infrastructure.mysql_node_passwords[node_key]
+    })
+  }
   mysql_private_ips = {
     for node_key in local.mysql_node_keys :
     node_key => module.mysql_execution_discovery.mysql_private_ips[node_key]
