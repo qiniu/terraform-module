@@ -21,8 +21,8 @@
 
 通过 InstanceConnect 执行验收可参考以下示例：
 
-- `examples/with_vpc_nat`：为已有子网创建 EIP、NAT Gateway 和 SNAT，供官方镜像安装 MySQL 软件包。
-- `examples/with_preinstalled_image`：使用预装 MySQL 软件包的自定义镜像，不创建公网出口。
+- `examples/with_eip`：为已有子网创建 EIP、NAT Gateway 和 SNAT，供官方镜像安装 MySQL 软件包。
+- `examples/without_eip`：使用预装 MySQL 软件包的自定义镜像，不创建公网出口。
 
 ## 前置条件
 
@@ -75,11 +75,11 @@ terraform test
 完整部署验收可在示例目录启用：
 
 ```bash
-cd examples/with_vpc_nat
+cd examples/with_eip
 terraform apply -var='enable_validation=true'
 ```
 
-`with_vpc_nat` 会创建 EIP、NAT Gateway 与 SNAT；`with_preinstalled_image` 不创建公网出口，要求镜像已包含 `mysql`、`mysqld`、`mysqlsh` 与 `mysqlrouter`。启用后示例通过 InstanceConnect 在首节点验证 Router 写读、只读查询、停止当前 primary 后的自动切主及原主重新加入。验收完成后应执行 `terraform destroy` 清理资源。
+`with_eip` 会创建 EIP、NAT Gateway 与 SNAT；`without_eip` 不创建公网出口，要求镜像已包含 `mysql`、`mysqld`、`mysqlsh` 与 `mysqlrouter`。启用后示例通过 InstanceConnect 在首节点验证 Router 写读、只读查询、停止当前 primary 后的自动切主及原主重新加入。验收完成后应执行 `terraform destroy` 清理资源。
 
 实例初始化日志位于：
 

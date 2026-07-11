@@ -187,12 +187,12 @@ terraform apply
 如需基于已有 VPC/Subnet/Security Group 进行试用，可参考：
 
 ```bash
-cd mysql/innodb_cluster/examples/with_vpc_nat
+cd mysql/innodb_cluster/examples/with_eip
 terraform init
 terraform apply
 ```
 
-`with_vpc_nat` 会创建 EIP、NAT Gateway 与 SNAT，确保官方镜像能够安装 MySQL 软件包；`with_preinstalled_image` 使用预装镜像，不创建公网出口。
+`with_eip` 会创建 EIP、NAT Gateway 与 SNAT，确保官方镜像能够安装 MySQL 软件包；`without_eip` 使用预装镜像，不创建公网出口。
 
 > Tips: 也可以同目录创建一个 `.tfvars.json` 后缀结尾的 json 文件，里面放入所有 `variables.tf`中定义的变量值作为输入，apply 时将自动读取。
 

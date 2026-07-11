@@ -15,7 +15,7 @@ rg -q 'output "mysql_node_instance_ids"' "$module_dir/outputs.tf"
 if rg -q 'internet_(max_bandwidth|charge_type|public_ip_type)|disable_public_ip|public_ip_addresses' \
   "$module_dir" \
   --glob '*.tf' \
-  -g '!examples/with_vpc_nat/**'; then
+  -g '!examples/with_eip/**'; then
   echo "The MySQL module must not configure or expose public IP resources." >&2
   exit 1
 fi
@@ -31,14 +31,14 @@ if rg -q 'resource "qiniu_compute_security_group' "$module_dir/infrastructure" -
 fi
 
 for resource_type in eip nat_gateway snat_rule; do
-  if ! rg -q "resource \"qiniu_compute_${resource_type}\"" "$module_dir/examples/with_vpc_nat" --glob '*.tf'; then
+  if ! rg -q "resource \"qiniu_compute_${resource_type}\"" "$module_dir/examples/with_eip" --glob '*.tf'; then
     echo "The package-installation example must provision EIP, NAT Gateway, and SNAT." >&2
     exit 1
   fi
 done
 
-test -f "$module_dir/examples/with_preinstalled_image/main.tf"
-if rg -q 'resource "qiniu_compute_(eip|nat_gateway|snat_rule)"' "$module_dir/examples/with_preinstalled_image" --glob '*.tf'; then
+test -f "$module_dir/examples/without_eip/main.tf"
+if rg -q 'resource "qiniu_compute_(eip|nat_gateway|snat_rule)"' "$module_dir/examples/without_eip" --glob '*.tf'; then
   echo "The preinstalled-image example must not create public egress resources." >&2
   exit 1
 fi
