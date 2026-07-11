@@ -4,15 +4,10 @@ resource "qiniu_compute_placement_group" "mysql" {
   strategy    = "Spread"
 }
 
-resource "random_password" "mysql_instance_password" {
-  for_each = var.mysql_nodes
-  length   = 16
-  lower    = true
-  upper    = true
-  numeric  = true
-  special  = true
-
-  override_special = "!#$%&*()-_=+[]{}<>:?"
+resource "qiniu_compute_key_pair" "mysql" {
+  name        = format("mysql-innodb-%s", var.cluster_suffix)
+  description = format("SSH key pair for MySQL InnoDB Cluster %s", var.cluster_suffix)
+  mode        = "generate"
 }
 
 resource "qiniu_compute_instance" "mysql_nodes" {
@@ -28,7 +23,7 @@ resource "qiniu_compute_instance" "mysql_nodes" {
   system_disk_type   = var.instance_system_disk_type
   state              = "Running"
   subnet_id          = var.subnet_id
-  password           = random_password.mysql_instance_password[each.key].result
+  key_pair_id        = qiniu_compute_key_pair.mysql.id
 
   security_group_ids = var.security_group_ids
 

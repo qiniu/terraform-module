@@ -34,8 +34,8 @@ locals {
   }
   mysql_execution_nodes = {
     for node_key, node in local.mysql_nodes : node_key => merge(node, {
-      id       = module.mysql_infrastructure.mysql_node_ids[node_key]
-      password = module.mysql_infrastructure.mysql_node_passwords[node_key]
+      id          = module.mysql_infrastructure.mysql_node_ids[node_key]
+      private_key = module.mysql_infrastructure.mysql_private_key
     })
   }
   mysql_private_ips = {

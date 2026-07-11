@@ -47,3 +47,8 @@ if rg -q '^  user_data\s*=' "$module_dir" --glob '*.tf'; then
   echo "MySQL instances must not use user_data for deployment." >&2
   exit 1
 fi
+
+if rg -q 'random_password.*mysql_instance_password|mysql_instance_passwords|\bpassword\s*=' "$module_dir" --glob '*.tf'; then
+  echo "MySQL instance access must use the generated SSH key pair, not passwords." >&2
+  exit 1
+fi

@@ -9,6 +9,7 @@
 - 创建 MySQL 数据库云主机。
 - 创建置放组与数据库节点。
 - 通过 InstanceConnect 和 `qiniu_compute_instance_exec` 安装 MySQL Server、MySQL Shell、MySQL Router。
+- 创建并绑定 SSH 密钥对，用于 InstanceConnect 执行。
 - 初始化 InnoDB Cluster，并将其余节点加入集群。
 - 在每台数据库节点上启动 MySQL Router，输出 `6446` 读写入口和 `6447` 只读入口。
 

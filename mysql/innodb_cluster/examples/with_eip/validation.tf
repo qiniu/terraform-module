@@ -4,7 +4,7 @@ resource "qiniu_compute_instance_exec" "mysql_cluster_validation" {
   depends_on = [module.mysql_innodb_cluster]
 
   instance_id = module.mysql_innodb_cluster.mysql_node_instance_ids[0]
-  password    = module.mysql_innodb_cluster.mysql_instance_passwords[0]
+  private_key = module.mysql_innodb_cluster.mysql_instance_private_key
   user        = "root"
   shell       = "bash"
   command = templatefile("${path.module}/validate_mysql_cluster.sh", {

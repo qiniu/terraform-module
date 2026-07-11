@@ -20,15 +20,7 @@ override_module {
       "06" = "instance-06"
       "07" = "instance-07"
     }
-    mysql_node_passwords = {
-      "01" = "InstancePass@01"
-      "02" = "InstancePass@02"
-      "03" = "InstancePass@03"
-      "04" = "InstancePass@04"
-      "05" = "InstancePass@05"
-      "06" = "InstancePass@06"
-      "07" = "InstancePass@07"
-    }
+    mysql_private_key = "-----BEGIN OPENSSH PRIVATE KEY-----\nmock\n-----END OPENSSH PRIVATE KEY-----"
   }
 }
 

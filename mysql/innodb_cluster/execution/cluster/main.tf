@@ -1,7 +1,7 @@
 resource "qiniu_compute_instance_exec" "node_network" {
   for_each    = toset(keys(nonsensitive(var.mysql_nodes)))
   instance_id = var.mysql_nodes[each.key].id
-  password    = var.mysql_nodes[each.key].password
+  private_key = var.mysql_nodes[each.key].private_key
   user        = "root"
   shell       = "bash"
   command     = local.node_network_commands[each.key]
@@ -14,7 +14,7 @@ resource "qiniu_compute_instance_exec" "node_setup" {
   for_each    = toset(keys(nonsensitive(var.mysql_nodes)))
   depends_on  = [qiniu_compute_instance_exec.node_network]
   instance_id = var.mysql_nodes[each.key].id
-  password    = var.mysql_nodes[each.key].password
+  private_key = var.mysql_nodes[each.key].private_key
   user        = "root"
   shell       = "bash"
   command     = local.node_setup_commands[each.key]
@@ -26,7 +26,7 @@ resource "qiniu_compute_instance_exec" "node_setup" {
 resource "qiniu_compute_instance_exec" "cluster_reconcile" {
   depends_on  = [qiniu_compute_instance_exec.node_setup]
   instance_id = var.mysql_nodes["01"].id
-  password    = var.mysql_nodes["01"].password
+  private_key = var.mysql_nodes["01"].private_key
   user        = "root"
   shell       = "bash"
   command     = local.cluster_reconcile_command
@@ -39,7 +39,7 @@ resource "qiniu_compute_instance_exec" "mysql_router" {
   for_each    = toset(keys(nonsensitive(var.mysql_nodes)))
   depends_on  = [qiniu_compute_instance_exec.cluster_reconcile]
   instance_id = var.mysql_nodes[each.key].id
-  password    = var.mysql_nodes[each.key].password
+  private_key = var.mysql_nodes[each.key].private_key
   user        = "root"
   shell       = "bash"
   command     = local.router_bootstrap_commands[each.key]
@@ -52,7 +52,7 @@ resource "qiniu_compute_instance_exec" "member_lifecycle" {
   for_each                    = toset([for node_key in keys(nonsensitive(var.mysql_nodes)) : node_key if node_key != "01"])
   depends_on                  = [qiniu_compute_instance_exec.cluster_reconcile]
   instance_id                 = var.mysql_nodes[each.key].id
-  password                    = var.mysql_nodes[each.key].password
+  private_key                 = var.mysql_nodes[each.key].private_key
   user                        = "root"
   shell                       = "bash"
   command                     = "true"
@@ -63,6 +63,6 @@ resource "qiniu_compute_instance_exec" "member_lifecycle" {
     delete = "30m"
   }
   lifecycle {
-    ignore_changes = [command, destroy_command, password]
+    ignore_changes = [command, destroy_command, private_key]
   }
 }

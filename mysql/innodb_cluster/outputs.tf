@@ -39,8 +39,8 @@ output "mysql_admin_password" {
   sensitive   = true
 }
 
-output "mysql_instance_passwords" {
-  value       = [for node_key in local.mysql_node_keys : module.mysql_infrastructure.mysql_node_passwords[node_key]]
-  description = "Root passwords for the Qiniu compute instances."
+output "mysql_instance_private_key" {
+  value       = module.mysql_infrastructure.mysql_private_key
+  description = "Private key generated for the MySQL compute instances."
   sensitive   = true
 }

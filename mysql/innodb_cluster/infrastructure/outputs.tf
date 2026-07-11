@@ -4,9 +4,7 @@ output "mysql_node_ids" {
   }
 }
 
-output "mysql_node_passwords" {
-  value = {
-    for node_key, password in random_password.mysql_instance_password : node_key => password.result
-  }
+output "mysql_private_key" {
+  value     = qiniu_compute_key_pair.mysql.private_key
   sensitive = true
 }
