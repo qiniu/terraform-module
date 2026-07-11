@@ -60,12 +60,25 @@ loose-group_replication_local_address = "$NODE_HOSTNAME:33061"
 loose-group_replication_group_seeds = "$BOOTSTRAP_HOSTNAME:33061"
 loose-group_replication_bootstrap_group = OFF
 EOF
+chmod 0644 /etc/mysql/mysql.conf.d/zz-innodb-cluster.cnf
+
+if [ ! -f /var/log/mysql-innodb-node-ready ]; then
+  systemctl stop mysql
+  rm -f /var/lib/mysql/auto.cnf
+fi
 
 systemctl restart mysql
 until mysqladmin ping --silent >/dev/null 2>&1; do
   log "Waiting for local MySQL..."
   sleep 2
 done
+
+actual_server_id="$(mysql -uroot -NBe 'SELECT @@server_id')"
+actual_report_host="$(mysql -uroot -NBe 'SELECT @@report_host')"
+if [ "$actual_server_id" != "$SERVER_ID" ] || [ "$actual_report_host" != "$NODE_HOSTNAME" ]; then
+  log "MySQL did not load the InnoDB Cluster configuration: server_id=$actual_server_id report_host=$actual_report_host"
+  exit 1
+fi
 
 password_sql="$(sql_escape "$MYSQL_ADMIN_PASSWORD")"
 mysql -uroot <<EOF
