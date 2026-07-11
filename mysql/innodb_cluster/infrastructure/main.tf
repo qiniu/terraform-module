@@ -20,7 +20,7 @@ resource "qiniu_compute_instance" "mysql_nodes" {
   placement_group_id = qiniu_compute_placement_group.mysql.id
   image_id           = var.image_id
   system_disk_size   = var.instance_system_disk_size
-  system_disk_type   = var.instance_system_disk_type
+  system_disk_type   = "cloud.ssd"
   state              = "Running"
   subnet_id          = var.subnet_id
   key_pair_id        = qiniu_compute_key_pair.mysql.id
@@ -37,6 +37,11 @@ resource "qiniu_compute_instance" "mysql_nodes" {
     precondition {
       condition     = var.image_id != null
       error_message = "未找到 Ubuntu 24.04 LTS 官方镜像，请确认当前区域已上架该镜像。"
+    }
+
+    precondition {
+      condition     = var.ebs_supported
+      error_message = "当前区域不支持 EBS 云盘，无法部署 MySQL InnoDB Cluster。"
     }
   }
 }

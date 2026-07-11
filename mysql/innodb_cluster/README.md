@@ -8,6 +8,7 @@
 
 - 创建 MySQL 数据库云主机。
 - 创建置放组与数据库节点。
+- 强制使用 EBS 云盘作为数据库系统盘；区域不支持 EBS 时在计划阶段失败。
 - 通过 InstanceConnect 和 `qiniu_compute_instance_exec` 安装 MySQL Server、MySQL Shell、MySQL Router。
 - 创建并绑定 SSH 密钥对，用于 InstanceConnect 执行。
 - 初始化 InnoDB Cluster，并将其余节点加入集群。

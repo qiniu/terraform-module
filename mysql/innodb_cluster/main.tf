@@ -1,5 +1,11 @@
 # Top-level orchestration: infrastructure outputs feed command execution and rendering.
 
+data "qiniu_compute_region" "current" {}
+
+locals {
+  ebs_supported = data.qiniu_compute_region.current.region.features.ebs.supported
+}
+
 module "mysql_infrastructure" {
   source = "./infrastructure"
 
@@ -11,7 +17,7 @@ module "mysql_infrastructure" {
   mysql_nodes               = local.mysql_nodes
   instance_type             = var.instance_type
   instance_system_disk_size = var.instance_system_disk_size
-  instance_system_disk_type = var.instance_system_disk_type
+  ebs_supported             = local.ebs_supported
   security_group_ids        = var.security_group_ids
 }
 

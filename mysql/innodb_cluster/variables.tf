@@ -88,18 +88,6 @@ variable "instance_system_disk_size" {
   }
 }
 
-variable "instance_system_disk_type" {
-  type        = string
-  description = "System disk type. Set null to let Qiniu choose the default."
-  default     = null
-  nullable    = true
-
-  validation {
-    condition     = var.instance_system_disk_type == null || contains(["local.ssd", "cloud.ssd"], var.instance_system_disk_type)
-    error_message = "instance_system_disk_type must be local.ssd, cloud.ssd, or null."
-  }
-}
-
 variable "mysql_admin_username" {
   type        = string
   description = "MySQL administrator account used by MySQL Shell AdminAPI and applications."
