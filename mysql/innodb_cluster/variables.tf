@@ -88,6 +88,29 @@ variable "instance_system_disk_size" {
   }
 }
 
+variable "mysql_data_disk_size" {
+  type        = number
+  description = "Optional size in GiB for one managed, PostPaid cloud disk per MySQL node. Null keeps MySQL data on the system disk."
+  default     = null
+  nullable    = true
+
+  validation {
+    condition     = var.mysql_data_disk_size == null || (var.mysql_data_disk_size >= 20 && var.mysql_data_disk_size <= 500)
+    error_message = "mysql_data_disk_size must be between 20 and 500 GiB when provided."
+  }
+}
+
+variable "mysql_data_disk_ids" {
+  type        = list(string)
+  description = "Optional external data disk IDs in MySQL node order. The list must contain one disk ID for every node."
+  default     = []
+
+  validation {
+    condition     = alltrue([for disk_id in var.mysql_data_disk_ids : trimspace(disk_id) != ""])
+    error_message = "mysql_data_disk_ids must not contain empty disk IDs."
+  }
+}
+
 variable "mysql_admin_username" {
   type        = string
   description = "MySQL administrator account used by MySQL Shell AdminAPI and applications."

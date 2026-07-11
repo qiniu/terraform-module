@@ -19,26 +19,10 @@ sql_escape() {
   printf '%s' "$1" | sed "s/'/''/g"
 }
 
-missing_packages=()
-if ! command -v mysql >/dev/null 2>&1 || ! command -v mysqld >/dev/null 2>&1; then
-  missing_packages+=(mysql-client-8.0 mysql-server-8.0)
-fi
-command -v mysqlsh >/dev/null 2>&1 || missing_packages+=(mysql-shell)
-if ! command -v mysqlrouter >/dev/null 2>&1; then
-  missing_packages+=(mysql-router)
-fi
-
-if [ "$${#missing_packages[@]}" -gt 0 ]; then
-  log "Installing missing MySQL packages..."
-  apt-get update
-  DEBIAN_FRONTEND=noninteractive apt-get install -y "$${missing_packages[@]}"
-else
-  log "Required MySQL packages are already installed."
-fi
-
 log "Configuring MySQL for InnoDB Cluster..."
 cat >/etc/mysql/mysql.conf.d/zz-innodb-cluster.cnf <<EOF
 [mysqld]
+datadir = /data/mysql
 server_id = $SERVER_ID
 bind-address = 0.0.0.0
 mysqlx-bind-address = 0.0.0.0
@@ -64,7 +48,7 @@ chmod 0644 /etc/mysql/mysql.conf.d/zz-innodb-cluster.cnf
 
 if [ ! -f /var/log/mysql-innodb-node-ready ]; then
   systemctl stop mysql
-  rm -f /var/lib/mysql/auto.cnf
+  rm -f /data/mysql/auto.cnf
 fi
 
 systemctl restart mysql

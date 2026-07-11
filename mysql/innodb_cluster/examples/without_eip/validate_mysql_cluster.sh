@@ -28,6 +28,8 @@ restore_mysql() { systemctl start mysql >/dev/null 2>&1 || true; }
 
 wait_for_query 6446 "SELECT 1" 900
 wait_for_query 6447 "SELECT 1" 900
+[ "$(findmnt -n -o TARGET /data)" = "/data" ] || { log "Data disk is not mounted at /data"; exit 1; }
+[ "$(mysql_query 6446 "SELECT @@datadir;")" = "/data/mysql/" ] || { log "MySQL data directory is not /data/mysql"; exit 1; }
 
 primary_before="$(mysql_query 6446 "SELECT MEMBER_HOST FROM performance_schema.replication_group_members WHERE MEMBER_ROLE = 'PRIMARY' LIMIT 1;")"
 [ "$primary_before" = "$BOOTSTRAP_HOSTNAME" ] || { log "Unexpected initial primary: $primary_before"; exit 1; }

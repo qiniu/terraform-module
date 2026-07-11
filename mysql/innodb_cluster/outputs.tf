@@ -8,6 +8,11 @@ output "mysql_node_instance_ids" {
   description = "Instance IDs of MySQL InnoDB Cluster nodes."
 }
 
+output "mysql_data_disk_ids" {
+  value       = [for node_key in local.mysql_node_keys : module.mysql_infrastructure.mysql_data_volumes[node_key].disk_id]
+  description = "Data disk IDs in MySQL node order. Empty values indicate system-disk storage."
+}
+
 output "mysql_node_hostnames" {
   value       = [for node_key in local.mysql_node_keys : local.mysql_nodes[node_key].hostname]
   description = "Hostnames of MySQL InnoDB Cluster nodes."

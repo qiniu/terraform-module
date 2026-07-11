@@ -11,6 +11,8 @@ module "mysql_infrastructure" {
   mysql_nodes               = local.mysql_nodes
   instance_type             = var.instance_type
   instance_system_disk_size = var.instance_system_disk_size
+  mysql_data_disk_size      = var.mysql_data_disk_size
+  mysql_data_disk_ids       = var.mysql_data_disk_ids
   security_group_ids        = var.security_group_ids
 }
 
@@ -27,6 +29,7 @@ module "mysql_execution_cluster" {
 
   mysql_nodes            = local.mysql_execution_nodes
   mysql_private_ips      = local.mysql_private_ips
+  mysql_data_volumes     = module.mysql_infrastructure.mysql_data_volumes
   cluster_name           = var.cluster_name
   group_replication_uuid = random_uuid.group_replication.result
   mysql_admin_username   = var.mysql_admin_username

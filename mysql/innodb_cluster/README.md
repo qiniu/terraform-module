@@ -9,6 +9,7 @@
 - 创建 MySQL 数据库云主机。
 - 创建置放组与数据库节点。
 - 强制使用 EBS 云盘作为数据库系统盘；区域不支持 EBS 时在计划阶段失败。
+- 可选为每个节点创建按量计费数据盘，或挂载调用方提供的数据盘。
 - 通过 InstanceConnect 和 `qiniu_compute_instance_exec` 安装 MySQL Server、MySQL Shell、MySQL Router。
 - 创建并绑定 SSH 密钥对，用于 InstanceConnect 执行。
 - 初始化 InnoDB Cluster，并将其余节点加入集群。
@@ -32,6 +33,17 @@
 - 调用方必须提供已有安全组：仅允许集群节点之间访问 `3306`、`33060`、`33061`，并仅允许业务安全组访问 Router 端口 `6446` 至 `6449`。
 - 模块会采集节点私网 IP 并在数据库节点内维护 hostname 到 IP 的映射。
 - 模块默认不创建公网入口。业务侧推荐自行部署 MySQL Router 并连接本地 `127.0.0.1:6446/6447`；本模块在 DB 节点上部署的 Router 可作为开箱即用入口或兜底入口。
+
+## 数据目录
+
+所有新部署节点都将 MySQL 数据目录设置为 `/data/mysql`：
+
+- 默认不创建数据盘，`/data` 位于系统盘。
+- 设置 `mysql_data_disk_size` 时，模块为每个节点创建一块按量付费 `cloud.ssd` 数据盘；销毁模块时会删除这些受管数据盘。
+- 设置 `mysql_data_disk_ids` 时，按节点顺序挂载调用方提供的数据盘；销毁模块时只解绑，磁盘保留。
+- `mysql_data_disk_size` 与 `mysql_data_disk_ids` 互斥。外部数据盘必须与节点数一一对应，且应为空或已格式化为 ext4。
+
+数据目录布局仅支持全新集群。不要将此版本直接 apply 到已有集群；请新建集群并完成业务迁移后再切换。
 
 ## 使用方式
 

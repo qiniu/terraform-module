@@ -33,6 +33,15 @@ variable "instance_system_disk_size" {
   type = number
 }
 
+variable "mysql_data_disk_size" {
+  type     = number
+  nullable = true
+}
+
+variable "mysql_data_disk_ids" {
+  type = list(string)
+}
+
 variable "security_group_ids" {
   type = list(string)
 }

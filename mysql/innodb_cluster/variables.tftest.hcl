@@ -21,6 +21,15 @@ override_module {
       "07" = "instance-07"
     }
     mysql_private_key = "-----BEGIN OPENSSH PRIVATE KEY-----\nmock\n-----END OPENSSH PRIVATE KEY-----"
+    mysql_data_volumes = {
+      "01" = { disk_id = "", attachment_id = "" }
+      "02" = { disk_id = "", attachment_id = "" }
+      "03" = { disk_id = "", attachment_id = "" }
+      "04" = { disk_id = "", attachment_id = "" }
+      "05" = { disk_id = "", attachment_id = "" }
+      "06" = { disk_id = "", attachment_id = "" }
+      "07" = { disk_id = "", attachment_id = "" }
+    }
   }
 }
 
@@ -28,6 +37,10 @@ variables {
   vpc_id             = "vpc-test"
   subnet_id          = "subnet-test"
   security_group_ids = ["sg-test"]
+}
+
+run "valid_system_disk_data_directory" {
+  command = plan
 }
 
 run "invalid_mysql_node_count_too_small" {

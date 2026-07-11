@@ -41,6 +41,7 @@ module "mysql_innodb_cluster" {
   vpc_id               = qiniu_compute_vpc.default.id
   subnet_id            = qiniu_compute_subnet.default.id
   mysql_node_count     = var.mysql_node_count
+  mysql_data_disk_size = var.mysql_data_disk_size
   mysql_admin_password = var.mysql_admin_password
   security_group_ids   = [qiniu_compute_security_group.default.id]
   image_id             = var.image_id

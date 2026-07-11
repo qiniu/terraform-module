@@ -11,6 +11,13 @@ variable "mysql_private_ips" {
   sensitive = true
 }
 
+variable "mysql_data_volumes" {
+  type = map(object({
+    disk_id       = string
+    attachment_id = string
+  }))
+}
+
 variable "cluster_name" {
   type = string
 }

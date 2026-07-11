@@ -8,6 +8,7 @@ variable "vpc_cidr_block" {
   type        = string
   description = "VPC CIDR block."
   default     = "192.168.77.0/24"
+
 }
 
 variable "subnet_cidr_block" {
@@ -25,6 +26,12 @@ variable "mysql_node_count" {
   type        = number
   description = "Number of MySQL InnoDB Cluster nodes."
   default     = 4
+}
+
+variable "mysql_data_disk_size" {
+  type        = number
+  description = "Managed data disk size in GiB for every MySQL node."
+  default     = 20
 }
 
 variable "mysql_admin_password" {

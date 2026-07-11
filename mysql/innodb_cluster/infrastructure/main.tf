@@ -12,6 +12,11 @@ locals {
   ]
 
   selected_image_id = var.image_id != null ? var.image_id : try(local.ubuntu_images[0].id, null)
+  mysql_node_keys   = sort(keys(var.mysql_nodes))
+  external_data_disks = length(var.mysql_data_disk_ids) == length(local.mysql_node_keys) ? zipmap(
+    local.mysql_node_keys,
+    var.mysql_data_disk_ids,
+  ) : {}
 }
 
 resource "qiniu_compute_placement_group" "mysql" {
@@ -59,5 +64,47 @@ resource "qiniu_compute_instance" "mysql_nodes" {
       condition     = data.qiniu_compute_region.current.region.features.ebs.supported
       error_message = "当前区域不支持 EBS 云盘，无法部署 MySQL InnoDB Cluster。"
     }
+
+    precondition {
+      condition     = length(var.mysql_data_disk_ids) == 0 || length(var.mysql_data_disk_ids) == length(var.mysql_nodes)
+      error_message = "mysql_data_disk_ids must contain exactly one disk ID per MySQL node."
+    }
+
+    precondition {
+      condition     = var.mysql_data_disk_size == null || length(var.mysql_data_disk_ids) == 0
+      error_message = "mysql_data_disk_size and mysql_data_disk_ids are mutually exclusive."
+    }
+  }
+}
+
+resource "qiniu_compute_disk" "mysql_data" {
+  for_each = var.mysql_data_disk_size == null ? {} : var.mysql_nodes
+
+  name        = format("mysql-data-%s-%s", each.key, var.cluster_suffix)
+  description = format("MySQL data disk for node %s (%s)", each.key, var.cluster_name)
+  size        = var.mysql_data_disk_size
+  type        = "cloud.ssd"
+
+  timeouts {
+    create = "10m"
+    delete = "10m"
+  }
+}
+
+locals {
+  mysql_data_disk_ids = var.mysql_data_disk_size != null ? {
+    for node_key, disk in qiniu_compute_disk.mysql_data : node_key => disk.id
+  } : local.external_data_disks
+}
+
+resource "qiniu_compute_disk_attachment" "mysql_data" {
+  for_each = local.mysql_data_disk_ids
+
+  instance_id = qiniu_compute_instance.mysql_nodes[each.key].id
+  disk_id     = each.value
+
+  timeouts {
+    create = "10m"
+    delete = "10m"
   }
 }

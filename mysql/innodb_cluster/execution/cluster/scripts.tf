@@ -15,6 +15,25 @@ locals {
     })
   }
 
+  node_package_commands = {
+    for node_key, node in var.mysql_nodes :
+    node_key => templatefile("${path.module}/templates/mysql_packages.sh", {})
+  }
+
+  node_storage_commands = {
+    for node_key, node in var.mysql_nodes :
+    node_key => templatefile("${path.module}/templates/mysql_data_storage.sh", {
+      data_disk_id = var.mysql_data_volumes[node_key].disk_id
+    })
+  }
+
+  node_storage_destroy_commands = {
+    for node_key, node in var.mysql_nodes :
+    node_key => templatefile("${path.module}/templates/mysql_data_storage_destroy.sh", {
+      data_disk_id = var.mysql_data_volumes[node_key].disk_id
+    })
+  }
+
   node_setup_commands = {
     for node_key, node in var.mysql_nodes :
     node_key => templatefile("${path.module}/templates/mysql_innodb_node.sh", {
