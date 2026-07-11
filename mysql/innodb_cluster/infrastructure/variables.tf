@@ -33,10 +33,6 @@ variable "instance_system_disk_size" {
   type = number
 }
 
-variable "ebs_supported" {
-  type = bool
-}
-
 variable "security_group_ids" {
   type = list(string)
 }
