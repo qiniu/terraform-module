@@ -192,7 +192,7 @@ terraform init
 terraform apply
 ```
 
-该示例不创建公网出口；首次安装 MySQL 软件包前，需要由调用方为子网提供 NAT/SNAT，或使用预装镜像。
+`with_vpc_nat` 会创建 EIP、NAT Gateway 与 SNAT，确保官方镜像能够安装 MySQL 软件包；`with_preinstalled_image` 使用预装镜像，不创建公网出口。
 
 > Tips: 也可以同目录创建一个 `.tfvars.json` 后缀结尾的 json 文件，里面放入所有 `variables.tf`中定义的变量值作为输入，apply 时将自动读取。
 

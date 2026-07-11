@@ -27,7 +27,3 @@ variable "mysql_admin_password" {
   type      = string
   sensitive = true
 }
-
-variable "install_mysql_router_on_nodes" {
-  type = bool
-}

@@ -19,7 +19,10 @@
 - 暴露公网访问入口。
 - 在业务服务器侧安装 Router。
 
-通过 InstanceConnect 执行验收可参考 `examples/with_vpc_nat`；它消费已有 VPC、子网和安全组，同样不创建网络出口。
+通过 InstanceConnect 执行验收可参考以下示例：
+
+- `examples/with_vpc_nat`：为已有子网创建 EIP、NAT Gateway 和 SNAT，供官方镜像安装 MySQL 软件包。
+- `examples/with_preinstalled_image`：使用预装 MySQL 软件包的自定义镜像，不创建公网出口。
 
 ## 前置条件
 
@@ -76,7 +79,7 @@ cd examples/with_vpc_nat
 terraform apply -var='enable_validation=true'
 ```
 
-启用后示例通过 InstanceConnect 在首节点验证 Router 写读、只读查询、停止当前 primary 后的自动切主及原主重新加入；不分配数据库节点公网 IP。示例仅创建 VPC 和子网，首次安装前仍需为子网提供 NAT/SNAT，或改用包含所需 MySQL 软件包的预装镜像。验收完成后应执行 `terraform destroy` 清理资源。
+`with_vpc_nat` 会创建 EIP、NAT Gateway 与 SNAT；`with_preinstalled_image` 不创建公网出口，要求镜像已包含 `mysql`、`mysqld`、`mysqlsh` 与 `mysqlrouter`。启用后示例通过 InstanceConnect 在首节点验证 Router 写读、只读查询、停止当前 primary 后的自动切主及原主重新加入。验收完成后应执行 `terraform destroy` 清理资源。
 
 实例初始化日志位于：
 

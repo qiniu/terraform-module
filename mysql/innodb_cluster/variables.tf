@@ -134,12 +134,6 @@ variable "mysql_admin_password" {
   }
 }
 
-variable "install_mysql_router_on_db_nodes" {
-  type        = bool
-  description = "Whether to install and bootstrap MySQL Router on every database node."
-  default     = true
-}
-
 variable "security_group_ids" {
   type        = list(string)
   description = "Existing security group IDs to attach to every MySQL node. They must allow cluster and approved Router client traffic."

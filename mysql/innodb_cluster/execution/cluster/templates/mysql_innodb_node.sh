@@ -10,7 +10,6 @@ BOOTSTRAP_HOSTNAME='${bootstrap_hostname}'
 GROUP_REPLICATION_UUID='${group_replication_uuid}'
 MYSQL_ADMIN_USERNAME='${mysql_admin_username}'
 MYSQL_ADMIN_PASSWORD="$(printf '%s' '${mysql_admin_password_b64}' | base64 -d)"
-INSTALL_MYSQL_ROUTER='${install_mysql_router}'
 
 log() {
   echo "[$(date -Is)] $*"
@@ -25,7 +24,7 @@ if ! command -v mysql >/dev/null 2>&1 || ! command -v mysqld >/dev/null 2>&1; th
   missing_packages+=(mysql-client-8.0 mysql-server-8.0)
 fi
 command -v mysqlsh >/dev/null 2>&1 || missing_packages+=(mysql-shell)
-if [ "$INSTALL_MYSQL_ROUTER" = "true" ] && ! command -v mysqlrouter >/dev/null 2>&1; then
+if ! command -v mysqlrouter >/dev/null 2>&1; then
   missing_packages+=(mysql-router)
 fi
 

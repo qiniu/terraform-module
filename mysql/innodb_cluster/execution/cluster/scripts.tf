@@ -24,7 +24,6 @@ locals {
       group_replication_uuid   = var.group_replication_uuid
       mysql_admin_username     = var.mysql_admin_username
       mysql_admin_password_b64 = base64encode(var.mysql_admin_password)
-      install_mysql_router     = tostring(var.install_mysql_router_on_nodes)
     })
   }
 

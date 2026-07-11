@@ -26,11 +26,10 @@ module "mysql_execution_cluster" {
 
   depends_on = [module.mysql_execution_discovery]
 
-  mysql_nodes                   = local.mysql_execution_nodes
-  mysql_private_ips             = local.mysql_private_ips
-  cluster_name                  = var.cluster_name
-  group_replication_uuid        = random_uuid.group_replication.result
-  mysql_admin_username          = var.mysql_admin_username
-  mysql_admin_password          = local.mysql_admin_password
-  install_mysql_router_on_nodes = var.install_mysql_router_on_db_nodes
+  mysql_nodes            = local.mysql_execution_nodes
+  mysql_private_ips      = local.mysql_private_ips
+  cluster_name           = var.cluster_name
+  group_replication_uuid = random_uuid.group_replication.result
+  mysql_admin_username   = var.mysql_admin_username
+  mysql_admin_password   = local.mysql_admin_password
 }

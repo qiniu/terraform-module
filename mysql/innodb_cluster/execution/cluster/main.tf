@@ -36,7 +36,7 @@ resource "qiniu_compute_instance_exec" "cluster_reconcile" {
 }
 
 resource "qiniu_compute_instance_exec" "mysql_router" {
-  for_each    = var.install_mysql_router_on_nodes ? toset(keys(nonsensitive(var.mysql_nodes))) : toset([])
+  for_each    = toset(keys(nonsensitive(var.mysql_nodes)))
   depends_on  = [qiniu_compute_instance_exec.cluster_reconcile]
   instance_id = var.mysql_nodes[each.key].id
   password    = var.mysql_nodes[each.key].password

@@ -1,7 +1,7 @@
 vpc_id             = "vpc-xxxxxxxx"
 subnet_id          = "subnet-xxxxxxxx"
-subnet_cidr_block  = "192.168.7.0/24"
 security_group_ids = ["sg-xxxxxxxx"]
+image_id           = "img-xxxxxxxx"
 mysql_node_count   = 4
 enable_validation  = false
 
