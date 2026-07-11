@@ -1,16 +1,19 @@
-variable "vpc_id" {
+variable "name_prefix" {
   type        = string
-  description = "Existing VPC ID."
+  description = "Resource name prefix."
+  default     = "mysql-innodb-with-eip"
 }
 
-variable "subnet_id" {
+variable "vpc_cidr_block" {
   type        = string
-  description = "Existing subnet ID."
+  description = "VPC CIDR block."
+  default     = "192.168.77.0/24"
 }
 
 variable "subnet_cidr_block" {
   type        = string
-  description = "CIDR block of subnet_id, used as the SNAT source range."
+  description = "Subnet CIDR block, used as the SNAT source range."
+  default     = "192.168.77.0/24"
 }
 
 variable "mysql_node_count" {
@@ -19,10 +22,6 @@ variable "mysql_node_count" {
   default     = 4
 }
 
-variable "security_group_ids" {
-  type        = list(string)
-  description = "Existing security groups in the demo VPC that allow InnoDB Cluster and Router traffic."
-}
 
 variable "nat_eip_bandwidth" {
   type        = number

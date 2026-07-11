@@ -1,16 +1,19 @@
-variable "vpc_id" {
+variable "name_prefix" {
   type        = string
-  description = "Existing VPC ID."
+  description = "Resource name prefix."
+  default     = "mysql-innodb-without-eip"
 }
 
-variable "subnet_id" {
+variable "vpc_cidr_block" {
   type        = string
-  description = "Existing subnet ID."
+  description = "VPC CIDR block."
+  default     = "192.168.77.0/24"
 }
 
-variable "security_group_ids" {
-  type        = list(string)
-  description = "Existing security groups that allow InnoDB Cluster and Router traffic."
+variable "subnet_cidr_block" {
+  type        = string
+  description = "Subnet CIDR block."
+  default     = "192.168.77.0/24"
 }
 
 variable "image_id" {

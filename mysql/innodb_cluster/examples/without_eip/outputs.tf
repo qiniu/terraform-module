@@ -20,11 +20,11 @@ output "mysql_admin_password" {
 }
 
 output "vpc_id" {
-  value       = var.vpc_id
+  value       = qiniu_compute_vpc.default.id
   description = "VPC ID."
 }
 
 output "subnet_id" {
-  value       = var.subnet_id
+  value       = qiniu_compute_subnet.default.id
   description = "Subnet ID."
 }
