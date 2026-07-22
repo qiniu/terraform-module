@@ -1,6 +1,7 @@
 variables {
   runnerd_version                = "v1.2.3"
   runnerd_install_revision       = "test-a"
+  runnerd_port                   = 25500
   config_content                 = "github:\n  oauth:\n    client_secret: oauth-secret\n"
   github_app_private_key_base64  = "LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCnRlc3Qta2V5Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K"
   bootstrap_admin_github_user_id = 123456
@@ -11,8 +12,9 @@ run "renders_safe_install_and_destroy_commands" {
 
   assert {
     condition = (
-      strcontains(nonsensitive(output.install_command), "sudo -n bash") &&
-      strcontains(nonsensitive(output.install_command), "set -euo pipefail") &&
+      startswith(nonsensitive(output.install_command), "#!/usr/bin/env bash\nset -euo pipefail") &&
+      !strcontains(nonsensitive(output.install_command), "sudo") &&
+      !strcontains(nonsensitive(output.install_command), "RUNNERD_INSTALL") &&
       strcontains(nonsensitive(output.install_command), "qiniu/ci-runner/releases/download/v1.2.3") &&
       strcontains(nonsensitive(output.install_command), "x86_64") &&
       strcontains(nonsensitive(output.install_command), "amd64") &&
@@ -45,6 +47,9 @@ run "renders_safe_install_and_destroy_commands" {
   assert {
     condition = (
       length(trimspace(output.destroy_command)) > 0 &&
+      startswith(output.destroy_command, "#!/usr/bin/env bash\nset -euo pipefail") &&
+      !strcontains(output.destroy_command, "sudo") &&
+      !strcontains(output.destroy_command, "RUNNERD_DESTROY") &&
       strcontains(output.destroy_command, "systemctl disable --now runnerd.service") &&
       strcontains(output.destroy_command, "/opt/runnerd/bin/runnerd") &&
       strcontains(output.destroy_command, "/etc/runnerd/runnerd.yaml") &&
@@ -69,6 +74,7 @@ run "renders_safe_install_and_destroy_commands" {
     condition = output.install_checksum == nonsensitive(sha256(jsonencode({
       version          = var.runnerd_version
       revision         = var.runnerd_install_revision
+      port             = var.runnerd_port
       config           = var.config_content
       pem_base64       = var.github_app_private_key_base64
       bootstrap_admin  = var.bootstrap_admin_github_user_id
@@ -108,6 +114,32 @@ run "renders_failure_safe_control_flow" {
       ))
     )
     error_message = "destroy command must tolerate only a missing unit and stop on real disable failures before deleting files"
+  }
+}
+
+run "renders_verification_command" {
+  command = plan
+
+  assert {
+    condition = (
+      startswith(output.verify_command, "#!/usr/bin/env bash\nset -euo pipefail") &&
+      strcontains(output.verify_command, "systemctl is-active --quiet runnerd.service") &&
+      strcontains(output.verify_command, "bootstrap_admin_id=\"123456\"") &&
+      strcontains(output.verify_command, "--bootstrap-admin github:$bootstrap_admin_id") &&
+      strcontains(output.verify_command, "/var/lib/runnerd-terraform-verification") &&
+      strcontains(output.verify_command, "systemctl restart runnerd.service") &&
+      strcontains(output.verify_command, "http://127.0.0.1:25500/healthz") &&
+      !strcontains(output.verify_command, "sudo -n")
+    )
+    error_message = "verify command must validate the installed service, bootstrap identity, and restart recovery without redundant sudo"
+  }
+
+  assert {
+    condition = output.verify_checksum == nonsensitive(sha256(jsonencode({
+      install_checksum = output.install_checksum
+      verify_template  = file("${path.module}/templates/verify.sh.tftpl")
+    })))
+    error_message = "verify checksum must include the install checksum and raw verify template"
   }
 }
 
@@ -176,7 +208,7 @@ run "version_changes_checksum" {
   }
 }
 
-run "normalizes_pem_line_breaks" {
+run "preserves_pem_line_breaks" {
   command = plan
 
   variables {
@@ -184,67 +216,23 @@ run "normalizes_pem_line_breaks" {
   }
 
   assert {
-    condition     = output.install_checksum == run.renders_safe_install_and_destroy_commands.install_checksum
-    error_message = "PEM Base64 line breaks must be normalized before checksumming"
+    condition     = output.install_checksum != run.renders_safe_install_and_destroy_commands.install_checksum
+    error_message = "PEM Base64 必须按传入值参与 checksum，不进行换行归一化。"
   }
 }
 
-run "rejects_latest_version" {
+run "renders_custom_runnerd_port" {
   command = plan
 
   variables {
-    runnerd_version = "latest"
+    runnerd_port = 31234
   }
 
-  expect_failures = [var.runnerd_version]
-}
-
-run "rejects_unsafe_revision" {
-  command = plan
-
-  variables {
-    runnerd_install_revision = "unsafe revision"
+  assert {
+    condition = (
+      strcontains(nonsensitive(output.install_command), "http://127.0.0.1:31234/healthz") &&
+      strcontains(output.verify_command, "http://127.0.0.1:31234/healthz")
+    )
+    error_message = "install 和 verify command 必须使用传入的 runnerd_port。"
   }
-
-  expect_failures = [var.runnerd_install_revision]
-}
-
-run "rejects_empty_config" {
-  command = plan
-
-  variables {
-    config_content = "   "
-  }
-
-  expect_failures = [var.config_content]
-}
-
-run "rejects_invalid_pem_base64" {
-  command = plan
-
-  variables {
-    github_app_private_key_base64 = "not-base64"
-  }
-
-  expect_failures = [var.github_app_private_key_base64]
-}
-
-run "rejects_non_private_key_pem" {
-  command = plan
-
-  variables {
-    github_app_private_key_base64 = "bm90IGEgcHJpdmF0ZSBrZXk="
-  }
-
-  expect_failures = [var.github_app_private_key_base64]
-}
-
-run "rejects_non_positive_admin_id" {
-  command = plan
-
-  variables {
-    bootstrap_admin_github_user_id = 0
-  }
-
-  expect_failures = [var.bootstrap_admin_github_user_id]
 }

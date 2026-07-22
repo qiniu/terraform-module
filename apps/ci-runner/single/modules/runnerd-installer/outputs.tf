@@ -9,6 +9,16 @@ output "destroy_command" {
   value       = local.destroy_command
 }
 
+output "verify_command" {
+  description = "验证目标主机 runnerd 安装结果和重启恢复能力的命令。"
+  value       = local.verify_command
+}
+
+output "verify_checksum" {
+  description = "覆盖安装摘要和原始验证模板的非敏感 SHA-256 摘要。"
+  value       = local.verify_checksum
+}
+
 output "install_checksum" {
   description = "覆盖全部安装输入和原始安装模板的非敏感 SHA-256 摘要。"
   value       = local.install_checksum

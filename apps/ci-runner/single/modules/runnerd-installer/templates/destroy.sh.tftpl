@@ -1,4 +1,4 @@
-sudo bash <<'RUNNERD_DESTROY'
+#!/usr/bin/env bash
 set -euo pipefail
 
 unit_load_state="$(systemctl show --property=LoadState --value runnerd.service)"
@@ -19,4 +19,3 @@ rmdir \
   /etc/runnerd/secrets \
   /etc/runnerd \
   2>/dev/null || true
-RUNNERD_DESTROY

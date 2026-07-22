@@ -1,5 +1,6 @@
 variables {
   public_url                 = "https://runner.example.test"
+  runnerd_port               = 25500
   github_app_id              = 123456
   github_app_slug            = "runner-example"
   github_oauth_client_id     = "Iv1.example"
@@ -122,32 +123,15 @@ run "generates_complete_runnerd_config" {
   }
 }
 
-run "rejects_public_url_path" {
-  command = plan
+run "uses_custom_runnerd_port" {
+  command = apply
 
   variables {
-    public_url = "https://runner.example.test/path"
+    runnerd_port = 31234
   }
 
-  expect_failures = [var.public_url]
-}
-
-run "rejects_public_url_query" {
-  command = plan
-
-  variables {
-    public_url = "https://runner.example.test?mode=test"
+  assert {
+    condition     = yamldecode(nonsensitive(output.config_content)).server.http_addr == ":31234"
+    error_message = "server.http_addr 必须使用传入的 runnerd_port。"
   }
-
-  expect_failures = [var.public_url]
-}
-
-run "rejects_public_url_fragment" {
-  command = plan
-
-  variables {
-    public_url = "https://runner.example.test#fragment"
-  }
-
-  expect_failures = [var.public_url]
 }

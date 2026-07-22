@@ -13,7 +13,7 @@ resource "random_bytes" "webhook_secret" {
 locals {
   config = {
     server = {
-      http_addr             = ":25500"
+      http_addr             = ":${var.runnerd_port}"
       read_timeout_seconds  = 15
       write_timeout_seconds = 60
       idle_timeout_seconds  = 120

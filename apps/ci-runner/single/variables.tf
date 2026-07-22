@@ -25,6 +25,21 @@ variable "runnerd_install_revision" {
   }
 }
 
+variable "runnerd_port" {
+  type        = number
+  description = "runnerd 监听及 HTTPProxy 转发的实例内部端口"
+  default     = 25500
+
+  validation {
+    condition = (
+      var.runnerd_port >= 1 &&
+      var.runnerd_port <= 65535 &&
+      floor(var.runnerd_port) == var.runnerd_port
+    )
+    error_message = "runnerd_port 必须是 1 到 65535 之间的整数。"
+  }
+}
+
 variable "github_app_id" {
   type        = number
   description = "GitHub App 的数字 ID"

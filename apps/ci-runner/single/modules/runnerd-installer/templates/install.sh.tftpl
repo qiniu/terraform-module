@@ -1,4 +1,4 @@
-sudo -n bash <<'RUNNERD_INSTALL'
+#!/usr/bin/env bash
 set -euo pipefail
 umask 077
 
@@ -108,7 +108,7 @@ systemctl restart runnerd.service
 
 for _ in $(seq 1 60); do
   if systemctl is-active --quiet runnerd.service && \
-    curl --fail --silent --max-time 2 http://127.0.0.1:25500/healthz >/dev/null; then
+    curl --fail --silent --max-time 2 http://127.0.0.1:${runnerd_port}/healthz >/dev/null; then
     exit 0
   fi
   sleep 1
@@ -116,4 +116,3 @@ done
 
 echo "runnerd failed to become active and healthy" >&2
 false
-RUNNERD_INSTALL
