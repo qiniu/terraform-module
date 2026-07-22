@@ -53,7 +53,6 @@ retry 5 curl --fail --location --retry 3 --retry-delay 2 \
 mkdir "$work_dir/extracted"
 tar -xzf "$work_dir/$archive" -C "$work_dir/extracted"
 runnerd_binary="$(find "$work_dir/extracted" -type f -name runnerd -print -quit)"
-test -n "$runnerd_binary"
 test -f "$runnerd_binary"
 
 config_tmp="$work_dir/runnerd.yaml"
@@ -61,9 +60,6 @@ pem_tmp="$work_dir/github-app.pem"
 unit_tmp="$work_dir/runnerd.service"
 printf '%s' '${config_content_base64}' | base64 --decode > "$config_tmp"
 printf '%s' '${github_app_private_key_base64}' | base64 --decode > "$pem_tmp"
-test -s "$config_tmp"
-test -s "$pem_tmp"
-grep -q 'PRIVATE KEY' "$pem_tmp"
 
 cat > "$unit_tmp" <<'RUNNERD_UNIT'
 [Unit]

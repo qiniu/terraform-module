@@ -4,4 +4,4 @@
 env.sh
 *.tfvars
 *.tfvars.json
-!.terraform.lock.hcl
+.terraform.lock.hcl

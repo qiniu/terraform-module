@@ -11,7 +11,7 @@
 - `runnerd.yaml`、GitHub App 私钥和 systemd 服务；
 - 一个使用本机 SQLite 数据库的单实例 `runnerd`。
 
-`terraform apply` 会等待服务启动，检查 `/healthz`，验证初始管理员身份，并测试服务重启恢复能力。
+`terraform apply` 会等待服务启动并通过 `/healthz` 健康检查。
 
 > 这是单机部署方案，不包含高可用、外部数据库或数据备份。生产使用前请结合 [`ci-runner` 部署检查清单](https://github.com/qiniu/ci-runner/blob/main/docs/deployment-smoke.zh.md) 完成验证。
 
@@ -71,7 +71,6 @@ instance_type             = "ecs.t1s.c1m2"
 system_disk_size          = 20
 internet_max_bandwidth    = 100
 enable_ssh_port_forward   = false
-runnerd_install_revision  = ""
 ```
 
 `runnerd_version` 必须是 [`qiniu/ci-runner` Releases](https://github.com/qiniu/ci-runner/releases) 中存在的明确版本标签，不能使用 `latest`。示例版本仅用于展示，请按需选择版本。
@@ -142,9 +141,13 @@ terraform plan
 terraform apply
 ```
 
-如果需要在版本和配置均未变化时强制重新执行安装，可修改 `runnerd_install_revision`，例如从 `revision-1` 改为 `revision-2`。
+如果需要在版本和配置均未变化时强制重新执行安装：
 
-修改 GitHub App 配置、私钥或初始管理员也会触发重新安装和验证。`instance_type`、`system_disk_type` 和 `system_disk_size` 在实例创建后被 Terraform 忽略；调整这些值不会原地修改已有实例。
+```bash
+terraform apply -replace=qiniu_compute_instance_exec.install_runnerd
+```
+
+修改 GitHub App 配置、私钥或初始管理员也会触发重新安装。基础设施参数变化时，Terraform 会按 Qiniu Provider 的资源行为更新或替换实例，请在执行前检查 plan。
 
 ## SSH 调试
 
@@ -183,7 +186,6 @@ terraform destroy
 | 名称 | 必填 | 默认值 | 说明 |
 | --- | --- | --- | --- |
 | `runnerd_version` | 是 | - | `runnerd` GitHub Release 标签，不能为 `latest` |
-| `runnerd_install_revision` | 否 | `""` | 修改该值可显式触发重新安装 |
 | `runnerd_port` | 否 | `25500` | `runnerd` 监听及 HTTPProxy 转发的实例内部端口 |
 | `github_app_id` | 是 | - | GitHub App 数字 ID |
 | `github_app_slug` | 是 | - | GitHub App slug |
@@ -191,9 +193,9 @@ terraform destroy
 | `github_oauth_client_secret` | 是 | - | GitHub App OAuth Client secret，敏感 |
 | `github_app_private_key_base64` | 是 | - | Base64 编码的 GitHub App PEM 私钥，敏感 |
 | `bootstrap_admin_github_user_id` | 是 | - | 初始管理员的 GitHub 数字用户 ID |
-| `instance_type` | 否 | `ecs.t1s.c1m2` | ECS 实例规格，允许值见 `variables.tf` |
+| `instance_type` | 否 | `ecs.t1s.c1m2` | 以 `ecs.` 开头的 ECS 实例规格 |
 | `system_disk_size` | 否 | `20` | 系统盘大小，20–500 GiB 且必须是 10 的倍数 |
-| `internet_max_bandwidth` | 否 | `100` | 公网最大带宽，可选 `50`、`100` 或 `200` Mbps |
+| `internet_max_bandwidth` | 否 | `100` | PeakBandwidth 公网带宽，可选 50、100 或 200 Mbps |
 | `enable_ssh_port_forward` | 否 | `false` | 是否通过 PortForward 暴露 SSH 22 端口 |
 
 ## 输出

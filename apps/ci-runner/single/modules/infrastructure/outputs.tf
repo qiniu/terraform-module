@@ -16,5 +16,5 @@ output "public_url" {
 
 output "ssh_endpoints" {
   description = "启用 SSH 端口转发时的公网 IP:Port 列表。"
-  value       = var.enable_ssh_port_forward ? [for endpoint in try(qiniu_compute_instance_public_access.ssh[0].endpoints, []) : endpoint.endpoint] : []
+  value       = var.enable_ssh_port_forward ? [for endpoint in qiniu_compute_instance_public_access.ssh[0].endpoints : endpoint.endpoint] : []
 }

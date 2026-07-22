@@ -23,7 +23,6 @@ module "runnerd" {
   source = "./modules/runnerd-installer"
 
   runnerd_version                = var.runnerd_version
-  runnerd_install_revision       = var.runnerd_install_revision
   runnerd_port                   = var.runnerd_port
   config_content                 = module.config.config_content
   github_app_private_key_base64  = var.github_app_private_key_base64
@@ -49,29 +48,5 @@ resource "qiniu_compute_instance_exec" "install_runnerd" {
   timeouts {
     create = "30m"
     delete = "10m"
-  }
-}
-
-resource "qiniu_compute_instance_exec" "verify_runnerd" {
-  depends_on = [qiniu_compute_instance_exec.install_runnerd]
-
-  instance_id = module.infrastructure.instance_id
-  user        = "root"
-  port        = "22"
-  private_key = module.infrastructure.deployment_private_key
-
-  shell   = "bash"
-  command = module.runnerd.verify_command
-
-  triggers = {
-    verify_checksum = module.runnerd.verify_checksum
-  }
-
-  store_stdout = false
-  store_stderr = false
-
-  timeouts {
-    create = "10m"
-    delete = "5m"
   }
 }

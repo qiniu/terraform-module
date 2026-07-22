@@ -11,20 +11,6 @@ variable "runnerd_version" {
   }
 }
 
-variable "runnerd_install_revision" {
-  type        = string
-  description = "runnerd 安装修订标识；留空表示使用默认安装版本"
-  default     = ""
-
-  validation {
-    condition = (
-      var.runnerd_install_revision == "" ||
-      can(regex("^[0-9A-Za-z._-]+$", var.runnerd_install_revision))
-    )
-    error_message = "runnerd_install_revision 必须为空或仅包含字母、数字、点、下划线和连字符。"
-  }
-}
-
 variable "runnerd_port" {
   type        = number
   description = "runnerd 监听及 HTTPProxy 转发的实例内部端口"
@@ -90,10 +76,7 @@ variable "github_app_private_key_base64" {
   sensitive   = true
 
   validation {
-    condition = (
-      can(base64decode(var.github_app_private_key_base64)) &&
-      can(regex("PRIVATE KEY", try(base64decode(var.github_app_private_key_base64), "")))
-    )
+    condition     = can(regex("PRIVATE KEY", base64decode(var.github_app_private_key_base64)))
     error_message = "github_app_private_key_base64 必须是有效的 Base64，且解码内容必须包含 PRIVATE KEY。"
   }
 }
@@ -117,16 +100,8 @@ variable "instance_type" {
   default     = "ecs.t1s.c1m2"
 
   validation {
-    condition = contains([
-      "ecs.t1s.c1m2",
-      "ecs.t1s.c2m2",
-      "ecs.t1s.c2m4",
-      "ecs.t1s.c4m8",
-      "ecs.t1s.c8m16",
-      "ecs.t1s.c12m24",
-      "ecs.t1s.c16m32",
-    ], var.instance_type)
-    error_message = "instance_type 必须是允许的 ECS 实例规格。"
+    condition     = can(regex("^ecs\\.[0-9A-Za-z]+(\\.[0-9A-Za-z]+)+$", var.instance_type))
+    error_message = "instance_type 必须是以 ecs. 开头的有效 ECS 实例规格。"
   }
 }
 
@@ -139,9 +114,10 @@ variable "system_disk_size" {
     condition = (
       var.system_disk_size >= 20 &&
       var.system_disk_size <= 500 &&
+      floor(var.system_disk_size) == var.system_disk_size &&
       var.system_disk_size % 10 == 0
     )
-    error_message = "system_disk_size 必须在 20 到 500 GiB 之间，且是 10 的倍数。"
+    error_message = "system_disk_size 必须是 20 到 500 之间且为 10 的倍数的整数。"
   }
 }
 
@@ -152,7 +128,7 @@ variable "internet_max_bandwidth" {
 
   validation {
     condition     = contains([50, 100, 200], var.internet_max_bandwidth)
-    error_message = "internet_max_bandwidth 只能为 50、100 或 200 Mbps。"
+    error_message = "internet_max_bandwidth 在 PeakBandwidth 模式下只能为 50、100 或 200 Mbps。"
   }
 }
 

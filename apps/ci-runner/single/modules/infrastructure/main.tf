@@ -55,13 +55,6 @@ resource "qiniu_compute_instance" "ci_runner" {
   }
 
   lifecycle {
-    ignore_changes = [
-      image_id,
-      instance_type,
-      system_disk_type,
-      system_disk_size,
-    ]
-
     precondition {
       condition     = length(local.ubuntu_image_ids) == 1
       error_message = "当前区域必须恰好存在一个可用的 Ubuntu 24.04 LTS 官方镜像。"

@@ -3,11 +3,6 @@ variable "runnerd_version" {
   type        = string
 }
 
-variable "runnerd_install_revision" {
-  description = "用于显式触发重新安装的 revision。"
-  type        = string
-}
-
 variable "runnerd_port" {
   description = "runnerd 监听和健康检查端口。"
   type        = number
