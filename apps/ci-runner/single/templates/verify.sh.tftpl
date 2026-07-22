@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+sudo -n /usr/bin/env bash <<'RUNNERD_VERIFY'
+set -euo pipefail
+
+diagnose() {
+  exit_code=$?
+  if [ "$exit_code" -ne 0 ]; then
+    systemctl status runnerd.service --no-pager >&2 || true
+    journalctl -u runnerd.service -n 100 --no-pager >&2 || true
+  fi
+  exit "$exit_code"
+}
+trap diagnose EXIT
+
+bootstrap_admin_id="${bootstrap_admin_github_user_id}"
+database_path="/var/lib/runnerd/runnerd.db"
+verification_dir="/var/lib/runnerd-terraform-verification"
+baseline_path="$verification_dir/bootstrap-identity"
+
+systemctl is-active --quiet runnerd.service
+systemctl is-enabled --quiet runnerd.service
+
+exec_start="$(systemctl show runnerd.service --property=ExecStart --value)"
+printf '%s\n' "$exec_start" | grep -F -- "/opt/runnerd/bin/runnerd" >/dev/null
+printf '%s\n' "$exec_start" | grep -F -- "--config /etc/runnerd/runnerd.yaml" >/dev/null
+printf '%s\n' "$exec_start" | grep -F -- "--bootstrap-admin github:$bootstrap_admin_id" >/dev/null
+
+test "$(stat -c '%U:%G:%a' /opt/runnerd/bin/runnerd)" = "root:root:755"
+test "$(stat -c '%U:%G:%a' /etc/runnerd/runnerd.yaml)" = "root:runnerd:640"
+test "$(stat -c '%U:%G:%a' /etc/runnerd/secrets/github-app.pem)" = "runnerd:runnerd:600"
+test "$(stat -c '%U:%G:%a' /etc/systemd/system/runnerd.service)" = "root:root:644"
+test "$(stat -c '%U:%G:%a' /var/lib/runnerd)" = "runnerd:runnerd:750"
+test -f "$database_path"
+test "$(stat -c '%U:%G' "$database_path")" = "runnerd:runnerd"
+
+curl --fail --silent --show-error --max-time 10 http://127.0.0.1:25500/healthz >/dev/null
+
+identity="$(python3 - "$database_path" "$bootstrap_admin_id" <<'PY'
+import sqlite3
+import sys
+
+database_path, subject = sys.argv[1], sys.argv[2]
+connection = sqlite3.connect(f"file:{database_path}?mode=ro", uri=True)
+try:
+    rows = connection.execute(
+        """
+        SELECT account_id, created_at
+        FROM oauth_identities
+        WHERE oauth_provider = ? AND oauth_subject = ?
+        """,
+        ("github", subject),
+    ).fetchall()
+finally:
+    connection.close()
+
+if len(rows) != 1 or rows[0][0] is None or not rows[0][1]:
+    raise SystemExit("bootstrap GitHub identity must exist exactly once")
+
+print(f"{rows[0][0]}|{rows[0][1]}")
+PY
+)"
+
+install -d -o root -g root -m 0700 "$verification_dir"
+if [ -f "$baseline_path" ]; then
+  test "$(cat "$baseline_path")" = "$identity"
+else
+  baseline_tmp="$(mktemp "$verification_dir/.bootstrap-identity.XXXXXX")"
+  printf '%s\n' "$identity" > "$baseline_tmp"
+  chown root:root "$baseline_tmp"
+  chmod 0600 "$baseline_tmp"
+  mv "$baseline_tmp" "$baseline_path"
+fi
+test "$(stat -c '%U:%G:%a' "$verification_dir")" = "root:root:700"
+test "$(stat -c '%U:%G:%a' "$baseline_path")" = "root:root:600"
+
+systemctl restart runnerd.service
+for attempt in $(seq 1 60); do
+  if systemctl is-active --quiet runnerd.service && \
+    curl --fail --silent --show-error --max-time 5 http://127.0.0.1:25500/healthz >/dev/null; then
+    exit 0
+  fi
+  sleep 1
+done
+
+echo "runnerd did not recover within 60 seconds" >&2
+exit 1
+RUNNERD_VERIFY

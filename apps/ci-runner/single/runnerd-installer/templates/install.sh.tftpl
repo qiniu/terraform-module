@@ -1,0 +1,119 @@
+sudo -n bash <<'RUNNERD_INSTALL'
+set -euo pipefail
+umask 077
+
+install_failure() {
+  failure_status="$?"
+  trap - ERR
+  systemctl status runnerd.service --no-pager || true
+  journalctl -u runnerd.service -n 100 --no-pager || true
+  exit "$failure_status"
+}
+
+trap install_failure ERR
+
+retry() {
+  max_attempts="$1"
+  shift
+  attempt=1
+  until "$@"; do
+    if [ "$attempt" -ge "$max_attempts" ]; then
+      echo "command failed after $${max_attempts} attempts" >&2
+      return 1
+    fi
+    sleep "$attempt"
+    attempt=$((attempt + 1))
+  done
+}
+
+case "$(uname -m)" in
+  x86_64)
+    release_arch="amd64"
+    ;;
+  aarch64)
+    release_arch="arm64"
+    ;;
+  *)
+    echo "unsupported architecture: $(uname -m)" >&2
+    false
+    ;;
+esac
+
+retry 5 apt-get update
+retry 5 apt-get install -y --no-install-recommends ca-certificates curl tar
+
+work_dir="$(mktemp -d)"
+trap 'rm -rf "$work_dir"' EXIT
+
+archive="ci-runner_linux_$${release_arch}.tar.gz"
+release_url="https://github.com/qiniu/ci-runner/releases/download/${runnerd_version}"
+retry 5 curl --fail --location --retry 3 --retry-delay 2 \
+  --output "$work_dir/$archive" "$release_url/$archive"
+
+mkdir "$work_dir/extracted"
+tar -xzf "$work_dir/$archive" -C "$work_dir/extracted"
+runnerd_binary="$(find "$work_dir/extracted" -type f -name runnerd -print -quit)"
+test -n "$runnerd_binary"
+test -f "$runnerd_binary"
+
+config_tmp="$work_dir/runnerd.yaml"
+pem_tmp="$work_dir/github-app.pem"
+unit_tmp="$work_dir/runnerd.service"
+printf '%s' '${config_content_base64}' | base64 --decode > "$config_tmp"
+printf '%s' '${github_app_private_key_base64}' | base64 --decode > "$pem_tmp"
+test -s "$config_tmp"
+test -s "$pem_tmp"
+grep -q 'PRIVATE KEY' "$pem_tmp"
+
+cat > "$unit_tmp" <<'RUNNERD_UNIT'
+[Unit]
+Description=runnerd CI runner service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=runnerd
+Group=runnerd
+WorkingDirectory=/var/lib/runnerd
+ExecStart=/opt/runnerd/bin/runnerd --config /etc/runnerd/runnerd.yaml --bootstrap-admin github:${bootstrap_admin_github_user_id}
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+RUNNERD_UNIT
+
+getent group runnerd >/dev/null || groupadd --system runnerd
+id -u runnerd >/dev/null 2>&1 || useradd \
+  --system \
+  --gid runnerd \
+  --home-dir /var/lib/runnerd \
+  --shell /usr/sbin/nologin \
+  runnerd
+
+install -d -o root -g root -m 0755 /opt/runnerd/bin
+install -d -o root -g runnerd -m 0750 /etc/runnerd
+install -d -o root -g runnerd -m 0750 /etc/runnerd/secrets
+install -d -o runnerd -g runnerd -m 0750 /var/lib/runnerd
+
+install -o root -g root -m 0755 "$runnerd_binary" /opt/runnerd/bin/runnerd
+install -o root -g runnerd -m 0640 "$config_tmp" /etc/runnerd/runnerd.yaml
+install -o runnerd -g runnerd -m 0600 "$pem_tmp" /etc/runnerd/secrets/github-app.pem
+install -o root -g root -m 0644 "$unit_tmp" /etc/systemd/system/runnerd.service
+
+systemctl daemon-reload
+systemctl enable runnerd.service
+systemctl restart runnerd.service
+
+for _ in $(seq 1 60); do
+  if systemctl is-active --quiet runnerd.service && \
+    curl --fail --silent --max-time 2 http://127.0.0.1:25500/healthz >/dev/null; then
+    exit 0
+  fi
+  sleep 1
+done
+
+echo "runnerd failed to become active and healthy" >&2
+false
+RUNNERD_INSTALL

@@ -1,0 +1,22 @@
+sudo bash <<'RUNNERD_DESTROY'
+set -euo pipefail
+
+unit_load_state="$(systemctl show --property=LoadState --value runnerd.service)"
+if [ "$unit_load_state" != "not-found" ]; then
+  systemctl disable --now runnerd.service
+fi
+
+rm -f \
+  /etc/systemd/system/runnerd.service \
+  /opt/runnerd/bin/runnerd \
+  /etc/runnerd/runnerd.yaml \
+  /etc/runnerd/secrets/github-app.pem
+systemctl daemon-reload
+
+rmdir \
+  /opt/runnerd/bin \
+  /opt/runnerd \
+  /etc/runnerd/secrets \
+  /etc/runnerd \
+  2>/dev/null || true
+RUNNERD_DESTROY
