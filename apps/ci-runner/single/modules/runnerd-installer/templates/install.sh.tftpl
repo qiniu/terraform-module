@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
+
+# 任意一步错误就直接退出
 set -euo pipefail
+
+# 新建文件默认仅所有者可读写
 umask 077
 
+# 安装失败时，将自动进入该函数
 install_failure() {
   failure_status="$?"
   trap - ERR
@@ -9,9 +14,9 @@ install_failure() {
   journalctl -u runnerd.service -n 100 --no-pager || true
   exit "$failure_status"
 }
-
 trap install_failure ERR
 
+# 重试函数，最多尝试执行 max_attempts 次，等待间隔时间依次递增
 retry() {
   max_attempts="$1"
   shift
@@ -45,6 +50,7 @@ retry 5 apt-get install -y --no-install-recommends ca-certificates curl tar
 work_dir="$(mktemp -d)"
 trap 'rm -rf "$work_dir"' EXIT
 
+# 下载和解压 runnerd 二进制文件
 archive="ci-runner_linux_$${release_arch}.tar.gz"
 release_url="https://github.com/qiniu/ci-runner/releases/download/${runnerd_version}"
 retry 5 curl --fail --location --retry 3 --retry-delay 2 \
@@ -61,6 +67,7 @@ unit_tmp="$work_dir/runnerd.service"
 printf '%s' '${config_content_base64}' | base64 --decode > "$config_tmp"
 printf '%s' '${github_app_private_key_base64}' | base64 --decode > "$pem_tmp"
 
+# 生成 runnerd 服务单元文件
 cat > "$unit_tmp" <<'RUNNERD_UNIT'
 [Unit]
 Description=runnerd CI runner service
@@ -80,6 +87,7 @@ RestartSec=5s
 WantedBy=multi-user.target
 RUNNERD_UNIT
 
+# 创建 runnerd 用户和组
 getent group runnerd >/dev/null || groupadd --system runnerd
 id -u runnerd >/dev/null 2>&1 || useradd \
   --system \
@@ -88,6 +96,7 @@ id -u runnerd >/dev/null 2>&1 || useradd \
   --shell /usr/sbin/nologin \
   runnerd
 
+# 安装 runnerd 的各个文件
 install -d -o root -g root -m 0755 /opt/runnerd/bin
 install -d -o root -g runnerd -m 0750 /etc/runnerd
 install -d -o root -g runnerd -m 0750 /etc/runnerd/secrets
@@ -102,6 +111,7 @@ systemctl daemon-reload
 systemctl enable runnerd.service
 systemctl restart runnerd.service
 
+# 等待 runnerd 服务启动完成
 for _ in $(seq 1 60); do
   if systemctl is-active --quiet runnerd.service && \
     curl --fail --silent --max-time 2 http://127.0.0.1:${runnerd_port}/healthz >/dev/null; then
