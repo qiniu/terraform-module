@@ -1,7 +1,12 @@
+locals {
+  # runnerd 监听及 HTTPProxy 转发的实例内部端口，固定值，无需外部配置
+  runnerd_port = 25500
+}
+
 module "infrastructure" {
   source = "./modules/infrastructure"
 
-  runnerd_port            = var.runnerd_port
+  runnerd_port            = local.runnerd_port
   instance_type           = var.instance_type
   system_disk_size        = var.system_disk_size
   internet_max_bandwidth  = var.internet_max_bandwidth
@@ -12,7 +17,7 @@ module "config" {
   source = "./modules/config-generator"
 
   public_url                 = module.infrastructure.public_url
-  runnerd_port               = var.runnerd_port
+  runnerd_port               = local.runnerd_port
   github_app_id              = var.github_app_id
   github_app_slug            = var.github_app_slug
   github_oauth_client_id     = var.github_oauth_client_id
@@ -23,7 +28,7 @@ module "runnerd" {
   source = "./modules/runnerd-installer"
 
   runnerd_version                = var.runnerd_version
-  runnerd_port                   = var.runnerd_port
+  runnerd_port                   = local.runnerd_port
   config_content                 = module.config.config_content
   github_app_private_key_base64  = var.github_app_private_key_base64
   bootstrap_admin_github_user_id = var.bootstrap_admin_github_user_id

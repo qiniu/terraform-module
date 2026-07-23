@@ -1,6 +1,9 @@
 variable "runnerd_version" {
   type        = string
-  description = "要安装的 runnerd 版本标签，不允许使用 latest"
+  description = <<-EOT
+    要安装的 runnerd 版本标签，必须是已明确发布的版本，不允许使用 "latest"。
+    获取位置：qiniu/ci-runner 的 GitHub Releases 页面 https://github.com/qiniu/ci-runner/releases 中的 tag 名称，例如 "v0.2.3"。
+  EOT
 
   validation {
     condition = (
@@ -11,24 +14,12 @@ variable "runnerd_version" {
   }
 }
 
-variable "runnerd_port" {
-  type        = number
-  description = "runnerd 监听及 HTTPProxy 转发的实例内部端口"
-  default     = 25500
-
-  validation {
-    condition = (
-      var.runnerd_port >= 1 &&
-      var.runnerd_port <= 65535 &&
-      floor(var.runnerd_port) == var.runnerd_port
-    )
-    error_message = "runnerd_port 必须是 1 到 65535 之间的整数。"
-  }
-}
-
 variable "github_app_id" {
   type        = number
-  description = "GitHub App 的数字 ID"
+  description = <<-EOT
+    GitHub App 的数字 ID（不是 App 名称或 slug）。
+    获取位置：GitHub App 设置页 https://github.com/settings/apps/<slug> ，"General" 页面顶部展示的 "App ID" 字段即为该数字。
+  EOT
 
   validation {
     condition = (
@@ -41,7 +32,11 @@ variable "github_app_id" {
 
 variable "github_app_slug" {
   type        = string
-  description = "GitHub App 的 slug"
+  description = <<-EOT
+    GitHub App 的 slug，即 App URL 中的 <slug> 部分。
+    获取位置：GitHub App 设置页地址 https://github.com/settings/apps/<slug> 的最后一段路径；
+    同时也是 App 安装地址 https://github.com/apps/<slug> 中域名后的那一段。
+  EOT
 
   validation {
     condition     = length(trimspace(var.github_app_slug)) > 0
@@ -51,7 +46,10 @@ variable "github_app_slug" {
 
 variable "github_oauth_client_id" {
   type        = string
-  description = "GitHub OAuth 客户端 ID"
+  description = <<-EOT
+    GitHub App 用于 OAuth 用户登录的 Client ID，通常以 "Iv1." 开头。
+    获取位置：GitHub App 设置页 https://github.com/settings/apps/<slug> 中展示的 "Client ID" 字段（可点击复制）。
+  EOT
 
   validation {
     condition     = length(trimspace(var.github_oauth_client_id)) > 0
@@ -61,7 +59,12 @@ variable "github_oauth_client_id" {
 
 variable "github_oauth_client_secret" {
   type        = string
-  description = "GitHub OAuth 客户端密钥"
+  description = <<-EOT
+    GitHub App 用于 OAuth 用户登录的 Client secret，敏感值。
+    获取位置：GitHub App 设置页 https://github.com/settings/apps/<slug> 的 "Client secrets" 区域，
+    点击 "Generate a new client secret" 生成后查看；该值仅在生成时展示一次，请立即保存。
+    建议通过环境变量 TF_VAR_github_oauth_client_secret 注入，不要写入 terraform.tfvars 并提交到代码库。
+  EOT
   sensitive   = true
 
   validation {
@@ -72,7 +75,13 @@ variable "github_oauth_client_secret" {
 
 variable "github_app_private_key_base64" {
   type        = string
-  description = "经过 Base64 编码的 GitHub App PEM 私钥"
+  description = <<-EOT
+    经过 Base64 编码的 GitHub App PEM 私钥，敏感值。
+    获取位置：GitHub App 设置页 https://github.com/settings/apps/<slug> 底部 "Private keys" 区域，
+    点击 "Generate a private key" 后浏览器会下载形如 <slug>.<date>.private-key.pem 的私钥文件；
+    随后执行 `base64 -w0 <file>.pem`（macOS 为 `base64 -i <file>.pem`）编码为单行 Base64 字符串。
+    建议通过环境变量 TF_VAR_github_app_private_key_base64 注入，不要将 .pem 文件或其 Base64 值提交到代码库。
+  EOT
   sensitive   = true
 
   validation {
@@ -83,7 +92,12 @@ variable "github_app_private_key_base64" {
 
 variable "bootstrap_admin_github_user_id" {
   type        = number
-  description = "初始管理员的 GitHub 数字用户 ID"
+  description = <<-EOT
+    初始管理员的 GitHub 数字用户 ID（不是用户名 / login name）。
+    部署完成后，使用该 ID 对应的 GitHub 账号登录 runnerd 控制台（dashboard_url）完成初始化。
+    获取位置：通过 GitHub API 查询并取返回值中的 "id" 字段：
+    curl -s https://api.github.com/users/<username>
+  EOT
 
   validation {
     condition = (
@@ -96,7 +110,11 @@ variable "bootstrap_admin_github_user_id" {
 
 variable "instance_type" {
   type        = string
-  description = "ECS 实例规格"
+  description = <<-EOT
+    运行 runnerd 的 ECS 实例规格，必须以 "ecs." 开头。
+    获取位置：七牛云控制台云服务器 ECS 购买页的可选规格列表。
+    示例："ecs.t1s.c1m2"。
+  EOT
   default     = "ecs.t1s.c1m2"
 
   validation {
@@ -107,7 +125,10 @@ variable "instance_type" {
 
 variable "system_disk_size" {
   type        = number
-  description = "系统盘大小（GiB），范围为 20 到 500 且必须是 10 的倍数"
+  description = <<-EOT
+    ECS 系统盘大小，单位 GiB，取值范围 20 到 500 且必须是 10 的倍数。
+    磁盘类型无需指定：模块会根据当前区域是否支持 EBS 自动选择 cloud.ssd 或 local.ssd。
+  EOT
   default     = 20
 
   validation {
@@ -123,7 +144,10 @@ variable "system_disk_size" {
 
 variable "internet_max_bandwidth" {
   type        = number
-  description = "PeakBandwidth 计费模式下的公网最大带宽（Mbps）"
+  description = <<-EOT
+    PeakBandwidth（按峰值带宽计费）模式下 ECS 的公网最大带宽，单位 Mbps，只能为 50、100 或 200 之一。
+    计费说明以七牛云 ECS 公网带宽计费文档为准。
+  EOT
   default     = 100
 
   validation {
@@ -134,6 +158,10 @@ variable "internet_max_bandwidth" {
 
 variable "enable_ssh_port_forward" {
   type        = bool
-  description = "是否通过七牛 PortForward 暴露实例 SSH 22 端口"
+  description = <<-EOT
+    是否通过七牛云 PortForward 将实例 SSH 22 端口暴露到公网，默认 false。
+    仅建议在 SSH 调试期间开启：开启后可通过输出 ssh_endpoints 获取公网 SSH 端点，
+    通过输出 ssh_private_key 获取部署私钥；调试结束后请重新关闭。
+  EOT
   default     = false
 }

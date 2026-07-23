@@ -58,7 +58,6 @@ cd apps/ci-runner/single
 
 ```hcl
 runnerd_version = "v0.2.3"
-runnerd_port    = 25500
 
 github_app_id          = 123456
 github_app_slug        = "your-github-app-slug"
@@ -186,7 +185,6 @@ terraform destroy
 | 名称 | 必填 | 默认值 | 说明 |
 | --- | --- | --- | --- |
 | `runnerd_version` | 是 | - | `runnerd` GitHub Release 标签，不能为 `latest` |
-| `runnerd_port` | 否 | `25500` | `runnerd` 监听及 HTTPProxy 转发的实例内部端口 |
 | `github_app_id` | 是 | - | GitHub App 数字 ID |
 | `github_app_slug` | 是 | - | GitHub App slug |
 | `github_oauth_client_id` | 是 | - | GitHub App OAuth Client ID |
