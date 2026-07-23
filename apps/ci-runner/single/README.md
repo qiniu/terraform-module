@@ -42,7 +42,7 @@ export QINIU_REGION_ID="<qiniu-region-id>"
 - GitHub App PEM 私钥；
 - 初始管理员的 GitHub 数字用户 ID。
 
-首次创建 GitHub App 时，可以暂时填写有效的占位 callback、setup 和 webhook URL；Terraform 部署完成后，再替换为模块输出的正式地址。
+首次创建 GitHub App 时，可以暂时填写有效的占位 callback 和 webhook URL；Terraform 部署完成后，再替换为模块输出的正式地址。
 
 GitHub App 至少需要订阅 `Workflow jobs` 事件。实际所需的 Repository 和 Organization 权限取决于使用仓库级还是组织级 runner，请以上游项目的 [GitHub App permissions](https://github.com/qiniu/ci-runner#github-app-permissions) 为准。
 
@@ -104,7 +104,6 @@ terraform output
 ```bash
 terraform output -raw dashboard_url
 terraform output -raw github_oauth_callback_url
-terraform output -raw github_app_setup_url
 terraform output -raw github_webhook_url
 terraform output -raw github_webhook_secret
 ```
@@ -114,7 +113,6 @@ terraform output -raw github_webhook_secret
 | GitHub App 配置 | Terraform 输出 |
 | --- | --- |
 | Callback URL | `github_oauth_callback_url` |
-| Setup URL | `github_app_setup_url` |
 | Webhook URL | `github_webhook_url` |
 | Webhook secret | `github_webhook_secret` |
 
@@ -202,7 +200,6 @@ terraform destroy
 | --- | --- | --- |
 | `dashboard_url` | 否 | `runnerd` 控制台 HTTPS 地址 |
 | `github_oauth_callback_url` | 否 | GitHub App OAuth callback URL |
-| `github_app_setup_url` | 否 | GitHub App setup URL |
 | `github_webhook_url` | 否 | GitHub App webhook URL |
 | `github_webhook_secret` | 是 | GitHub webhook 签名密钥 |
 | `ssh_endpoints` | 否 | 启用 SSH 转发后的公网 `IP:Port` 列表 |

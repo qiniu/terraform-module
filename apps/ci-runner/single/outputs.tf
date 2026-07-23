@@ -8,11 +8,6 @@ output "github_oauth_callback_url" {
   value       = "${module.infrastructure.public_url}/auth/github/callback"
 }
 
-output "github_app_setup_url" {
-  description = "GitHub App setup URL。"
-  value       = "${module.infrastructure.public_url}/github-app/setup"
-}
-
 output "github_webhook_url" {
   description = "GitHub App webhook URL。"
   value       = "${module.infrastructure.public_url}/webhooks/github"
