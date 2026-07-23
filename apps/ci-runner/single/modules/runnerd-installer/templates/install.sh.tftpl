@@ -44,30 +44,62 @@ case "$(uname -m)" in
     ;;
 esac
 
-retry 5 apt-get update
-retry 5 apt-get install -y --no-install-recommends ca-certificates curl tar
+# 仅安装缺失的依赖包
+pkgs_missing=()
+for pkg in ca-certificates curl tar; do
+  dpkg-query -W -f='$${Status}' "$pkg" 2>/dev/null | grep -q "ok installed" || pkgs_missing+=("$pkg")
+done
+if [ "$${#pkgs_missing[@]}" -gt 0 ]; then
+  retry 5 apt-get update
+  retry 5 apt-get install -y --no-install-recommends "$${pkgs_missing[@]}"
+fi
+
+# 创建 runnerd 用户和组（幂等）
+getent group runnerd >/dev/null || groupadd --system runnerd
+id -u runnerd >/dev/null 2>&1 || useradd \
+  --system \
+  --gid runnerd \
+  --home-dir /var/lib/runnerd \
+  --shell /usr/sbin/nologin \
+  runnerd
+
+# 创建目录（幂等）
+install -d -o root -g root -m 0755 /opt/runnerd/bin
+install -d -o root -g runnerd -m 0750 /etc/runnerd
+install -d -o root -g runnerd -m 0750 /etc/runnerd/secrets
+install -d -o runnerd -g runnerd -m 0750 /var/lib/runnerd
 
 work_dir="$(mktemp -d)"
 trap 'rm -rf "$work_dir"' EXIT
 
-# 下载和解压 runnerd 二进制文件
-archive="ci-runner_linux_$${release_arch}.tar.gz"
-release_url="https://github.com/qiniu/ci-runner/releases/download/${runnerd_version}"
-retry 5 curl --fail --location --retry 3 --retry-delay 2 \
-  --output "$work_dir/$archive" "$release_url/$archive"
+changed=false
 
-mkdir "$work_dir/extracted"
-tar -xzf "$work_dir/$archive" -C "$work_dir/extracted"
-runnerd_binary="$(find "$work_dir/extracted" -type f -name runnerd -print -quit)"
-test -f "$runnerd_binary"
+# 仅当版本不同时下载并安装二进制
+version_file="/opt/runnerd/VERSION"
+if [ ! -x /opt/runnerd/bin/runnerd ] || [ ! -f "$version_file" ] || [ "$(cat "$version_file")" != "${runnerd_version}" ]; then
+  archive="ci-runner_linux_$${release_arch}.tar.gz"
+  release_url="https://github.com/qiniu/ci-runner/releases/download/${runnerd_version}"
+  retry 5 curl --fail --location --retry 3 --retry-delay 2 \
+    --output "$work_dir/$archive" "$release_url/$archive"
 
+  mkdir "$work_dir/extracted"
+  tar -xzf "$work_dir/$archive" -C "$work_dir/extracted"
+  runnerd_binary="$(find "$work_dir/extracted" -type f -name runnerd -print -quit)"
+  test -f "$runnerd_binary"
+
+  install -o root -g root -m 0755 "$runnerd_binary" /opt/runnerd/bin/runnerd
+  printf '%s\n' '${runnerd_version}' > "$version_file"
+  chmod 0644 "$version_file"
+  changed=true
+fi
+
+# 准备配置、密钥、服务单元文件
 config_tmp="$work_dir/runnerd.yaml"
 pem_tmp="$work_dir/github-app.pem"
 unit_tmp="$work_dir/runnerd.service"
 printf '%s' '${config_content_base64}' | base64 --decode > "$config_tmp"
 printf '%s' '${github_app_private_key_base64}' | base64 --decode > "$pem_tmp"
 
-# 生成 runnerd 服务单元文件
 cat > "$unit_tmp" <<'RUNNERD_UNIT'
 [Unit]
 Description=runnerd CI runner service
@@ -79,7 +111,7 @@ Type=simple
 User=runnerd
 Group=runnerd
 WorkingDirectory=/var/lib/runnerd
-ExecStart=/opt/runnerd/bin/runnerd --config /etc/runnerd/runnerd.yaml --bootstrap-admin github:${bootstrap_admin_github_user_id}
+ExecStart=/opt/runnerd/bin/runnerd --config /etc/runnerd/runnerd.yaml
 Restart=on-failure
 RestartSec=5s
 
@@ -87,29 +119,31 @@ RestartSec=5s
 WantedBy=multi-user.target
 RUNNERD_UNIT
 
-# 创建 runnerd 用户和组
-getent group runnerd >/dev/null || groupadd --system runnerd
-id -u runnerd >/dev/null 2>&1 || useradd \
-  --system \
-  --gid runnerd \
-  --home-dir /var/lib/runnerd \
-  --shell /usr/sbin/nologin \
-  runnerd
+# 仅当文件内容变化时才覆盖安装
+if [ ! -f /etc/runnerd/runnerd.yaml ] || ! cmp -s "$config_tmp" /etc/runnerd/runnerd.yaml; then
+  install -o root -g runnerd -m 0640 "$config_tmp" /etc/runnerd/runnerd.yaml
+  changed=true
+fi
 
-# 安装 runnerd 的各个文件
-install -d -o root -g root -m 0755 /opt/runnerd/bin
-install -d -o root -g runnerd -m 0750 /etc/runnerd
-install -d -o root -g runnerd -m 0750 /etc/runnerd/secrets
-install -d -o runnerd -g runnerd -m 0750 /var/lib/runnerd
+if [ ! -f /etc/runnerd/secrets/github-app.pem ] || ! cmp -s "$pem_tmp" /etc/runnerd/secrets/github-app.pem; then
+  install -o runnerd -g runnerd -m 0600 "$pem_tmp" /etc/runnerd/secrets/github-app.pem
+  changed=true
+fi
 
-install -o root -g root -m 0755 "$runnerd_binary" /opt/runnerd/bin/runnerd
-install -o root -g runnerd -m 0640 "$config_tmp" /etc/runnerd/runnerd.yaml
-install -o runnerd -g runnerd -m 0600 "$pem_tmp" /etc/runnerd/secrets/github-app.pem
-install -o root -g root -m 0644 "$unit_tmp" /etc/systemd/system/runnerd.service
+if [ ! -f /etc/systemd/system/runnerd.service ] || ! cmp -s "$unit_tmp" /etc/systemd/system/runnerd.service; then
+  install -o root -g root -m 0644 "$unit_tmp" /etc/systemd/system/runnerd.service
+  changed=true
+fi
 
-systemctl daemon-reload
-systemctl enable runnerd.service
-systemctl restart runnerd.service
+# 一次性设置 bootstrap admin（幂等，执行完即退出）
+runuser -u runnerd -- /opt/runnerd/bin/runnerd --config /etc/runnerd/runnerd.yaml --bootstrap-admin "github:${bootstrap_admin_github_user_id}"
+
+# 仅当有变更或服务未运行时才重启
+if [ "$changed" = true ] || ! systemctl is-active --quiet runnerd.service; then
+  systemctl daemon-reload
+  systemctl enable runnerd.service
+  systemctl restart runnerd.service
+fi
 
 # 等待 runnerd 服务启动完成
 for _ in $(seq 1 60); do

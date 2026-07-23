@@ -6,5 +6,4 @@ locals {
     github_app_private_key_base64  = var.github_app_private_key_base64
     bootstrap_admin_github_user_id = var.bootstrap_admin_github_user_id
   })
-  install_checksum = nonsensitive(sha256(local.install_command))
 }

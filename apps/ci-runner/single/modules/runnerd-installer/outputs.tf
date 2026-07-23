@@ -4,7 +4,3 @@ output "install_command" {
   sensitive   = true
 }
 
-output "install_checksum" {
-  description = "完整安装命令的非敏感 SHA-256 摘要。"
-  value       = local.install_checksum
-}

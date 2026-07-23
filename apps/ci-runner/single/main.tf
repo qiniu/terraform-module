@@ -43,10 +43,6 @@ resource "qiniu_compute_instance_exec" "install_runnerd" {
   shell   = "bash"
   command = module.runnerd.install_command
 
-  triggers = {
-    install_checksum = module.runnerd.install_checksum
-  }
-
   store_stdout = false
   store_stderr = false
 
