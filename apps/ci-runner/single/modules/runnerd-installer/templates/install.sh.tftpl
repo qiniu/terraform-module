@@ -46,7 +46,7 @@ esac
 
 # 仅安装缺失的依赖包
 pkgs_missing=()
-for pkg in ca-certificates curl tar; do
+for pkg in ca-certificates curl tar sqlite3; do
   dpkg-query -W -f='$${Status}' "$pkg" 2>/dev/null | grep -q "ok installed" || pkgs_missing+=("$pkg")
 done
 if [ "$${#pkgs_missing[@]}" -gt 0 ]; then
