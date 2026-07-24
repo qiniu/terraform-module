@@ -1,6 +1,6 @@
 # CI Runner 单机一键部署
 
-本目录是 [`qiniu/ci-runner`](https://github.com/qiniu/ci-runner) 的 Terraform 单机部署封装，用于在七牛云上创建一台 ECS，并自动安装、配置和启动 `runnerd`。
+本目录是 [`qiniu/ci-runner`](https://github.com/qiniu/ci-runner) 的 Terraform 单机部署封装，用于在七牛云上创建一台 ECS，并自动安装、配置和启动 CI Runner 服务。
 
 该模块会创建：
 
@@ -9,7 +9,7 @@
 - 一个将公网 HTTPS 请求转发到 `runnerd_port` 的 HTTPProxy；
 - 可选的 SSH 端口转发；
 - `runnerd.yaml`、GitHub App 私钥和 systemd 服务；
-- 一个使用本机 SQLite 数据库的单实例 `runnerd`。
+- 一个使用本机 SQLite 数据库的单实例 CI Runner 服务。
 
 `terraform apply` 会等待服务启动并通过 `/healthz` 健康检查。
 
@@ -118,7 +118,7 @@ terraform output -raw github_webhook_secret
 
 确认 webhook 已启用并订阅 `Workflow jobs`；如需将 `workflow_run` 作为补偿信号，可同时订阅 `Workflow runs`。然后将 GitHub App 安装到需要使用 runner 的仓库或组织。
 
-## 5. 完成 runnerd 初始化
+## 5. 完成 CI Runner 初始化
 
 打开 `dashboard_url`，使用 `bootstrap_admin_github_login` 对应的 GitHub 账号登录。之后至少还需要：
 
@@ -127,9 +127,9 @@ terraform output -raw github_webhook_secret
 3. 按需配置 runner group 和 repository policy；
 4. 用 `runs-on: [self-hosted, e2b]` 的测试工作流验证任务调度。
 
-这些属于 `runnerd` 的运行配置，不由本 Terraform 模块创建。详细步骤参见上游 [`ci-runner` README](https://github.com/qiniu/ci-runner/blob/main/README.zh.md) 和[部署检查清单](https://github.com/qiniu/ci-runner/blob/main/docs/deployment-smoke.zh.md)。
+这些属于 CI Runner 的运行配置，不由本 Terraform 模块创建。详细步骤参见上游 [`ci-runner` README](https://github.com/qiniu/ci-runner/blob/main/README.zh.md) 和[部署检查清单](https://github.com/qiniu/ci-runner/blob/main/docs/deployment-smoke.zh.md)。
 
-## 升级或重新安装 runnerd
+## 升级或重新安装 CI Runner
 
 修改 `runnerd_version` 后执行：
 
@@ -182,7 +182,7 @@ terraform destroy
 
 | 名称 | 必填 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `runnerd_version` | 是 | - | `runnerd` GitHub Release 标签，不能为 `latest` |
+| `runnerd_version` | - | 内部常量 | CI Runner 版本，在 `main.tf` locals 中维护 |
 | `github_app_id` | 是 | - | GitHub App 数字 ID |
 | `github_app_slug` | 是 | - | GitHub App slug |
 | `github_oauth_client_id` | 是 | - | GitHub App OAuth Client ID |
@@ -198,7 +198,7 @@ terraform destroy
 
 | 名称 | 敏感 | 说明 |
 | --- | --- | --- |
-| `dashboard_url` | 否 | `runnerd` 控制台 HTTPS 地址 |
+| `dashboard_url` | 否 | CI Runner 控制台 HTTPS 地址 |
 | `github_oauth_callback_url` | 否 | GitHub App OAuth callback URL |
 | `github_webhook_url` | 否 | GitHub App webhook URL |
 | `github_webhook_secret` | 是 | GitHub webhook 签名密钥 |
