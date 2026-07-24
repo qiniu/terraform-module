@@ -11,6 +11,15 @@ override_module {
   }
 }
 
+override_module {
+  target = module.github_utils
+
+  outputs = {
+    user_id = 583231
+    login   = "octocat"
+  }
+}
+
 variables {
   runnerd_version                = "v0.2.3"
   github_app_id                  = 123456
