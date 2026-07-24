@@ -19,9 +19,13 @@ output "github_webhook_secret" {
   sensitive   = true
 }
 
-output "ssh_endpoints" {
-  description = "启用 SSH 端口转发时的公网 IP:Port 列表，配合 instance_password 使用。"
-  value       = module.infrastructure.ssh_endpoints
+output "ssh_command" {
+  description = "SSH 登录命令（root 用户），需先设置 instance_password 且 enable_ssh_port_forward = true。"
+  value = length(module.infrastructure.ssh_endpoints) > 0 ? join(" ", [
+    "ssh",
+    "-p", split(":", module.infrastructure.ssh_endpoints[0])[1],
+    "root@${split(":", module.infrastructure.ssh_endpoints[0])[0]}",
+  ]) : null
 }
 
 output "setup_guide" {
