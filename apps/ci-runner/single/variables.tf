@@ -90,21 +90,17 @@ variable "github_app_private_key_base64" {
   }
 }
 
-variable "bootstrap_admin_github_user_id" {
-  type        = number
+variable "bootstrap_admin_github_login" {
+  type        = string
   description = <<-EOT
-    初始管理员的 GitHub 数字用户 ID（不是用户名 / login name）。
-    部署完成后，使用该 ID 对应的 GitHub 账号登录 runnerd 控制台（dashboard_url）完成初始化。
-    获取位置：通过 GitHub API 查询并取返回值中的 "id" 字段：
-    curl -s https://api.github.com/users/<username>
+    初始管理员的 GitHub 用户名（login name），例如 "octocat"。
+    模块会自动通过 GitHub API 解析为数字用户 ID，无需手动查询。
+    部署完成后，使用该账号登录 runnerd 控制台（dashboard_url）完成初始化。
   EOT
 
   validation {
-    condition = (
-      var.bootstrap_admin_github_user_id > 0 &&
-      floor(var.bootstrap_admin_github_user_id) == var.bootstrap_admin_github_user_id
-    )
-    error_message = "bootstrap_admin_github_user_id 必须是大于 0 的整数。"
+    condition     = can(regex("^[a-zA-Z0-9]([a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$", var.bootstrap_admin_github_login))
+    error_message = "bootstrap_admin_github_login 必须是有效的 GitHub 用户名。"
   }
 }
 

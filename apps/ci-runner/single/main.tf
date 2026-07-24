@@ -3,6 +3,26 @@ locals {
   runnerd_port = 25500
 }
 
+# 通过 GitHub API 将用户名解析为数字用户 ID
+data "http" "github_user" {
+  url = "https://api.github.com/users/${var.bootstrap_admin_github_login}"
+
+  request_headers = {
+    Accept = "application/vnd.github+json"
+  }
+
+  lifecycle {
+    postcondition {
+      condition     = self.status_code == 200
+      error_message = "GitHub 用户 ${var.bootstrap_admin_github_login} 不存在或 GitHub API 不可达（HTTP ${self.status_code}）。"
+    }
+  }
+}
+
+locals {
+  bootstrap_admin_github_user_id = jsondecode(data.http.github_user.response_body).id
+}
+
 module "infrastructure" {
   source = "./modules/infrastructure"
 
@@ -36,7 +56,7 @@ module "runnerd" {
   runnerd_port                   = local.runnerd_port
   config_content                 = module.config.config_content
   github_app_private_key_base64  = var.github_app_private_key_base64
-  bootstrap_admin_github_user_id = var.bootstrap_admin_github_user_id
+  bootstrap_admin_github_user_id = local.bootstrap_admin_github_user_id
 }
 
 resource "qiniu_compute_instance_exec" "install_runnerd" {

@@ -18,7 +18,7 @@ variables {
   github_oauth_client_id         = "Iv1.example"
   github_oauth_client_secret     = "oauth-secret"
   github_app_private_key_base64  = "LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCnRlc3Qta2V5Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K"
-  bootstrap_admin_github_user_id = 123456
+  bootstrap_admin_github_login = "octocat"
 }
 
 run "rejects_invalid_instance_type_format" {

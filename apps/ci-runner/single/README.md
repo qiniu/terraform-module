@@ -63,7 +63,7 @@ github_app_id          = 123456
 github_app_slug        = "your-github-app-slug"
 github_oauth_client_id = "Iv1.your-client-id"
 
-bootstrap_admin_github_user_id = 12345678
+bootstrap_admin_github_login = "your-github-username"
 
 # 可选
 instance_type             = "ecs.t1s.c1m2"
@@ -120,7 +120,7 @@ terraform output -raw github_webhook_secret
 
 ## 5. 完成 runnerd 初始化
 
-打开 `dashboard_url`，使用 `bootstrap_admin_github_user_id` 对应的 GitHub 账号登录。之后至少还需要：
+打开 `dashboard_url`，使用 `bootstrap_admin_github_login` 对应的 GitHub 账号登录。之后至少还需要：
 
 1. 为账号或组织配置 Sandbox service API URL 和 API key，或者启用管理员级 fallback；
 2. 创建 runner spec，并关联一个包含 GitHub Actions runner 的七牛 Sandbox 模板；
@@ -188,7 +188,7 @@ terraform destroy
 | `github_oauth_client_id` | 是 | - | GitHub App OAuth Client ID |
 | `github_oauth_client_secret` | 是 | - | GitHub App OAuth Client secret，敏感 |
 | `github_app_private_key_base64` | 是 | - | Base64 编码的 GitHub App PEM 私钥，敏感 |
-| `bootstrap_admin_github_user_id` | 是 | - | 初始管理员的 GitHub 数字用户 ID |
+| `bootstrap_admin_github_login` | 是 | - | 初始管理员的 GitHub 用户名（自动解析为数字 ID） |
 | `instance_type` | 否 | `ecs.t1s.c1m2` | 以 `ecs.` 开头的 ECS 实例规格 |
 | `system_disk_size` | 否 | `20` | 系统盘大小，20–500 GiB 且必须是 10 的倍数 |
 | `internet_max_bandwidth` | 否 | `100` | PeakBandwidth 公网带宽，可选 50、100 或 200 Mbps |
