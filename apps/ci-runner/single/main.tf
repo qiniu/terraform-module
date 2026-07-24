@@ -1,6 +1,8 @@
 locals {
   # runnerd 监听及 HTTPProxy 转发的实例内部端口，固定值，无需外部配置
   runnerd_port = 25500
+  # runnerd 版本，升级时修改此处
+  runnerd_version = "v0.2.3"
 }
 
 module "github_utils" {
@@ -38,7 +40,7 @@ module "config" {
 module "runnerd" {
   source = "./modules/runnerd-installer"
 
-  runnerd_version                = var.runnerd_version
+  runnerd_version                = local.runnerd_version
   runnerd_port                   = local.runnerd_port
   config_content                 = module.config.config_content
   github_app_private_key_base64  = var.github_app_private_key_base64

@@ -1,19 +1,3 @@
-variable "runnerd_version" {
-  type        = string
-  description = <<-EOT
-    要安装的 runnerd 版本标签，必须是已明确发布的版本，不允许使用 "latest"。
-    获取位置：qiniu/ci-runner 的 GitHub Releases 页面 https://github.com/qiniu/ci-runner/releases 中的 tag 名称，例如 "v0.2.3"。
-  EOT
-
-  validation {
-    condition = (
-      can(regex("^[0-9A-Za-z._-]+$", var.runnerd_version)) &&
-      lower(var.runnerd_version) != "latest"
-    )
-    error_message = "runnerd_version 必须是非空的安全版本标签，仅可包含字母、数字、点、下划线和连字符，且不能为 latest。"
-  }
-}
-
 variable "github_app_id" {
   type        = number
   description = <<-EOT

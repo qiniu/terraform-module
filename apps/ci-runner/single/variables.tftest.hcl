@@ -21,7 +21,6 @@ override_module {
 }
 
 variables {
-  runnerd_version                = "v0.2.3"
   github_app_id                  = 123456
   github_app_slug                = "runner-example"
   github_oauth_client_id         = "Iv1.example"
