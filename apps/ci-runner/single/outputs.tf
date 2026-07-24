@@ -20,14 +20,8 @@ output "github_webhook_secret" {
 }
 
 output "ssh_endpoints" {
-  description = "启用 SSH 端口转发时的公网 IP:Port 列表。"
+  description = "启用 SSH 端口转发时的公网 IP:Port 列表，配合 instance_password 使用。"
   value       = module.infrastructure.ssh_endpoints
-}
-
-output "ssh_private_key" {
-  description = "启用 SSH 端口转发时使用的部署私钥；仅应写入权限为 0600 的本地临时文件。"
-  value       = var.enable_ssh_port_forward ? module.infrastructure.deployment_private_key : null
-  sensitive   = true
 }
 
 output "setup_guide" {

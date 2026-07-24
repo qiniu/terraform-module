@@ -141,7 +141,7 @@ variable "enable_ssh_port_forward" {
   description = <<-EOT
     是否通过七牛云 PortForward 将实例 SSH 22 端口暴露到公网，默认 false。
     仅建议在 SSH 调试期间开启：开启后可通过输出 ssh_endpoints 获取公网 SSH 端点，
-    通过输出 ssh_private_key 获取部署私钥；调试结束后请重新关闭。
+    配合 instance_password 通过密码登录；调试结束后请重新关闭。
   EOT
   default     = false
 }
