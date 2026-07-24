@@ -40,7 +40,7 @@ export QINIU_REGION_ID="<qiniu-region-id>"
 - App slug；
 - OAuth Client ID 和 Client secret；
 - GitHub App PEM 私钥；
-- 初始管理员的 GitHub 数字用户 ID。
+- 初始管理员的 GitHub 用户名。
 
 首次创建 GitHub App 时，可以暂时填写有效的占位 callback 和 webhook URL；Terraform 部署完成后，再替换为模块输出的正式地址。
 
@@ -57,8 +57,6 @@ cd apps/ci-runner/single
 创建 `terraform.tfvars`：
 
 ```hcl
-runnerd_version = "v0.2.3"
-
 github_app_id          = 123456
 github_app_slug        = "your-github-app-slug"
 github_oauth_client_id = "Iv1.your-client-id"
@@ -66,13 +64,16 @@ github_oauth_client_id = "Iv1.your-client-id"
 bootstrap_admin_github_login = "your-github-username"
 
 # 可选
-instance_type             = "ecs.t1s.c1m2"
-system_disk_size          = 20
-internet_max_bandwidth    = 100
-enable_ssh_port_forward   = false
-```
+instance_type           = "ecs.t1s.c1m2"
+system_disk_size        = 20
+internet_max_bandwidth  = 100
+instance_password       = "YourP@ssw0rd"
+enable_ssh_port_forward = false
 
-`runnerd_version` 必须是 [`qiniu/ci-runner` Releases](https://github.com/qiniu/ci-runner/releases) 中存在的明确版本标签，不能使用 `latest`。示例版本仅用于展示，请按需选择版本。
+# 计费（默认按量，可选包月）
+# cost_charge_type = "PrePaid"
+# cost_period      = 1
+```
 
 将敏感值通过 Terraform 环境变量传入：
 
@@ -131,7 +132,7 @@ terraform output -raw github_webhook_secret
 
 ## 升级或重新安装 CI Runner
 
-修改 `runnerd_version` 后执行：
+CI Runner 版本在 `main.tf` 的 `locals.runnerd_version` 中维护，修改后执行：
 
 ```bash
 terraform plan
@@ -148,26 +149,20 @@ terraform apply -replace=qiniu_compute_instance_exec.install_runnerd
 
 ## SSH 调试
 
-SSH 端口转发默认关闭。设置以下变量并重新执行 `terraform apply` 可启用：
-
-```hcl
-enable_ssh_port_forward = true
-```
-
-查看公网 SSH 端点：
+设置 `instance_password` 和 `enable_ssh_port_forward = true` 后执行 `terraform apply`，即可通过密码 SSH 登录：
 
 ```bash
-terraform output -json ssh_endpoints
+terraform output -raw ssh_command
+# 输出示例: ssh -p 10012 root@149.71.241.13
 ```
 
-将私钥保存到仅当前用户可读的临时文件：
+也可使用内部调试脚本（从 terraform state 读取部署密钥）：
 
 ```bash
-umask 077
-terraform output -raw ssh_private_key > ci-runner-ssh.pem
+./scripts/ssh.sh "journalctl -u runnerd --since '10 min ago' --no-pager"
 ```
 
-调试结束后，建议关闭 `enable_ssh_port_forward`，重新执行 `terraform apply`，并安全删除导出的私钥文件。
+调试结束后，建议关闭 `enable_ssh_port_forward` 并重新执行 `terraform apply`。
 
 ## 销毁
 
@@ -182,17 +177,19 @@ terraform destroy
 
 | 名称 | 必填 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `runnerd_version` | - | 内部常量 | CI Runner 版本，在 `main.tf` locals 中维护 |
 | `github_app_id` | 是 | - | GitHub App 数字 ID |
 | `github_app_slug` | 是 | - | GitHub App slug |
 | `github_oauth_client_id` | 是 | - | GitHub App OAuth Client ID |
 | `github_oauth_client_secret` | 是 | - | GitHub App OAuth Client secret，敏感 |
 | `github_app_private_key_base64` | 是 | - | Base64 编码的 GitHub App PEM 私钥，敏感 |
 | `bootstrap_admin_github_login` | 是 | - | 初始管理员的 GitHub 用户名（自动解析为数字 ID） |
-| `instance_type` | 否 | `ecs.t1s.c1m2` | 以 `ecs.` 开头的 ECS 实例规格 |
-| `system_disk_size` | 否 | `20` | 系统盘大小，20–500 GiB 且必须是 10 的倍数 |
-| `internet_max_bandwidth` | 否 | `100` | PeakBandwidth 公网带宽，可选 50、100 或 200 Mbps |
-| `enable_ssh_port_forward` | 否 | `false` | 是否通过 PortForward 暴露 SSH 22 端口 |
+| `instance_type` | 否 | `ecs.t1s.c1m2` | ECS 实例规格 |
+| `system_disk_size` | 否 | `20` | 系统盘大小，20–500 GiB，10 的倍数 |
+| `internet_max_bandwidth` | 否 | `100` | 公网带宽，可选 50、100 或 200 Mbps |
+| `instance_password` | 否 | `null` | SSH 登录密码，≥8 位含字母+数字+特殊字符 |
+| `enable_ssh_port_forward` | 否 | `false` | 是否暴露 SSH 端口到公网 |
+| `cost_charge_type` | 否 | `PostPaid` | 计费类型：`PostPaid`（按量）/ `PrePaid`（包月） |
+| `cost_period` | 否 | `null` | 包月时长，1-36 个月，仅 PrePaid 时设置 |
 
 ## 输出
 
@@ -202,8 +199,8 @@ terraform destroy
 | `github_oauth_callback_url` | 否 | GitHub App OAuth callback URL |
 | `github_webhook_url` | 否 | GitHub App webhook URL |
 | `github_webhook_secret` | 是 | GitHub webhook 签名密钥 |
-| `ssh_endpoints` | 否 | 启用 SSH 转发后的公网 `IP:Port` 列表 |
-| `ssh_private_key` | 是 | 启用 SSH 转发后使用的部署私钥 |
+| `ssh_command` | 否 | SSH 登录命令（需开启端口转发并设置密码） |
+| `setup_guide` | 否 | 部署后 GitHub App 配置步骤指引 |
 
 ## 安全注意事项
 
