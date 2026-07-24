@@ -140,7 +140,7 @@ variable "enable_ssh_port_forward" {
   type        = bool
   description = <<-EOT
     是否通过七牛云 PortForward 将实例 SSH 22 端口暴露到公网，默认 false。
-    仅建议在 SSH 调试期间开启：开启后可通过输出 ssh_endpoints 获取公网 SSH 端点，
+    仅建议在调试期间开启：开启后可通过输出 ssh_command 获取 SSH 登录命令，
     配合 instance_password 通过密码登录；调试结束后请重新关闭。
   EOT
   default     = false
@@ -149,8 +149,8 @@ variable "enable_ssh_port_forward" {
 variable "cost_charge_type" {
   type        = string
   description = <<-EOT
-    实例计费类型。PostPaid 为按量计费（后付费），PrePaid 为包年包月（预付费）。
-    按量计费适合短期测试；包年包月适合长期运行，费用更低。
+    实例计费类型。PostPaid 为按量计费（后付费），PrePaid 为包月（预付费）。
+    按量计费适合短期测试；包月适合长期运行，费用更低。
   EOT
   default     = "PostPaid"
 
@@ -182,8 +182,6 @@ variable "cost_period" {
     error_message = "cost_period 取值范围为 1-36（月）。"
   }
 }
-
-
 
 variable "instance_password" {
   type        = string
