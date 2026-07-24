@@ -40,11 +40,6 @@ variable "cost_period_unit" {
   default     = null
 }
 
-variable "cost_discount_activity_id" {
-  type        = string
-  description = "预付费促销活动 ID"
-  default     = null
-}
 
 variable "instance_password" {
   type        = string

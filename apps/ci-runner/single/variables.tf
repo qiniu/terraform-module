@@ -163,8 +163,7 @@ variable "cost_charge_type" {
 variable "cost_period" {
   type        = number
   description = <<-EOT
-    预付费购买时长，仅在 cost_charge_type 为 PrePaid 时生效。
-    取值范围：cost_period_unit 为 Month 时 1-36，为 Year 时 1-3。
+    预付费购买时长（月），仅在 cost_charge_type 为 PrePaid 时生效，取值 1-36。
   EOT
   default     = null
 
@@ -179,15 +178,8 @@ variable "cost_period" {
   }
 
   validation {
-    condition = (
-      var.cost_period == null ||
-      (
-        var.cost_period_unit == "Year" ?
-        (var.cost_period >= 1 && var.cost_period <= 3) :
-        (var.cost_period >= 1 && var.cost_period <= 36)
-      )
-    )
-    error_message = "cost_period 在 Month 单位时取值 1-36，Year 单位时取值 1-3。"
+    condition     = var.cost_period == null || (var.cost_period >= 1 && var.cost_period <= 36)
+    error_message = "cost_period 取值范围为 1-36（月）。"
   }
 }
 
@@ -195,39 +187,10 @@ variable "cost_period_unit" {
   type        = string
   description = <<-EOT
     预付费购买时长单位，仅在 cost_charge_type 为 PrePaid 时生效。
-    支持 Month（月）和 Year（年）。
   EOT
-  default     = null
-
-  validation {
-    condition     = var.cost_charge_type != "PostPaid" || var.cost_period_unit == null
-    error_message = "PostPaid 模式下 cost_period_unit 必须为 null（不设置）。"
-  }
-
-  validation {
-    condition     = var.cost_charge_type != "PrePaid" || var.cost_period_unit != null
-    error_message = "PrePaid 模式下必须设置 cost_period_unit。"
-  }
-
-  validation {
-    condition     = var.cost_period_unit == null || contains(["Month", "Year"], var.cost_period_unit)
-    error_message = "cost_period_unit 必须为 Month 或 Year。"
-  }
+  default     = "Month"
 }
 
-variable "cost_discount_activity_id" {
-  type        = string
-  description = <<-EOT
-    预付费促销活动 ID，仅在 cost_charge_type 为 PrePaid 时可选设置。
-    获取位置：七牛云控制台促销活动页面。
-  EOT
-  default     = null
-
-  validation {
-    condition     = var.cost_charge_type != "PostPaid" || var.cost_discount_activity_id == null
-    error_message = "PostPaid 模式下 cost_discount_activity_id 必须为 null（不设置）。"
-  }
-}
 
 variable "instance_password" {
   type        = string
