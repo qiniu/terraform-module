@@ -1,5 +1,5 @@
 output "dashboard_url" {
-  description = "runnerd 控制台 HTTPS 地址。"
+  description = "CI Runner 控制台 HTTPS 地址。"
   value       = module.infrastructure.public_url
 }
 

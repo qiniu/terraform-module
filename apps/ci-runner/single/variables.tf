@@ -79,7 +79,7 @@ variable "bootstrap_admin_github_login" {
   description = <<-EOT
     初始管理员的 GitHub 用户名（login name），例如 "octocat"。
     模块会自动通过 GitHub API 解析为数字用户 ID，无需手动查询。
-    部署完成后，使用该账号登录 runnerd 控制台（dashboard_url）完成初始化。
+    部署完成后，使用该账号登录 CI Runner 控制台（dashboard_url）完成初始化。
   EOT
 
   validation {
@@ -91,7 +91,7 @@ variable "bootstrap_admin_github_login" {
 variable "instance_type" {
   type        = string
   description = <<-EOT
-    运行 runnerd 的 ECS 实例规格，必须以 "ecs." 开头。
+    运行 CI Runner 的 ECS 实例规格，必须以 "ecs." 开头。
     获取位置：七牛云控制台云服务器 ECS 购买页的可选规格列表。
     示例："ecs.t1s.c1m2"。
   EOT
