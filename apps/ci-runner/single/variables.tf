@@ -234,7 +234,7 @@ variable "instance_password" {
   description = <<-EOT
     ECS 实例 SSH 登录密码，设置后可通过 root 用户密码登录虚机。
     要求：不少于 8 位，必须同时包含字母、数字和特殊符号。
-    不设置则仅可通过七牛云控制台（VNC / Web Terminal）或密钥对登录。
+    不设置则仅可通过密钥对登录（内部使用）。
   EOT
   default     = null
   sensitive   = true
