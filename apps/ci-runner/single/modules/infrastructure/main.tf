@@ -48,7 +48,7 @@ resource "qiniu_compute_instance" "ci_runner" {
 
   cost_charge_type          = var.cost_charge_type
   cost_period               = var.cost_period
-  cost_period_unit          = var.cost_period_unit
+  cost_period_unit          = "Month"
   disable_public_ip      = true
   key_pair_id            = qiniu_compute_key_pair.deployment.id
   password              = var.instance_password

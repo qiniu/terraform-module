@@ -95,7 +95,6 @@ run "accepts_prepaid_with_month_period" {
   variables {
     cost_charge_type = "PrePaid"
     cost_period      = 1
-    cost_period_unit = "Month"
   }
 }
 

@@ -183,13 +183,6 @@ variable "cost_period" {
   }
 }
 
-variable "cost_period_unit" {
-  type        = string
-  description = <<-EOT
-    预付费购买时长单位，仅在 cost_charge_type 为 PrePaid 时生效。
-  EOT
-  default     = "Month"
-}
 
 
 variable "instance_password" {
