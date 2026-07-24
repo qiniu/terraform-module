@@ -228,3 +228,38 @@ variable "cost_discount_activity_id" {
     error_message = "PostPaid 模式下 cost_discount_activity_id 必须为 null（不设置）。"
   }
 }
+
+variable "instance_password" {
+  type        = string
+  description = <<-EOT
+    ECS 实例 SSH 登录密码，设置后可通过 root 用户密码登录虚机。
+    须包含大写字母、小写字母、数字和特殊字符中的至少三种，长度 8-26 位。
+    不设置则仅可通过七牛云控制台（VNC / Web Terminal）或密钥对登录。
+  EOT
+  default     = null
+  sensitive   = true
+
+  validation {
+    condition = (
+      var.instance_password == null ||
+      (
+        length(var.instance_password) >= 8 &&
+        length(var.instance_password) <= 26
+      )
+    )
+    error_message = "instance_password 长度必须为 8-26 位。"
+  }
+
+  validation {
+    condition = (
+      var.instance_password == null ||
+      (
+        (can(regex("[A-Z]", var.instance_password)) ? 1 : 0) +
+        (can(regex("[a-z]", var.instance_password)) ? 1 : 0) +
+        (can(regex("[0-9]", var.instance_password)) ? 1 : 0) +
+        (can(regex("[^A-Za-z0-9]", var.instance_password)) ? 1 : 0) >= 3
+      )
+    )
+    error_message = "instance_password 须包含大写字母、小写字母、数字和特殊字符中的至少三种。"
+  }
+}

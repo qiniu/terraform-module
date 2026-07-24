@@ -45,3 +45,10 @@ variable "cost_discount_activity_id" {
   description = "预付费促销活动 ID"
   default     = null
 }
+
+variable "instance_password" {
+  type        = string
+  description = "ECS 实例 SSH 登录密码"
+  default     = null
+  sensitive   = true
+}

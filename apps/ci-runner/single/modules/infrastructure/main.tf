@@ -52,6 +52,7 @@ resource "qiniu_compute_instance" "ci_runner" {
   cost_discount_activity_id = var.cost_discount_activity_id
   disable_public_ip      = true
   key_pair_id            = qiniu_compute_key_pair.deployment.id
+  password              = var.instance_password
 
   timeouts {
     create = "30m"
