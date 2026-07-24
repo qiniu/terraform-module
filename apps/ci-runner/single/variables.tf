@@ -233,7 +233,7 @@ variable "instance_password" {
   type        = string
   description = <<-EOT
     ECS 实例 SSH 登录密码，设置后可通过 root 用户密码登录虚机。
-    须包含大写字母、小写字母、数字和特殊字符中的至少三种，长度 8-26 位。
+    要求：不少于 8 位，必须同时包含字母、数字和特殊符号。
     不设置则仅可通过七牛云控制台（VNC / Web Terminal）或密钥对登录。
   EOT
   default     = null
@@ -244,22 +244,11 @@ variable "instance_password" {
       var.instance_password == null ||
       (
         length(var.instance_password) >= 8 &&
-        length(var.instance_password) <= 26
+        can(regex("[A-Za-z]", var.instance_password)) &&
+        can(regex("[0-9]", var.instance_password)) &&
+        can(regex("[^A-Za-z0-9]", var.instance_password))
       )
     )
-    error_message = "instance_password 长度必须为 8-26 位。"
-  }
-
-  validation {
-    condition = (
-      var.instance_password == null ||
-      (
-        (can(regex("[A-Z]", var.instance_password)) ? 1 : 0) +
-        (can(regex("[a-z]", var.instance_password)) ? 1 : 0) +
-        (can(regex("[0-9]", var.instance_password)) ? 1 : 0) +
-        (can(regex("[^A-Za-z0-9]", var.instance_password)) ? 1 : 0) >= 3
-      )
-    )
-    error_message = "instance_password 须包含大写字母、小写字母、数字和特殊字符中的至少三种。"
+    error_message = "密码不符合要求：必须不少于 8 位，且同时包含字母、数字和特殊符号。"
   }
 }
