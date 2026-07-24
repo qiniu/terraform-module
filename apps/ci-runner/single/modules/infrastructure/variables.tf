@@ -22,3 +22,26 @@ variable "enable_ssh_port_forward" {
   type        = bool
   description = "是否通过七牛 PortForward 暴露实例 SSH 22 端口"
 }
+
+variable "cost_charge_type" {
+  type        = string
+  description = "实例计费类型（PostPaid / PrePaid）"
+}
+
+variable "cost_period" {
+  type        = number
+  description = "预付费购买时长"
+  default     = null
+}
+
+variable "cost_period_unit" {
+  type        = string
+  description = "预付费购买时长单位（Month / Year）"
+  default     = null
+}
+
+variable "cost_discount_activity_id" {
+  type        = string
+  description = "预付费促销活动 ID"
+  default     = null
+}

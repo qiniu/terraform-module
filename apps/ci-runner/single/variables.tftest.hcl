@@ -70,3 +70,31 @@ run "rejects_unsupported_peak_bandwidth" {
 
   expect_failures = [var.internet_max_bandwidth]
 }
+
+run "rejects_invalid_cost_charge_type" {
+  command = plan
+
+  variables {
+    cost_charge_type = "Invalid"
+  }
+
+  expect_failures = [var.cost_charge_type]
+}
+
+run "accepts_prepaid_with_month_period" {
+  command = plan
+
+  variables {
+    cost_charge_type = "PrePaid"
+    cost_period      = 1
+    cost_period_unit = "Month"
+  }
+}
+
+run "accepts_postpaid_default" {
+  command = plan
+
+  variables {
+    cost_charge_type = "PostPaid"
+  }
+}
