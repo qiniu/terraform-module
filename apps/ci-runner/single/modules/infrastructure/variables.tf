@@ -34,6 +34,12 @@ variable "cost_period" {
   default     = null
 }
 
+variable "cost_period_unit" {
+  type        = string
+  description = "预付费购买时长单位"
+  default     = "Month"
+}
+
 
 
 variable "instance_password" {

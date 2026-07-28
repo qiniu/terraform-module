@@ -46,12 +46,12 @@ resource "qiniu_compute_instance" "ci_runner" {
   internet_max_bandwidth = var.internet_max_bandwidth
   internet_charge_type   = "PeakBandwidth"
 
-  cost_charge_type          = var.cost_charge_type
-  cost_period               = var.cost_period
-  cost_period_unit          = "Month"
-  disable_public_ip      = true
-  key_pair_id            = qiniu_compute_key_pair.deployment.id
-  password              = var.instance_password
+  cost_charge_type  = var.cost_charge_type
+  cost_period       = var.cost_charge_type == "PrePaid" ? var.cost_period : null
+  cost_period_unit  = var.cost_charge_type == "PrePaid" ? var.cost_period_unit : null
+  disable_public_ip = true
+  key_pair_id       = qiniu_compute_key_pair.deployment.id
+  password          = var.instance_password
 
   timeouts {
     create = "30m"

@@ -73,6 +73,7 @@ enable_ssh_port_forward = false
 # 计费（默认按量，可选包月）
 # cost_charge_type = "PrePaid"
 # cost_period      = 1
+# cost_period_unit = "Month"
 ```
 
 将敏感值通过 Terraform 环境变量传入：
@@ -190,6 +191,7 @@ terraform destroy
 | `enable_ssh_port_forward` | 否 | `false` | 是否暴露 SSH 端口到公网 |
 | `cost_charge_type` | 否 | `PostPaid` | 计费类型：`PostPaid`（按量）/ `PrePaid`（包月） |
 | `cost_period` | 否 | `null` | 包月时长，1-36 个月，仅 PrePaid 时设置 |
+| `cost_period_unit` | 否 | `Month` | 预付费时长单位：`Month` / `Year`，仅 PrePaid 时生效 |
 
 ## 输出
 

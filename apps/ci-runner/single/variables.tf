@@ -185,6 +185,17 @@ variable "cost_period" {
   }
 }
 
+variable "cost_period_unit" {
+  type        = string
+  description = "预付费购买时长单位，仅在 cost_charge_type 为 PrePaid 时生效，支持 Month、Year。"
+  default     = "Month"
+
+  validation {
+    condition     = contains(["Month", "Year"], var.cost_period_unit)
+    error_message = "cost_period_unit 必须为 Month 或 Year。"
+  }
+}
+
 variable "instance_password" {
   type        = string
   description = <<-EOT
