@@ -57,20 +57,22 @@ variable "github_oauth_client_secret" {
   }
 }
 
-variable "github_app_private_key_base64" {
+variable "github_app_private_key" {
   type        = string
   description = <<-EOT
-    经过 Base64 编码的 GitHub App PEM 私钥，敏感值。
+    GitHub App 的 PEM 私钥原文，敏感值。
     获取位置：GitHub App 设置页 https://github.com/settings/apps/<slug> 底部 "Private keys" 区域，
-    点击 "Generate a private key" 后浏览器会下载形如 <slug>.<date>.private-key.pem 的私钥文件；
-    随后执行 `base64 -w0 <file>.pem`（macOS 为 `base64 -i <file>.pem`）编码为单行 Base64 字符串。
-    建议通过环境变量 TF_VAR_github_app_private_key_base64 注入，不要将 .pem 文件或其 Base64 值提交到代码库。
+    点击 "Generate a private key" 后浏览器会下载形如 <slug>.<date>.private-key.pem 的私钥文件。
+    建议通过环境变量 TF_VAR_github_app_private_key 注入，不要将 .pem 文件或其内容提交到代码库。
   EOT
   sensitive   = true
 
   validation {
-    condition     = can(regex("PRIVATE KEY", base64decode(var.github_app_private_key_base64)))
-    error_message = "github_app_private_key_base64 必须是有效的 Base64，且解码内容必须包含 PRIVATE KEY。"
+    condition = (
+      can(regex("-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----", trimspace(var.github_app_private_key))) &&
+      can(regex("-----END (RSA |EC |OPENSSH )?PRIVATE KEY-----", trimspace(var.github_app_private_key)))
+    )
+    error_message = "github_app_private_key 必须是有效的 PEM 私钥原文。"
   }
 }
 

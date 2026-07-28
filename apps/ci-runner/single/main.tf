@@ -20,10 +20,10 @@ module "infrastructure" {
   internet_max_bandwidth  = var.internet_max_bandwidth
   enable_ssh_port_forward = var.enable_ssh_port_forward
 
-  cost_charge_type          = var.cost_charge_type
-  cost_period               = var.cost_period
+  cost_charge_type = var.cost_charge_type
+  cost_period      = var.cost_period
 
-  instance_password         = var.instance_password
+  instance_password = var.instance_password
 }
 
 module "config" {
@@ -43,7 +43,7 @@ module "runnerd" {
   runnerd_version                = local.runnerd_version
   runnerd_port                   = local.runnerd_port
   config_content                 = module.config.config_content
-  github_app_private_key_base64  = var.github_app_private_key_base64
+  github_app_private_key         = var.github_app_private_key
   bootstrap_admin_github_user_id = module.github_utils.user_id
 }
 

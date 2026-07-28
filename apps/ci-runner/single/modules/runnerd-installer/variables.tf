@@ -14,8 +14,8 @@ variable "config_content" {
   sensitive   = true
 }
 
-variable "github_app_private_key_base64" {
-  description = "Base64 编码的 GitHub App PEM 私钥。"
+variable "github_app_private_key" {
+  description = "GitHub App 的 PEM 私钥原文。"
   type        = string
   sensitive   = true
 }

@@ -21,12 +21,26 @@ override_module {
 }
 
 variables {
-  github_app_id                  = 123456
-  github_app_slug                = "runner-example"
-  github_oauth_client_id         = "Iv1.example"
-  github_oauth_client_secret     = "oauth-secret"
-  github_app_private_key_base64  = "LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCnRlc3Qta2V5Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K"
+  github_app_id                = 123456
+  github_app_slug              = "runner-example"
+  github_oauth_client_id       = "Iv1.example"
+  github_oauth_client_secret   = "oauth-secret"
+  github_app_private_key       = <<-EOT
+    -----BEGIN PRIVATE KEY-----
+    test-key
+    -----END PRIVATE KEY-----
+  EOT
   bootstrap_admin_github_login = "octocat"
+}
+
+run "rejects_base64_encoded_github_app_private_key" {
+  command = plan
+
+  variables {
+    github_app_private_key = "LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCg=="
+  }
+
+  expect_failures = [var.github_app_private_key]
 }
 
 run "rejects_invalid_instance_type_format" {
