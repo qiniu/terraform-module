@@ -1,0 +1,158 @@
+#!/usr/bin/env bash
+
+# 任意一步错误就直接退出
+set -euo pipefail
+
+# 新建文件默认仅所有者可读写
+umask 077
+
+# 安装失败时，将自动进入该函数
+install_failure() {
+  failure_status="$?"
+  trap - ERR
+  systemctl status runnerd.service --no-pager || true
+  journalctl -u runnerd.service -n 100 --no-pager || true
+  exit "$failure_status"
+}
+trap install_failure ERR
+
+# 重试函数，最多尝试执行 max_attempts 次，等待间隔时间依次递增
+retry() {
+  max_attempts="$1"
+  shift
+  attempt=1
+  until "$@"; do
+    if [ "$attempt" -ge "$max_attempts" ]; then
+      echo "command failed after $${max_attempts} attempts" >&2
+      return 1
+    fi
+    sleep "$attempt"
+    attempt=$((attempt + 1))
+  done
+}
+
+case "$(uname -m)" in
+  x86_64)
+    release_arch="amd64"
+    ;;
+  aarch64)
+    release_arch="arm64"
+    ;;
+  *)
+    echo "unsupported architecture: $(uname -m)" >&2
+    false
+    ;;
+esac
+
+# 仅安装缺失的依赖包
+pkgs_missing=()
+for pkg in ca-certificates curl tar sqlite3; do
+  dpkg-query -W -f='$${Status}' "$pkg" 2>/dev/null | grep -q "ok installed" || pkgs_missing+=("$pkg")
+done
+if [ "$${#pkgs_missing[@]}" -gt 0 ]; then
+  retry 5 apt-get update
+  retry 5 apt-get install -y --no-install-recommends "$${pkgs_missing[@]}"
+fi
+
+# 创建 runnerd 用户和组（幂等）
+getent group runnerd >/dev/null || groupadd --system runnerd
+id -u runnerd >/dev/null 2>&1 || useradd \
+  --system \
+  --gid runnerd \
+  --home-dir /var/lib/runnerd \
+  --shell /usr/sbin/nologin \
+  runnerd
+
+# 创建目录（幂等）
+install -d -o root -g root -m 0755 /opt/runnerd/bin
+install -d -o root -g runnerd -m 0750 /etc/runnerd
+install -d -o root -g runnerd -m 0750 /etc/runnerd/secrets
+install -d -o runnerd -g runnerd -m 0750 /var/lib/runnerd
+
+work_dir="$(mktemp -d)"
+trap 'rm -rf "$work_dir"' EXIT
+
+changed=false
+
+# 仅当版本不同时下载并安装二进制
+version_file="/opt/runnerd/VERSION"
+if [ ! -x /opt/runnerd/bin/runnerd ] || [ ! -f "$version_file" ] || [ "$(cat "$version_file")" != "${runnerd_version}" ]; then
+  archive="ci-runner_linux_$${release_arch}.tar.gz"
+  release_url="https://github.com/qiniu/ci-runner/releases/download/${runnerd_version}"
+  retry 5 curl --fail --location --retry 3 --retry-delay 2 \
+    --output "$work_dir/$archive" "$release_url/$archive"
+
+  mkdir "$work_dir/extracted"
+  tar -xzf "$work_dir/$archive" -C "$work_dir/extracted"
+  runnerd_binary="$(find "$work_dir/extracted" -type f -name runnerd -print -quit)"
+  test -f "$runnerd_binary"
+
+  install -o root -g root -m 0755 "$runnerd_binary" /opt/runnerd/bin/runnerd
+  printf '%s\n' '${runnerd_version}' > "$version_file"
+  chmod 0644 "$version_file"
+  changed=true
+fi
+
+# 准备配置、密钥、服务单元文件
+config_tmp="$work_dir/runnerd.yaml"
+pem_tmp="$work_dir/github-app.pem"
+unit_tmp="$work_dir/runnerd.service"
+printf '%s' '${config_content_base64}' | base64 --decode > "$config_tmp"
+printf '%s' '${github_app_private_key_base64}' | base64 --decode > "$pem_tmp"
+
+cat > "$unit_tmp" <<'RUNNERD_UNIT'
+[Unit]
+Description=runnerd CI runner service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=runnerd
+Group=runnerd
+WorkingDirectory=/var/lib/runnerd
+ExecStart=/opt/runnerd/bin/runnerd --config /etc/runnerd/runnerd.yaml
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+RUNNERD_UNIT
+
+# 仅当文件内容变化时才覆盖安装
+if [ ! -f /etc/runnerd/runnerd.yaml ] || ! cmp -s "$config_tmp" /etc/runnerd/runnerd.yaml; then
+  install -o root -g runnerd -m 0640 "$config_tmp" /etc/runnerd/runnerd.yaml
+  changed=true
+fi
+
+if [ ! -f /etc/runnerd/secrets/github-app.pem ] || ! cmp -s "$pem_tmp" /etc/runnerd/secrets/github-app.pem; then
+  install -o runnerd -g runnerd -m 0600 "$pem_tmp" /etc/runnerd/secrets/github-app.pem
+  changed=true
+fi
+
+if [ ! -f /etc/systemd/system/runnerd.service ] || ! cmp -s "$unit_tmp" /etc/systemd/system/runnerd.service; then
+  install -o root -g root -m 0644 "$unit_tmp" /etc/systemd/system/runnerd.service
+  changed=true
+fi
+
+# 一次性设置 bootstrap admin（幂等，执行完即退出）
+runuser -u runnerd -- /opt/runnerd/bin/runnerd --config /etc/runnerd/runnerd.yaml --bootstrap-admin "github:${bootstrap_admin_github_user_id}"
+
+# 仅当有变更或服务未运行时才重启
+if [ "$changed" = true ] || ! systemctl is-active --quiet runnerd.service; then
+  systemctl daemon-reload
+  systemctl enable runnerd.service
+  systemctl restart runnerd.service
+fi
+
+# 等待 runnerd 服务启动完成
+for _ in $(seq 1 60); do
+  if systemctl is-active --quiet runnerd.service && \
+    curl --fail --silent --max-time 2 http://127.0.0.1:${runnerd_port}/healthz >/dev/null; then
+    exit 0
+  fi
+  sleep 1
+done
+
+echo "runnerd failed to become active and healthy" >&2
+false

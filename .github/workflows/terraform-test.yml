@@ -23,6 +23,7 @@ jobs:
       matrix:
         module:
           - openclaw
+          - apps/ci-runner/single
 
     steps:
       - uses: actions/checkout@v4
