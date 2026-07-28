@@ -43,6 +43,36 @@ run "rejects_base64_encoded_github_app_private_key" {
   expect_failures = [var.github_app_private_key]
 }
 
+run "accepts_github_app_private_key_data_uri" {
+  command = plan
+
+  variables {
+    github_app_private_key          = null
+    github_app_private_key_data_uri = "data:application/octet-stream;name=test.pem;base64,LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCnRlc3Qta2V5Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K"
+  }
+}
+
+run "rejects_both_github_app_private_key_inputs" {
+  command = plan
+
+  variables {
+    github_app_private_key_data_uri = "data:application/octet-stream;base64,LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCnRlc3Qta2V5Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K"
+  }
+
+  expect_failures = [check.github_app_private_key_input]
+}
+
+run "rejects_missing_github_app_private_key_input" {
+  command = plan
+
+  variables {
+    github_app_private_key          = null
+    github_app_private_key_data_uri = null
+  }
+
+  expect_failures = [check.github_app_private_key_input]
+}
+
 run "rejects_invalid_instance_type_format" {
   command = plan
 

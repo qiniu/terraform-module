@@ -81,6 +81,8 @@ enable_ssh_port_forward = false
 ```bash
 export TF_VAR_github_oauth_client_secret="<github-oauth-client-secret>"
 export TF_VAR_github_app_private_key="$(cat /path/to/github-app.pem)"
+# 或使用浏览器下载得到的 data:...;base64,... 内容（二选一）
+# export TF_VAR_github_app_private_key_data_uri="data:application/octet-stream;name=github-app.pem;base64,..."
 ```
 
 本目录的 `.gitignore` 已忽略 `*.tfvars`、`env.sh` 和 Terraform state；仍需确认这些文件不会被复制、上传或提交到其他位置。
@@ -182,7 +184,8 @@ terraform destroy
 | `github_app_slug` | 是 | - | GitHub App slug |
 | `github_oauth_client_id` | 是 | - | GitHub App OAuth Client ID |
 | `github_oauth_client_secret` | 是 | - | GitHub App OAuth Client secret，敏感 |
-| `github_app_private_key` | 是 | - | GitHub App PEM 私钥原文，敏感 |
+| `github_app_private_key` | 二选一 | - | GitHub App PEM 私钥原文，敏感 |
+| `github_app_private_key_data_uri` | 二选一 | `null` | GitHub App 私钥 Data URI，敏感 |
 | `bootstrap_admin_github_login` | 是 | - | 初始管理员的 GitHub 用户名（自动解析为数字 ID） |
 | `instance_type` | 否 | `ecs.t1s.c1m2` | ECS 实例规格 |
 | `system_disk_size` | 否 | `20` | 系统盘大小，20–500 GiB，10 的倍数 |
