@@ -3,6 +3,21 @@ locals {
   runnerd_port = 25500
   # runnerd 版本，升级时修改此处
   runnerd_version = "v0.2.4"
+  github_app_private_key = trimspace(
+    var.github_app_private_key != null && trimspace(var.github_app_private_key) != ""
+    ? var.github_app_private_key
+    : try(base64decode(split(",", trimspace(var.github_app_private_key_data_uri))[1]), "")
+  )
+}
+
+check "github_app_private_key_input" {
+  assert {
+    condition = (
+      (length(trimspace(var.github_app_private_key == null ? "" : var.github_app_private_key)) > 0 ? 1 : 0) +
+      (length(trimspace(var.github_app_private_key_data_uri == null ? "" : var.github_app_private_key_data_uri)) > 0 ? 1 : 0) == 1
+    )
+    error_message = "github_app_private_key 和 github_app_private_key_data_uri 必须且只能设置一个。"
+  }
 }
 
 module "github_utils" {
@@ -44,7 +59,7 @@ module "runnerd" {
   runnerd_version                = local.runnerd_version
   runnerd_port                   = local.runnerd_port
   config_content                 = module.config.config_content
-  github_app_private_key         = var.github_app_private_key
+  github_app_private_key         = local.github_app_private_key
   bootstrap_admin_github_user_id = module.github_utils.user_id
 }
 

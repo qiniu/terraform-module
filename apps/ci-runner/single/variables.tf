@@ -59,6 +59,7 @@ variable "github_oauth_client_secret" {
 
 variable "github_app_private_key" {
   type        = string
+  default     = null
   description = <<-EOT
     GitHub App 的 PEM 私钥原文，敏感值。
     获取位置：GitHub App 设置页 https://github.com/settings/apps/<slug> 底部 "Private keys" 区域，
@@ -69,10 +70,35 @@ variable "github_app_private_key" {
 
   validation {
     condition = (
-      can(regex("-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----", trimspace(var.github_app_private_key))) &&
-      can(regex("-----END (RSA |EC |OPENSSH )?PRIVATE KEY-----", trimspace(var.github_app_private_key)))
+      length(trimspace(var.github_app_private_key == null ? "" : var.github_app_private_key)) == 0 || (
+        can(regex("-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----", trimspace(var.github_app_private_key == null ? "" : var.github_app_private_key))) &&
+        can(regex("-----END (RSA |EC |OPENSSH )?PRIVATE KEY-----", trimspace(var.github_app_private_key == null ? "" : var.github_app_private_key)))
+      )
     )
     error_message = "github_app_private_key 必须是有效的 PEM 私钥原文。"
+  }
+}
+
+variable "github_app_private_key_data_uri" {
+  type        = string
+  default     = null
+  description = <<-EOT
+    GitHub App 私钥的 Data URI，敏感值；与 github_app_private_key 二选一。
+    可直接使用浏览器下载得到的 data:...;base64,... 格式内容。
+    建议通过环境变量 TF_VAR_github_app_private_key_data_uri 注入，不要提交到代码库。
+  EOT
+  sensitive   = true
+
+  validation {
+    condition = (
+      length(trimspace(var.github_app_private_key_data_uri == null ? "" : var.github_app_private_key_data_uri)) == 0 || (
+        startswith(trimspace(var.github_app_private_key_data_uri == null ? "" : var.github_app_private_key_data_uri), "data:") &&
+        length(split(",", trimspace(var.github_app_private_key_data_uri == null ? "" : var.github_app_private_key_data_uri))) == 2 &&
+        can(regex("-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----", base64decode(split(",", trimspace(var.github_app_private_key_data_uri == null ? "" : var.github_app_private_key_data_uri))[1]))) &&
+        can(regex("-----END (RSA |EC |OPENSSH )?PRIVATE KEY-----", base64decode(split(",", trimspace(var.github_app_private_key_data_uri == null ? "" : var.github_app_private_key_data_uri))[1])))
+      )
+    )
+    error_message = "github_app_private_key_data_uri 必须是包含有效 PEM 私钥的 Base64 Data URI。"
   }
 }
 
