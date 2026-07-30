@@ -2,7 +2,7 @@ locals {
   # runnerd 监听及 HTTPProxy 转发的实例内部端口，固定值，无需外部配置
   runnerd_port = 25500
   # runnerd 版本，升级时修改此处
-  runnerd_version = "v0.2.5"
+  runnerd_version = "v0.2.6"
   github_app_private_key = trimspace(
     var.github_app_private_key != null && trimspace(var.github_app_private_key) != ""
     ? var.github_app_private_key
