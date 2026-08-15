@@ -59,11 +59,9 @@ variable "content_base64" {
   validation {
     condition = (
       length(var.content_base64) > 0 &&
-      can(regex("^[A-Za-z0-9+/]*={0,2}$", var.content_base64)) &&
-      can(base64decode(var.content_base64)) &&
-      base64encode(base64decode(var.content_base64)) == var.content_base64
+      can(regex("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$", var.content_base64))
     )
-    error_message = "content_base64 必须是无换行、规范编码的非空 ASCII Base64。"
+    error_message = "content_base64 必须是无换行、长度格式正确的非空 ASCII Base64。"
   }
 }
 

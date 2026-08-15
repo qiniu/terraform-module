@@ -1,0 +1,40 @@
+set -euo pipefail
+umask 077
+sha='${content_sha256}'; destination='${destination_path}'; staging='${staging_root}/${content_sha256}'; marker="$staging/${marker_name}"; chunks="$staging/chunks"; expected=${chunk_count}
+fail() { printf '%s\n' "$1" >&2; exit 1; }
+require_root_dir() { [ -d "$1" ] && [ ! -L "$1" ] && [ "$(stat -c %u -- "$1")" = 0 ] && [ "$(realpath -e -- "$1")" = "$1" ] || fail "unsafe directory: $1"; }
+require_root_file() { [ -f "$1" ] && [ ! -L "$1" ] && [ "$(stat -c %u -- "$1")" = 0 ] && [ "$(realpath -e -- "$1")" = "$1" ] || fail "unsafe file: $1"; }
+marker_value() {
+  require_root_file "$1"
+  value="$(cat -- "$1")"
+  [[ "$value" =~ ^[0-9a-f]{64}$ ]] && printf '%s\n' "$value" | cmp -s - "$1" || fail "unsafe marker: $1"
+  printf '%s' "$value"
+}
+marker_matches() { [ "$(marker_value "$1")" = "$sha" ]; }
+require_root_dir "$staging"; require_root_dir "$chunks"
+marker_matches "$marker" || fail 'unsafe staging marker'
+[ "$(find "$chunks" -mindepth 1 -maxdepth 1 -printf x | wc -c)" -eq "$expected" ] || fail 'unexpected chunk count'
+for index in $(seq 0 "$((expected - 1))"); do
+  name="$(printf 'chunk-%06d' "$index")"; file="$chunks/$name"
+  require_root_file "$file" || fail "unsafe chunk: $name"
+done
+parent="$(dirname -- "$destination")"; require_root_dir "$parent"
+target_marker="$destination${marker_name}"
+if [ -e "$destination" ] || [ -L "$destination" ]; then
+  require_root_file "$destination"
+  target_sha="$(sha256sum -- "$destination" | awk '{print $1}')"
+  if [ -e "$target_marker" ] || [ -L "$target_marker" ]; then
+    [ "$(marker_value "$target_marker")" = "$target_sha" ] || fail 'target marker hash mismatch'
+  elif [ "$target_sha" = "$sha" ] && marker_matches "$marker"; then
+    marker_temporary="$(mktemp "$parent/.${destination_name}.marker.XXXXXX")"
+    printf '%s\n' "$sha" > "$marker_temporary"; chown root:root -- "$marker_temporary"; chmod 0600 -- "$marker_temporary"; mv -f -- "$marker_temporary" "$target_marker"
+  else
+    fail 'refusing unmanaged target'
+  fi
+fi
+temporary="$(mktemp "$parent/.${destination_name}.XXXXXX")"; marker_temporary="$(mktemp "$parent/.${destination_name}.marker.XXXXXX")"
+trap 'rm -f -- "$temporary" "$marker_temporary"' EXIT
+for index in $(seq 0 "$((expected - 1))"); do cat -- "$chunks/$(printf 'chunk-%06d' "$index")"; done | base64 -d > "$temporary"
+[ "$(sha256sum -- "$temporary" | awk '{print $1}')" = "$sha" ] || fail 'decoded content hash mismatch'
+chown root:root -- "$temporary"; chmod 0600 -- "$temporary"; printf '%s\n' "$sha" > "$marker_temporary"; chown root:root -- "$marker_temporary"; chmod 0600 -- "$marker_temporary"
+mv -f -- "$temporary" "$destination"; mv -f -- "$marker_temporary" "$target_marker"

@@ -72,8 +72,41 @@ run "keeps_maximum_rendered_chunk_below_limit" {
   }
 }
 
-run "rejects_mismatched_content_hash" {
+run "defers_content_hash_verification_to_finalize" {
   command = plan
   variables { content_sha256 = "0000000000000000000000000000000000000000000000000000000000000000" }
-  expect_failures = [terraform_data.input_validation]
+
+  assert {
+    condition     = strcontains(qiniu_compute_instance_exec.finalize.command, "decoded content hash mismatch")
+    error_message = "内容 SHA-256 必须由远端 finalize 在二进制解码后验证。"
+  }
+}
+
+run "accepts_binary_gzip_base64_without_terraform_decoding" {
+  command = plan
+  variables {
+    content_base64 = "H4sIAAAAAAAC/8tIzcnJBwCGphA2BQAAAA=="
+    content_sha256 = "3223ab15154bd181c783e5b434b108c68f5798bf10be7eb681faba9b6668bc65"
+  }
+
+  assert {
+    condition = (
+      strcontains(qiniu_compute_instance_exec.finalize.command, "base64 -d") &&
+      strcontains(qiniu_compute_instance_exec.finalize.command, "sha256sum")
+    )
+    error_message = "二进制归档必须仅在远端解码并校验 SHA-256。"
+  }
+}
+
+run "allows_destination_change_to_regenerate_chunks" {
+  command = plan
+  variables { destination_path = "/opt/las-dsh-installer/runtime/other.tar.gz" }
+
+  assert {
+    condition = (
+      strcontains(qiniu_compute_instance_exec.chunks["000000"].command, "/opt/las-dsh-installer/runtime/other.tar.gz") ||
+      qiniu_compute_instance_exec.chunks["000000"].triggers.prepare_generation == qiniu_compute_instance_exec.prepare.triggers.command_sha256
+    )
+    error_message = "目标路径变化时，chunk 必须绑定 prepare generation 并重传。"
+  }
 }

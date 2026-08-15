@@ -1,0 +1,12 @@
+set -euo pipefail
+sha='${content_sha256}'; staging='${staging_root}/${content_sha256}'; marker="$staging/${marker_name}"; chunks="$staging/chunks"
+fail() { printf '%s\n' "$1" >&2; exit 1; }
+require_root_file() { [ -f "$1" ] && [ ! -L "$1" ] && [ "$(stat -c %u -- "$1")" = 0 ] && [ "$(realpath -e -- "$1")" = "$1" ] || fail "unsafe file: $1"; }
+marker_matches() { require_root_file "$1"; printf '%s\n' "$sha" | cmp -s - "$1"; }
+[ -d "$staging" ] && [ ! -L "$staging" ] && [ "$(stat -c %u -- "$staging")" = 0 ] && [ "$(realpath -e -- "$staging")" = "$staging" ] || fail 'unsafe staging'
+marker_matches "$marker" || fail 'unsafe staging marker'
+[ -d "$chunks" ] && [ ! -L "$chunks" ] && [ "$(stat -c %u -- "$chunks")" = 0 ] && [ "$(realpath -e -- "$chunks")" = "$chunks" ] || fail 'unsafe chunks directory'
+target="$chunks/chunk-${index}"; temporary="$(mktemp "$chunks/.chunk-${index}.XXXXXX")"
+trap 'rm -f -- "$temporary"' EXIT
+printf %s '${payload}' > "$temporary"
+chown root:root -- "$temporary"; chmod 0600 -- "$temporary"; mv -f -- "$temporary" "$target"

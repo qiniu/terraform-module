@@ -1,0 +1,60 @@
+set -euo pipefail
+umask 077
+sha='${content_sha256}'
+destination='${destination_path}'
+staging_root='${staging_root}'
+marker_name='${marker_name}'
+fail() { printf '%s\n' "$1" >&2; exit 1; }
+require_root_dir() {
+  [ -d "$1" ] && [ ! -L "$1" ] && [ "$(stat -c %u -- "$1")" = 0 ] || fail "unsafe directory: $1"
+  [ "$(realpath -e -- "$1")" = "$1" ] || fail "unsafe realpath: $1"
+}
+require_root_file() {
+  [ -f "$1" ] && [ ! -L "$1" ] && [ "$(stat -c %u -- "$1")" = 0 ] || fail "unsafe file: $1"
+  [ "$(realpath -e -- "$1")" = "$1" ] || fail "unsafe file realpath: $1"
+}
+marker_value() {
+  require_root_file "$1"
+  value="$(cat -- "$1")"
+  [[ "$value" =~ ^[0-9a-f]{64}$ ]] && printf '%s\n' "$value" | cmp -s - "$1" || fail "unsafe marker: $1"
+  printf '%s' "$value"
+}
+marker_matches() { [ "$(marker_value "$1")" = "$sha" ]; }
+install -d -o root -g root -m 0700 -- "$staging_root"
+require_root_dir "$staging_root"
+runtime_parent="$(dirname -- "$destination")"
+current=/opt
+require_root_dir "$current"
+relative="$${destination#/opt/}"
+IFS=/ read -r -a parts <<< "$relative"
+for part in "$${parts[@]:0:$${#parts[@]}-1}"; do
+  current="$current/$part"
+  if [ -e "$current" ] || [ -L "$current" ]; then require_root_dir "$current"; else install -d -o root -g root -m 0755 -- "$current"; require_root_dir "$current"; fi
+done
+require_root_dir "$runtime_parent"
+staging="$staging_root/$sha"
+marker="$staging/$marker_name"
+if [ -e "$staging" ] || [ -L "$staging" ]; then
+  require_root_dir "$staging"
+  marker_matches "$marker" || fail 'staging marker hash mismatch'
+else
+  install -d -o root -g root -m 0700 -- "$staging"
+  printf '%s\n' "$sha" > "$marker"
+  chown root:root -- "$marker"; chmod 0600 -- "$marker"
+fi
+chunks="$staging/chunks"
+if [ -e "$chunks" ] || [ -L "$chunks" ]; then require_root_dir "$chunks"; rm -rf -- "$chunks"; fi
+install -d -o root -g root -m 0700 -- "$chunks"
+if [ -e "$destination" ] || [ -L "$destination" ]; then
+  target_marker="$destination$marker_name"
+  require_root_file "$destination"
+  target_sha="$(sha256sum -- "$destination" | awk '{print $1}')"
+  if [ -e "$target_marker" ] || [ -L "$target_marker" ]; then
+    [ "$(marker_value "$target_marker")" = "$target_sha" ] || fail 'target marker hash mismatch'
+  elif [ "$target_sha" = "$sha" ] && marker_matches "$marker"; then
+    target_marker_temporary="$(mktemp "$runtime_parent/.${destination_name}.marker.XXXXXX")"
+    printf '%s\n' "$sha" > "$target_marker_temporary"; chown root:root -- "$target_marker_temporary"; chmod 0600 -- "$target_marker_temporary"; mv -f -- "$target_marker_temporary" "$target_marker"
+  else
+    fail 'refusing unmanaged target'
+  fi
+fi
