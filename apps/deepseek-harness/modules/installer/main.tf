@@ -16,7 +16,7 @@ locals {
     dsh_version                            = var.dsh_version
     node_version                           = var.node_version
     dsh_port                               = var.dsh_port
-    proxy_port                             = var.proxy_port
+    nginx_proxy_port                       = var.nginx_proxy_port
     public_authority                       = var.public_authority
     preview_count                          = var.preview_count
     preview_ports                          = var.preview_ports

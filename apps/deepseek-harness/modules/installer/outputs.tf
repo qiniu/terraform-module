@@ -5,11 +5,11 @@ output "install_command" {
 
   precondition {
     condition = (
-      var.dsh_port != var.proxy_port &&
+      var.dsh_port != var.nginx_proxy_port &&
       var.dsh_port != var.code_server_port &&
-      var.proxy_port != var.code_server_proxy_port &&
+      var.nginx_proxy_port != var.code_server_proxy_port &&
       !contains(var.preview_ports, var.dsh_port) &&
-      !contains(var.preview_ports, var.proxy_port) &&
+      !contains(var.preview_ports, var.nginx_proxy_port) &&
       !contains(var.preview_ports, var.code_server_port) &&
       !contains(var.preview_ports, var.code_server_proxy_port)
     )

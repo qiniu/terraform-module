@@ -2,7 +2,7 @@ locals {
   dsh_version            = "0.1.0-rc.6"
   node_version           = "24.19.0"
   dsh_port               = 3080
-  proxy_port             = 3081
+  nginx_proxy_port       = 3081
   preview_ports          = [30080, 30081, 30082, 30083]
   code_server_version    = "4.132.0"
   code_server_port       = 3086
@@ -31,7 +31,7 @@ resource "random_password" "code_server" {
 module "infrastructure" {
   source = "./modules/infrastructure"
 
-  proxy_port              = local.proxy_port
+  nginx_proxy_port        = local.nginx_proxy_port
   preview_count           = var.preview_count
   code_server_proxy_port  = local.code_server_proxy_port
   instance_type           = var.instance_type
@@ -50,7 +50,7 @@ module "installer" {
   dsh_version                  = local.dsh_version
   node_version                 = local.node_version
   dsh_port                     = local.dsh_port
-  proxy_port                   = local.proxy_port
+  nginx_proxy_port             = local.nginx_proxy_port
   public_authority             = module.infrastructure.public_authority
   preview_count                = var.preview_count
   preview_ports                = local.preview_ports

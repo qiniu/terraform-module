@@ -12,7 +12,7 @@ cleanup() {
 trap cleanup EXIT
 
 upstream_port=13001
-proxy_port=30822
+nginx_proxy_port=30822
 headers_file="$tmp_dir/headers"
 repo_root="$(cd "$(dirname "$0")/../../../../.." && pwd)"
 installer_template="${INSTALLER_TEMPLATE:-$repo_root/apps/deepseek-harness/modules/installer/templates/install.sh.tftpl}"
@@ -68,8 +68,8 @@ PY
 {
   printf 'events {}\nhttp {\n'
   awk '/^map_hash_bucket_size 512;/{copy=1} copy && /^NGINX_CONFIG$/{exit} copy { print }' "$installer_template" |
-    awk -v dsh_port="$upstream_port" -v proxy_port="$proxy_port" '
-      { gsub(/\$\{proxy_port\}/, proxy_port); gsub(/\$\{dsh_port\}/, dsh_port); gsub(/\$\{public_authority\}/, "harness.runtime.test"); print }
+    awk -v dsh_port="$upstream_port" -v nginx_proxy_port="$nginx_proxy_port" '
+      { gsub(/\$\{nginx_proxy_port\}/, nginx_proxy_port); gsub(/\$\{dsh_port\}/, dsh_port); gsub(/\$\{public_authority\}/, "harness.runtime.test"); print }
     '
   printf '}\n'
 } > "$tmp_dir/nginx.conf"
@@ -84,8 +84,8 @@ if ! command -v nginx >/dev/null 2>&1; then
 fi
 nginx -p "$tmp_dir" -c nginx.conf -g "pid $tmp_dir/logs/nginx.pid;"
 nginx_pid="$(cat "$tmp_dir/logs/nginx.pid")"
-curl --silent --show-error --max-time 3 -H 'Authorization: Basic should-not-pass' "http://127.0.0.1:$proxy_port/" >/dev/null
-python3 - "$proxy_port" <<'PY'
+curl --silent --show-error --max-time 3 -H 'Authorization: Basic should-not-pass' "http://127.0.0.1:$nginx_proxy_port/" >/dev/null
+python3 - "$nginx_proxy_port" <<'PY'
 import socket, sys
 s = socket.create_connection(('127.0.0.1', int(sys.argv[1])), timeout=3)
 s.sendall(b'GET /ws HTTP/1.1\r\nHost: test\r\nAuthorization: Bearer should-not-pass\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\r\n')

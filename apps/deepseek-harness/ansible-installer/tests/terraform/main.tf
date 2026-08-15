@@ -18,7 +18,7 @@ provider "qiniu" {}
 module "infrastructure" {
   source = "../../../modules/infrastructure"
 
-  proxy_port              = 3081
+  nginx_proxy_port        = 3081
   preview_count           = 1
   code_server_proxy_port  = 3087
   instance_type           = "ecs.t1s.c2m4"

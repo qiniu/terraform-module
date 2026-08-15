@@ -1,5 +1,33 @@
 mock_provider "qiniu" {
   override_during = plan
+
+  mock_data "qiniu_compute_images" {
+    defaults = {
+      items = {
+        "0" = {
+          architecture    = "x86_64"
+          created_at      = "2026-01-01T00:00:00Z"
+          creator_account = "official"
+          description     = "Ubuntu 24.04 LTS"
+          id              = "ubuntu-2404"
+          image_type      = "Public"
+          min_cpu         = 1
+          min_disk        = 20
+          min_memory      = 1
+          name            = "Ubuntu 24.04 LTS"
+          os_distribution = "Ubuntu"
+          os_platform     = "Linux"
+          os_version      = "24.04 LTS"
+          public          = true
+          public_time     = "2026-01-01T00:00:00Z"
+          region_id       = "ap-southeast-1"
+          size            = 10
+          state           = "Available"
+          updated_at      = "2026-01-01T00:00:00Z"
+        }
+      }
+    }
+  }
 }
 mock_provider "random" {
   override_during = plan
@@ -48,24 +76,19 @@ override_resource {
   values          = { endpoint = "code.example.test" }
 }
 
-override_module {
-  target          = module.ubuntu_image
-  override_during = plan
-  outputs         = { id = "ubuntu-2404" }
-}
-
 variables {
-  proxy_port              = 3081
-  preview_count           = 1
-  code_server_proxy_port  = 3087
-  instance_type           = "ecs.t1s.c2m4"
-  system_disk_size        = 40
-  internet_max_bandwidth  = 100
-  enable_ssh_port_forward = false
-  cost_charge_type        = "PostPaid"
-  cost_period             = null
-  cost_period_unit        = "Month"
-  instance_password       = null
+  nginx_proxy_port         = 3081
+  image_validation_enabled = false
+  preview_count            = 1
+  code_server_proxy_port   = 3087
+  instance_type            = "ecs.t1s.c2m4"
+  system_disk_size         = 40
+  internet_max_bandwidth   = 100
+  enable_ssh_port_forward  = false
+  cost_charge_type         = "PostPaid"
+  cost_period              = null
+  cost_period_unit         = "Month"
+  instance_password        = null
 }
 
 run "plans_complete_instance_and_public_access" {

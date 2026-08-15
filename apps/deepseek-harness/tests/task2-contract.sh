@@ -110,7 +110,7 @@ require_regex() {
 
 root_main="$repo_dir/main.tf"
 installer_main="$repo_dir/modules/installer/main.tf"
-workflow_file="$repo_dir/../../.github/workflows/terraform-test.yml"
+workflow_file="$repo_dir/../../.github/workflows/deepseek-harness-test.yml"
 
 locals_block="$(extract_simple_block "$root_main" locals)"
 infrastructure_block="$(extract_simple_block "$root_main" module infrastructure)"
@@ -138,19 +138,13 @@ require_assignment "$template_vars" 'code_server_public_authority' 'var\.code_se
 require_assignment "$template_vars" 'code_server_password_base64' 'base64encode\(var\.code_server_password\)' 'templatefile receives encoded code-server password'
 
 workflow_text="$(<"$workflow_file")"
-require_regex "$workflow_text" "^[[:space:]]*-[[:space:]]*['\\\"]?apps/deepseek-harness/\\*\\*/\\*\\.py['\\\"]?[[:space:]]*$" 'workflow triggers on DeepSeek Harness Python changes'
-require_regex "$workflow_text" "^[[:space:]]*-[[:space:]]*['\\\"]?apps/deepseek-harness/\\*\\*/\\*\\.md['\\\"]?[[:space:]]*$" 'workflow triggers on DeepSeek Harness Markdown changes'
-require_regex "$workflow_text" "^[[:space:]]*-[[:space:]]*['\\\"]?apps/deepseek-harness/\\*\\*/\\*\\.sh['\\\"]?[[:space:]]*$" 'workflow triggers on DeepSeek Harness shell changes'
+require_text "$workflow_text" "'apps/deepseek-harness/**'" 'workflow triggers on DeepSeek Harness changes'
 
-wiring_step="$(require_yaml_step "$workflow_file" 'Test DeepSeek Harness module wiring contracts')"
-skill_step="$(require_yaml_step "$workflow_file" 'Test deployment environment skill installer')"
+wiring_step="$(require_yaml_step "$workflow_file" 'Test module wiring contracts')"
+skill_step="$(require_yaml_step "$workflow_file" 'Test LAS DSH skill installer')"
 nginx_step="$(require_yaml_step "$workflow_file" 'Test offline Nginx configuration transaction')"
 code_server_step="$(require_yaml_step "$workflow_file" 'Test code-server installer contract')"
-ansible_step="$(require_yaml_step "$workflow_file" 'Test DeepSeek Harness Ansible installer')"
-
-for step in "$wiring_step" "$skill_step" "$nginx_step" "$ansible_step"; do
-  require_regex "$step" "^[[:space:]]*if:[[:space:]]*matrix\\.module[[:space:]]*==[[:space:]]*['\\\"]apps/deepseek-harness['\\\"][[:space:]]*$" 'DeepSeek Harness workflow step is matrix-scoped'
-done
+ansible_step="$(require_yaml_step "$workflow_file" 'Test Ansible installer')"
 require_regex "$wiring_step" '^[[:space:]]*run:[[:space:]]*bash[[:space:]]+apps/deepseek-harness/tests/task2-contract\.sh[[:space:]]*$' 'workflow runs module wiring contract script'
 require_regex "$skill_step" '^[[:space:]]*run:[[:space:]]*bash[[:space:]]+apps/deepseek-harness/modules/installer/tests/las-dsh-environment-skill\.sh[[:space:]]*$' 'workflow runs las-dsh-environment skill test'
 require_regex "$nginx_step" '^[[:space:]]*run:[[:space:]]*bash[[:space:]]+apps/deepseek-harness/modules/installer/tests/nginx-config\.sh[[:space:]]*$' 'workflow runs Nginx configuration test'
