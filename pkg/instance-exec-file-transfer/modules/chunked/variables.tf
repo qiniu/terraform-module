@@ -4,7 +4,7 @@ variable "instance_id" {
 }
 
 variable "user" {
-  description = "SSH 用户名，默认 root（issue #58 要求所有远端操作用 root）。"
+  description = "SSH 用户名，默认 root。"
   type        = string
   default     = "root"
 }
@@ -88,7 +88,7 @@ variable "file_mode" {
 }
 
 variable "chunk_size" {
-  description = "大文件分片时每个分片的 base64 payload 字节上限（不含命令模板固定开销）。"
+  description = "每个分片的 base64 payload 字节上限（不含命令模板固定开销）。"
   type        = number
   default     = 2048
 
@@ -113,22 +113,4 @@ variable "destroy_cleanup" {
   description = "是否在资源销毁/替换时清理严格匹配的受管文件，默认 true。"
   type        = bool
   default     = true
-}
-
-# ---------------------------------------------------------------------------
-# 补充约束（check）
-# ---------------------------------------------------------------------------
-
-check "content_sha256_match" {
-  assert {
-    condition     = var.content_sha256 == sha256(base64decode(var.content))
-    error_message = "content_sha256 必须等于 content base64 解码后原始字节的 SHA-256。"
-  }
-}
-
-check "credential_exactly_one" {
-  assert {
-    condition     = (var.private_key != null ? 1 : 0) + (var.password != null ? 1 : 0) == 1
-    error_message = "private_key 与 password 必须且只能设置一个。"
-  }
 }

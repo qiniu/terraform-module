@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# chunk script (concurrent large-file shard upload, issue #58)
+# each chunk writes its own distinct part file; never appends to the same file;
+# same-dir temp file + atomic mv keeps concurrent execution safe.
+set -e
+D=${staging_dir}
+printf '%s' '${payload}' > "$D/part.${index}.tmp"
+mv -f "$D/part.${index}.tmp" "$D/part.${index}"

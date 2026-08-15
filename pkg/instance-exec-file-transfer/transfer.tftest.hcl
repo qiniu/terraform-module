@@ -1,16 +1,9 @@
 # ============================================================================
-# instance-exec-file-transfer 模块契约测试（issue #58）
+# instance-exec-file-transfer 根模块契约测试（issue #58）
 # ============================================================================
-# 运行方式：在模块根目录执行 `terraform -chdir=pkg/instance-exec-file-transfer test`
-# 说明：
-# - 使用 mock_provider 跳过 qiniu provider 凭证，只验证渲染出的命令与资源图。
-# - 契约点：
-#   1. 输入 content 为无换行 ASCII base64（变量校验）
-#   2. content_sha256 是解码内容的 64 位小写十六进制（check）
-#   3. 每个完整渲染命令均为 ASCII 且 <= 8192 字节（assert）
-#   4. 小文件走单条短命令直传；大文件自动分片并发上传
-#   5. finalize 显式依赖完整 chunk 集合；输出引用已完成发布
-#   6. private_key 为 sensitive、所有 exec 禁用 stdout/stderr（静态契约见 tests/contract.sh）
+# 根模块职责：输入校验 + 大小分流（small → module.direct，large → module.chunked）。
+# 子模块内部的命令渲染断言位于 modules/direct/direct.tftest.hcl 与
+# modules/chunked/chunked.tftest.hcl。
 # ============================================================================
 
 mock_provider "qiniu" {}
@@ -84,126 +77,65 @@ run "rejects_invalid_file_mode" {
 }
 
 # ---------------------------------------------------------------------------
-# 契约：小文件使用单条短命令直传，无分片资源
+# 契约：小文件走 module.direct 单命令直传，无分片
 # ---------------------------------------------------------------------------
 
-run "small_file_direct_publish" {
+run "small_file_routes_to_direct" {
   command = apply
 
   assert {
-    condition     = length(qiniu_compute_instance_exec.publish) == 1
-    error_message = "小文件应使用单条短命令直接发布（publish 资源）"
+    condition     = length(module.direct) == 1
+    error_message = "小文件应路由到 module.direct 直传"
   }
 
   assert {
-    condition     = length(qiniu_compute_instance_exec.chunk) == 0
-    error_message = "小文件不应产生分片资源"
+    condition     = length(module.chunked) == 0
+    error_message = "小文件不应路由到 module.chunked"
   }
 
   assert {
-    condition     = length(qiniu_compute_instance_exec.prepare) == 0
-    error_message = "小文件不应产生 prepare 资源"
-  }
-
-  assert {
-    condition     = length(qiniu_compute_instance_exec.finalize) == 0
-    error_message = "小文件不应产生 finalize 资源"
-  }
-
-  assert {
-    condition     = length(qiniu_compute_instance_exec.publish[0].command) <= 8192
-    error_message = "直传命令必须 <= 8192 字节"
-  }
-
-  assert {
-    condition     = can(regex("^[\\x00-\\x7F]*$", qiniu_compute_instance_exec.publish[0].command))
-    error_message = "直传命令必须是纯 ASCII"
-  }
-
-  assert {
-    condition     = strcontains(qiniu_compute_instance_exec.publish[0].command, "/opt/test/hello.txt")
-    error_message = "直传命令应引用目标绝对路径"
+    condition     = output.chunk_count == 1
+    error_message = "小文件 chunk_count 应为 1"
   }
 }
 
 # ---------------------------------------------------------------------------
-# 契约：大文件自动分片（chunk > 1），每个完整渲染命令 <= 8192 且 ASCII，
-#       finalize 显式依赖全部 chunk
+# 契约：大文件自动分流到 module.chunked 分片上传
 # ---------------------------------------------------------------------------
 
-run "large_file_chunked_publish" {
+run "large_file_routes_to_chunked" {
   command = apply
 
   variables {
-    # 32 字符 × 256 = 8192 字节内容 → base64 约 10.9 KiB，
-    # 超过直传命令 8192 字节上限，必然拆成多片
+    # 32 字符 × 256 = 8192 字节内容 → base64 约 10.9 KiB，超过直传阈值必然分片
     content        = base64encode(join("", [for i in range(256) : "0123456789abcdefghijklmnopqrstuvwxyz"]))
     content_sha256 = sha256(join("", [for i in range(256) : "0123456789abcdefghijklmnopqrstuvwxyz"]))
   }
 
   assert {
-    condition     = length(qiniu_compute_instance_exec.publish) == 0
-    error_message = "大文件不应走直传发布"
+    condition     = length(module.chunked) == 1
+    error_message = "大文件应路由到 module.chunked 分片传输"
   }
 
   assert {
-    condition     = length(qiniu_compute_instance_exec.prepare) == 1
-    error_message = "大文件应先执行 prepare"
+    condition     = length(module.direct) == 0
+    error_message = "大文件不应路由到 module.direct"
   }
 
   assert {
-    condition     = length(qiniu_compute_instance_exec.chunk) > 1
+    condition     = module.chunked[0].chunk_count > 1
     error_message = "大文件必须拆成多个分片并发上传"
   }
 
   assert {
-    condition     = length(qiniu_compute_instance_exec.finalize) == 1
-    error_message = "大文件最后应执行 finalize 校验合并"
-  }
-
-  assert {
-    condition = alltrue([
-      for _, r in qiniu_compute_instance_exec.chunk : length(r.command) <= 8192
-    ])
-    error_message = "每个分片命令必须 <= 8192 字节"
-  }
-
-  assert {
-    condition = alltrue([
-      for _, r in qiniu_compute_instance_exec.chunk : can(regex("^[\\x00-\\x7F]*$", r.command))
-    ])
-    error_message = "每个分片命令必须是纯 ASCII"
-  }
-
-  assert {
-    condition     = length(qiniu_compute_instance_exec.finalize[0].command) <= 8192
-    error_message = "finalize 命令必须 <= 8192 字节"
-  }
-
-  assert {
-    condition     = can(regex("^[\\x00-\\x7F]*$", qiniu_compute_instance_exec.finalize[0].command))
-    error_message = "finalize 命令必须是纯 ASCII"
+    condition     = output.chunk_count > 1
+    error_message = "根模块 chunk_count 输出应大于 1"
   }
 }
 
 # ---------------------------------------------------------------------------
-# 契约：destroy 清理命令只删除与 marker/hash 严格匹配的受管文件，
-#       且清理命令同样满足 8192/ASCII 约束
+# 契约：输出引用已发布路径与完成依赖
 # ---------------------------------------------------------------------------
-
-run "destroy_command_small_direct" {
-  command = plan
-
-  assert {
-    condition     = can(regex("^[\\x00-\\x7F]*$", qiniu_compute_instance_exec.publish[0].destroy_command))
-    error_message = "直传 destroy 命令必须是纯 ASCII"
-  }
-
-  assert {
-    condition     = length(qiniu_compute_instance_exec.publish[0].destroy_command) <= 8192
-    error_message = "直传 destroy 命令必须 <= 8192 字节"
-  }
-}
 
 run "outputs_reference_published_path" {
   command = apply
@@ -211,5 +143,10 @@ run "outputs_reference_published_path" {
   assert {
     condition     = output.published_path == "/opt/test/hello.txt"
     error_message = "published_path 应等于目标绝对路径"
+  }
+
+  assert {
+    condition     = output.completed != ""
+    error_message = "completed 应引用完成的 exec 资源"
   }
 }

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# direct single-command publish script (issue #58)
+# rendered by module: set -e; target parent dir must be root-owned, non-symlink, realpath;
+# existing target may only be overwritten when marker+SHA match (managed file).
+set -e
+D=${staging_dir}
+T='${target_path}'
+TD=$(dirname "$T")
+[ -d "$TD" ]||exit 1
+[ "$(stat -c %U "$TD")" = root ]||exit 1
+[ ! -L "$TD" ]||exit 1
+[ "$(realpath -m "$TD")" = "$TD" ]||exit 1
+${cover_guard}
+mkdir -p "$D"
+[ ! -L "$D" ]||exit 1
+printf '%s' '${marker_content}' > "$D/marker"
+tmp_pub="$(mktemp "$${TD}/.qiniu-pub.XXXXXX")"
+printf '%s' '${content}' | base64 -d > "$tmp_pub"
+printf '%s  %s\n' '${content_sha256}' "$tmp_pub" | sha256sum -c - >/dev/null
+chmod ${file_mode} "$tmp_pub"
+mv -f "$tmp_pub" "$T"
