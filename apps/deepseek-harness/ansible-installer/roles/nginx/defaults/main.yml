@@ -1,0 +1,4 @@
+---
+dsh_proxy_port: 3081
+code_server_proxy_port: 3087
+dsh_web_username: admin

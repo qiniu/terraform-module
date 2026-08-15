@@ -1,0 +1,7 @@
+---
+all:
+  children:
+    deepseek_harness:
+      hosts:
+        syntax_check:
+          ansible_connection: local

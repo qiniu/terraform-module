@@ -1,0 +1,90 @@
+---
+- name: Select the Node.js archive architecture
+  ansible.builtin.set_fact:
+    nodejs_platform: "{{ nodejs_platforms[ansible_facts['architecture']] | default('') }}"
+
+- name: Verify supported Node.js architecture
+  ansible.builtin.assert:
+    that: nodejs_platform | length > 0
+    fail_msg: "Unsupported architecture for Node.js: {{ ansible_facts['architecture'] }}"
+
+- name: Check for the pinned Node.js binary
+  ansible.builtin.stat:
+    path: "{{ nodejs_prefix }}/bin/node"
+  register: nodejs_binary
+  tags: nodejs-version-check
+
+- name: Read the installed Node.js version
+  ansible.builtin.command:
+    argv:
+      - "{{ nodejs_prefix }}/bin/node"
+      - --version
+  register: nodejs_installed_version
+  changed_when: false
+  failed_when: false
+  when: nodejs_binary.stat.exists
+  tags: nodejs-version-check
+
+- name: Determine whether Node.js installation is current
+  ansible.builtin.set_fact:
+    nodejs_needs_install: >-
+      {{
+        not nodejs_binary.stat.exists
+        or nodejs_installed_version.rc | default(1) != 0
+        or nodejs_installed_version.stdout | default('') | trim != 'v' ~ nodejs_version
+      }}
+  tags: nodejs-version-check
+
+- name: Download the pinned Node.js archive
+  ansible.builtin.get_url:
+    url: "{{ nodejs_dist_url }}/{{ nodejs_archive }}"
+    dest: "{{ dsh_download_dir }}/{{ nodejs_archive }}"
+    checksum: "sha256:{{ nodejs_dist_url }}/SHASUMS256.txt"
+    mode: '0600'
+  when: nodejs_needs_install
+
+- name: Remove an incomplete Node.js installation
+  ansible.builtin.file:
+    path: "{{ nodejs_prefix }}"
+    state: absent
+  when: nodejs_needs_install
+
+- name: Create the Node.js installation directory
+  ansible.builtin.file:
+    path: "{{ nodejs_prefix }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: nodejs_needs_install
+
+- name: Extract the pinned Node.js archive
+  ansible.builtin.unarchive:
+    src: "{{ dsh_download_dir }}/{{ nodejs_archive }}"
+    dest: "{{ nodejs_prefix }}"
+    remote_src: true
+    extra_opts:
+      - --strip-components=1
+  when: nodejs_needs_install
+  notify:
+    - restart deepseek harness
+    - restart code server
+
+- name: Record the installed Node.js version
+  ansible.builtin.copy:
+    content: "{{ nodejs_version }}\n"
+    dest: "{{ nodejs_prefix }}/VERSION"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Publish Node.js executables
+  ansible.builtin.file:
+    src: "{{ nodejs_prefix }}/bin/{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    state: link
+    force: true
+  loop:
+    - node
+    - npm
+    - npx

@@ -1,0 +1,63 @@
+---
+- name: Deploy DeepSeek Harness
+  hosts: deepseek_harness
+  become: true
+  gather_facts: true
+  vars_files:
+    - ../group_vars/all/main.yml
+  pre_tasks:
+    - name: Verify required deployment variables
+      ansible.builtin.assert:
+        that:
+          - dsh_public_authority | default('') | length > 0
+          - code_server_public_authority | default('') | length > 0
+          - dsh_preview_count_raw is match('^(0|[1-4])$')
+          - dsh_preview_count | int >= 0
+          - dsh_preview_count | int <= 4
+          - dsh_preview_public_authorities is sequence
+          - dsh_preview_public_authorities is not string
+          - dsh_preview_public_authorities is not mapping
+          - dsh_preview_public_authorities | length == dsh_preview_count | int
+          - dsh_web_password | default('') | length > 0
+          - dsh_code_server_password | default('') | length > 0
+        fail_msg: Provide endpoint authorities and passwords through inventory or extra vars.
+  roles:
+    - base
+    - nodejs
+    - code_server
+    - deepseek_harness
+    - nginx
+    - deployment_skill
+  post_tasks:
+    - name: Apply pending service handlers before health checks
+      ansible.builtin.meta: flush_handlers
+
+    - name: Wait for the DeepSeek Harness loopback service
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ dsh_port }}/"
+        status_code: [200, 201, 202, 204]
+      register: dsh_health
+      retries: 60
+      delay: 1
+      until: dsh_health.status in [200, 201, 202, 204]
+
+    - name: Verify the Harness Nginx authentication boundary
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ dsh_proxy_port }}/"
+        status_code: 401
+
+    - name: Verify the code-server loopback authentication boundary
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ code_server_port }}/"
+        status_code: [302, 401]
+        follow_redirects: none
+      register: code_server_health
+      retries: 60
+      delay: 1
+      until: code_server_health.status in [302, 401]
+
+    - name: Verify the code-server Nginx authentication boundary
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ code_server_proxy_port }}/"
+        status_code: [302, 401]
+        follow_redirects: none

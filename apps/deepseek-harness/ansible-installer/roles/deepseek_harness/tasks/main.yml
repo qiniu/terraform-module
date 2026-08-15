@@ -1,0 +1,65 @@
+---
+- name: Read the cached DeepSeek Harness version
+  ansible.builtin.command:
+    argv:
+      - cat
+      - "{{ dsh_cache_version_file }}"
+  register: dsh_cached_version
+  changed_when: false
+  failed_when: false
+
+- name: Prewarm the pinned DeepSeek Harness package
+  ansible.builtin.command:
+    argv:
+      - /usr/local/bin/npm
+      - exec
+      - --yes
+      - "--package=@deepseek-ai/dsh@{{ dsh_version }}"
+      - --
+      - dsh
+      - --version
+  args:
+    chdir: "{{ dsh_workspace_dir }}"
+  environment:
+    HOME: "{{ dsh_home }}"
+    npm_config_cache: "{{ dsh_npm_cache_dir }}"
+  become_user: "{{ dsh_user }}"
+  when: dsh_cached_version.stdout | trim != dsh_version
+  async: 1800
+  poll: 0
+  register: dsh_prewarm_job
+
+- name: Wait for the DeepSeek Harness package prewarm
+  ansible.builtin.async_status:
+    jid: "{{ dsh_prewarm_job.ansible_job_id }}"
+  become_user: "{{ dsh_user }}"
+  when: dsh_cached_version.stdout | trim != dsh_version
+  register: dsh_prewarm
+  retries: 180
+  delay: 10
+  until: dsh_prewarm.finished
+  notify: restart deepseek harness
+
+- name: Record the cached DeepSeek Harness version
+  ansible.builtin.copy:
+    content: "{{ dsh_version }}\n"
+    dest: "{{ dsh_cache_version_file }}"
+    owner: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    mode: '0600'
+  when: dsh_cached_version.stdout | trim != dsh_version
+
+- name: Render the DeepSeek Harness service
+  ansible.builtin.template:
+    src: deepseek-harness.service.j2
+    dest: /etc/systemd/system/deepseek-harness.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart deepseek harness
+
+- name: Enable and start DeepSeek Harness
+  ansible.builtin.systemd_service:
+    name: deepseek-harness.service
+    enabled: true
+    state: started

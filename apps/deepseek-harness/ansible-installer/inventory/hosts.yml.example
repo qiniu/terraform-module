@@ -1,0 +1,10 @@
+---
+all:
+  children:
+    deepseek_harness:
+      hosts:
+        production:
+          ansible_host: replace-with-ssh-host
+          ansible_port: 22
+          ansible_user: root
+          ansible_ssh_private_key_file: /absolute/path/to/id_ed25519

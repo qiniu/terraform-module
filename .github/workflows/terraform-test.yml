@@ -6,11 +6,19 @@ on:
     paths:
       - '**/*.tf'
       - '**/*.tftest.hcl'
+      - '**/*.tftpl'
+      - 'apps/deepseek-harness/**/*.sh'
+      - 'apps/deepseek-harness/**/*.py'
+      - 'apps/deepseek-harness/**/*.md'
       - '.github/workflows/terraform-test.yml'
   pull_request:
     paths:
       - '**/*.tf'
       - '**/*.tftest.hcl'
+      - '**/*.tftpl'
+      - 'apps/deepseek-harness/**/*.sh'
+      - 'apps/deepseek-harness/**/*.py'
+      - 'apps/deepseek-harness/**/*.md'
       - '.github/workflows/terraform-test.yml'
   workflow_dispatch:
 
@@ -24,6 +32,7 @@ jobs:
         module:
           - openclaw
           - apps/ci-runner/single
+          - apps/deepseek-harness
 
     steps:
       - uses: actions/checkout@v4
@@ -37,13 +46,16 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.terraform.d/plugin-mirror
-          key: qiniu-provider-1.0.0-linux-amd64
+          key: qiniu-provider-1.0.0-linux-amd64-sha256-7261f5bbeb77
 
       - name: Install qiniu provider
         if: steps.cache-provider.outputs.cache-hit != 'true'
         run: |
           MIRROR_DIR="${HOME}/.terraform.d/plugin-mirror/registry.terraform.io/qiniu/qiniu/1.0.0/linux_amd64"
+          PROVIDER_SHA256="7261f5bbeb772f9256c0f0b0b1486b2ad959c6b511de459a2013a667f098857e"
           mkdir -p "${MIRROR_DIR}"
+          PROVIDER_TMP="$(mktemp "${MIRROR_DIR}/.terraform-provider-qiniu.XXXXXX")"
+          trap 'rm -f "${PROVIDER_TMP}"' EXIT
 
           curl -fsSL \
             --retry 5 \
@@ -52,10 +64,12 @@ jobs:
             --retry-all-errors \
             --connect-timeout 30 \
             --max-time 600 \
-            -o "${MIRROR_DIR}/terraform-provider-qiniu" \
-            "http://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/qiniu/qiniu/1.0.0/linux_amd64/terraform-provider-qiniu"
+            -o "${PROVIDER_TMP}" \
+            "https://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/qiniu/qiniu/1.0.0/linux_amd64/terraform-provider-qiniu"
 
-          chmod +x "${MIRROR_DIR}/terraform-provider-qiniu"
+          printf '%s  %s\n' "${PROVIDER_SHA256}" "${PROVIDER_TMP}" | sha256sum -c -
+          chmod +x "${PROVIDER_TMP}"
+          mv "${PROVIDER_TMP}" "${MIRROR_DIR}/terraform-provider-qiniu"
 
       - name: Configure Terraform provider mirror
         run: |
@@ -80,7 +94,48 @@ jobs:
         run: |
           if ls *.tftest.hcl 1>/dev/null 2>&1; then
             terraform init
+            terraform validate
             terraform test -no-color
           else
             echo "::notice::No test files in ${{ matrix.module }}, skipping"
           fi
+
+      - name: Test DeepSeek Harness nested modules
+        if: matrix.module == 'apps/deepseek-harness'
+        working-directory: apps/deepseek-harness
+        run: |
+          for module in \
+            modules/installer \
+            modules/infrastructure \
+            modules/infrastructure/modules/ubuntu-image
+          do
+            terraform -chdir="$module" init
+            terraform -chdir="$module" validate
+            terraform -chdir="$module" test -no-color
+          done
+
+      - name: Test DeepSeek Harness module wiring contracts
+        if: matrix.module == 'apps/deepseek-harness'
+        run: bash apps/deepseek-harness/tests/task2-contract.sh
+
+      - name: Test deployment environment skill installer
+        if: matrix.module == 'apps/deepseek-harness'
+        run: bash apps/deepseek-harness/modules/installer/tests/deployment-environment-skill.sh
+
+      - name: Test offline Nginx configuration transaction
+        if: matrix.module == 'apps/deepseek-harness'
+        run: bash apps/deepseek-harness/modules/installer/tests/nginx-config.sh
+
+      - name: Test code-server installer contract
+        if: matrix.module == 'apps/deepseek-harness'
+        run: bash apps/deepseek-harness/modules/installer/tests/code-server-install.sh
+
+      - name: Test DeepSeek Harness Ansible installer
+        if: matrix.module == 'apps/deepseek-harness'
+        working-directory: apps/deepseek-harness/ansible-installer
+        run: |
+          bash tests/test-project.sh
+          source ./env.sh
+          "$dsh_uv_dir/uv" run --locked ansible-playbook --syntax-check -i tests/inventory.yml playbooks/site.yml
+          bash tests/test-preview-count-validation.sh
+          bash tests/test-nodejs-version-check.sh

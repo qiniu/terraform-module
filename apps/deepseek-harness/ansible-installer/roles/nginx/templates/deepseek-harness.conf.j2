@@ -1,0 +1,64 @@
+map_hash_bucket_size 512;
+
+map $http_origin $dsh_origin_allowed {
+    default 0;
+    "" 1;
+    "https://{{ dsh_public_authority }}" 1;
+}
+
+map $http_sec_fetch_site $dsh_fetch_site_allowed {
+    default 1;
+    "cross-site" 0;
+}
+
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    "" close;
+}
+
+server {
+    listen 0.0.0.0:{{ dsh_proxy_port }};
+    server_name _;
+
+    location / {
+        if ($dsh_origin_allowed = 0) { return 403; }
+        if ($dsh_fetch_site_allowed = 0) { return 403; }
+
+        auth_basic "DeepSeek Harness";
+        auth_basic_user_file /etc/nginx/deepseek-harness.htpasswd;
+        proxy_pass http://127.0.0.1:{{ dsh_port }};
+        proxy_http_version 1.1;
+        proxy_set_header Host 127.0.0.1:{{ dsh_port }};
+        proxy_set_header X-Forwarded-Host $http_x_forwarded_host;
+        proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Origin "http://127.0.0.1:{{ dsh_port }}";
+        proxy_set_header Sec-Fetch-Site "same-origin";
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_buffering off;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+    }
+}
+
+server {
+    listen 0.0.0.0:{{ code_server_proxy_port }};
+    server_name _;
+
+    location / {
+        proxy_pass http://127.0.0.1:{{ code_server_port }};
+        proxy_http_version 1.1;
+        proxy_set_header Authorization "";
+        proxy_set_header Host {{ code_server_public_authority }};
+        proxy_set_header X-Forwarded-Host $http_x_forwarded_host;
+        proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Origin "https://{{ code_server_public_authority }}";
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_buffering off;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+    }
+}
