@@ -8,3 +8,9 @@ custom-plugins/
 *.auto.*
 env.sh
 *.tfvars
+*.tfvars.json
+*.tfplan
+.playwright-cli
+docs/superpowers/
+*.pyc
+.tools
