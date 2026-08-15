@@ -82,6 +82,14 @@ jobs:
             terraform -chdir="$module" test -no-color
           done
 
+      - name: Test Ansible bootstrap installer
+        working-directory: apps/deepseek-harness
+        run: |
+          terraform -chdir="modules/ansible-installer" init
+          terraform -chdir="modules/ansible-installer" validate
+          terraform -chdir="modules/ansible-installer" test -no-color
+          bash modules/ansible-installer/tests/contract.sh
+
       - name: Test module wiring contracts
         run: bash apps/deepseek-harness/tests/task2-contract.sh
 

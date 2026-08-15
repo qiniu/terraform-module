@@ -145,6 +145,7 @@ skill_step="$(require_yaml_step "$workflow_file" 'Test LAS DSH skill installer')
 nginx_step="$(require_yaml_step "$workflow_file" 'Test offline Nginx configuration transaction')"
 code_server_step="$(require_yaml_step "$workflow_file" 'Test code-server installer contract')"
 ansible_step="$(require_yaml_step "$workflow_file" 'Test Ansible installer')"
+ansible_bootstrap_step="$(require_yaml_step "$workflow_file" 'Test Ansible bootstrap installer')"
 require_regex "$wiring_step" '^[[:space:]]*run:[[:space:]]*bash[[:space:]]+apps/deepseek-harness/tests/task2-contract\.sh[[:space:]]*$' 'workflow runs module wiring contract script'
 require_regex "$skill_step" '^[[:space:]]*run:[[:space:]]*bash[[:space:]]+apps/deepseek-harness/modules/installer/tests/las-dsh-environment-skill\.sh[[:space:]]*$' 'workflow runs las-dsh-environment skill test'
 require_regex "$nginx_step" '^[[:space:]]*run:[[:space:]]*bash[[:space:]]+apps/deepseek-harness/modules/installer/tests/nginx-config\.sh[[:space:]]*$' 'workflow runs Nginx configuration test'
@@ -153,6 +154,10 @@ require_text "$ansible_step" 'bash tests/test-project.sh' 'workflow runs Ansible
 require_text "$ansible_step" 'ansible-playbook --syntax-check' 'workflow validates Ansible playbook syntax'
 require_text "$ansible_step" 'bash tests/test-ansible-parity-contract.sh' 'workflow runs Ansible parity contract'
 require_text "$ansible_step" 'bash tests/test-port-validation.sh' 'workflow runs Ansible port validation'
+require_text "$ansible_bootstrap_step" 'terraform -chdir="modules/ansible-installer" init' 'workflow initializes the Ansible bootstrap Terraform module'
+require_text "$ansible_bootstrap_step" 'terraform -chdir="modules/ansible-installer" validate' 'workflow validates the Ansible bootstrap Terraform module'
+require_text "$ansible_bootstrap_step" 'terraform -chdir="modules/ansible-installer" test -no-color' 'workflow runs Ansible bootstrap Terraform tests'
+require_text "$ansible_bootstrap_step" 'bash modules/ansible-installer/tests/contract.sh' 'workflow runs the Ansible bootstrap contract'
 
 ansible_readme_file="$repo_dir/ansible-installer/README.md"
 ansible_readme_text="$(<"$ansible_readme_file")"
