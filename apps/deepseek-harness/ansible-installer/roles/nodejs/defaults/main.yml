@@ -1,0 +1,8 @@
+---
+nodejs_version: 24.19.0
+nodejs_platforms:
+  x86_64: linux-x64
+  aarch64: linux-arm64
+nodejs_prefix: "/opt/node-v{{ nodejs_version }}"
+nodejs_dist_url: "https://nodejs.org/dist/v{{ nodejs_version }}"
+nodejs_archive: "node-v{{ nodejs_version }}-{{ nodejs_platform }}.tar.xz"

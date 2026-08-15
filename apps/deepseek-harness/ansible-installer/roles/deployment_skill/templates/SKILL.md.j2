@@ -1,0 +1,23 @@
+---
+name: deployment-environment
+description: 开发、启动、调试网页或向用户提供网页预览时必须使用。
+disable-model-invocation: false
+---
+
+# Deployment Environment
+
+运行用户为 `{{ dsh_user }}`，`HOME={{ dsh_home }}`，`DSH_HOME={{ dsh_state_dir }}`，工作目录是 `{{ dsh_workspace_dir }}`。
+
+Harness 地址为 `https://{{ dsh_public_authority }}`。
+
+{% if dsh_preview_count | int == 0 %}
+当前没有启用 Preview 槽位。
+{% else %}
+网页开发服务必须只监听对应 Preview 槽位的回环端口，不得绑定 `0.0.0.0` 或额外公开端口：
+{% for index in range(dsh_preview_count | int) %}
+- Preview {{ index + 1 }}：`127.0.0.1:{{ dsh_preview_ports[index] }}` -> `https://{{ dsh_preview_public_authorities[index] }}`
+{% endfor %}
+Preview 由 HTTPProxy 直连服务，不经过 Nginx；未启动服务时返回 5xx（通常为 502，也可能为 503）属于正常状态。
+{% endif %}
+
+不要在网页、日志或命令中写入密码、令牌、私钥或其他敏感信息。

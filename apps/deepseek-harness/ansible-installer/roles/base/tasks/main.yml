@@ -1,0 +1,44 @@
+---
+- name: Verify supported operating system
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['distribution'] == 'Ubuntu'
+      - ansible_facts['distribution_major_version'] | int >= 24
+    fail_msg: This installer supports Ubuntu 24.04 or newer only.
+
+- name: Install base dependencies
+  ansible.builtin.apt:
+    name: "{{ dsh_base_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  retries: 5
+  delay: 3
+
+- name: Create the DeepSeek Harness group
+  ansible.builtin.group:
+    name: "{{ dsh_group }}"
+    system: true
+
+- name: Create the DeepSeek Harness user
+  ansible.builtin.user:
+    name: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    system: true
+    home: "{{ dsh_home }}"
+    create_home: true
+    shell: /bin/bash
+    password_lock: true
+
+- name: Create DeepSeek Harness directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ dsh_state_dir }}", mode: '0700' }
+    - { path: "{{ dsh_npm_cache_dir }}", mode: '0700' }
+    - { path: "{{ dsh_workspace_dir }}", mode: '0750' }
+    - { path: "{{ dsh_download_dir }}", mode: '0700' }

@@ -1,0 +1,12 @@
+---
+- name: Verify Node.js version reconciliation
+  hosts: syntax_check
+  become: false
+  gather_facts: true
+  roles:
+    - nodejs
+  tasks:
+    - name: Verify a mismatched Node.js binary requires installation
+      ansible.builtin.assert:
+        that: nodejs_needs_install | bool
+      tags: nodejs-version-check

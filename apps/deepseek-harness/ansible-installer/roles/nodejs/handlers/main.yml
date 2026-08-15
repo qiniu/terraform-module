@@ -1,0 +1,5 @@
+---
+- name: noop nodejs handler anchor
+  ansible.builtin.debug:
+    msg: Node.js changed
+  changed_when: false
