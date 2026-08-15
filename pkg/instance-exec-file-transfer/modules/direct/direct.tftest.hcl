@@ -69,6 +69,21 @@ run "publish_command_has_security_guards" {
     condition     = strcontains(qiniu_compute_instance_exec.publish.command, "$D/marker")
     error_message = "直传命令必须校验受管 marker"
   }
+
+  assert {
+    condition     = strcontains(qiniu_compute_instance_exec.publish.command, "stat -c %U \"$R\"")
+    error_message = "直传命令必须校验 staging root 所有者为 root"
+  }
+
+  assert {
+    condition     = strcontains(qiniu_compute_instance_exec.publish.command, "realpath -m \"$R\"")
+    error_message = "直传命令必须校验 staging root realpath"
+  }
+
+  assert {
+    condition     = strcontains(qiniu_compute_instance_exec.publish.command, "-L \"$R\"")
+    error_message = "直传命令必须拒绝 staging root 为 symlink"
+  }
 }
 
 run "destroy_command_constraints" {
@@ -101,5 +116,31 @@ run "outputs_reference_published_path" {
   assert {
     condition     = output.completed != ""
     error_message = "completed 应引用完成的 publish exec"
+  }
+}
+
+# ---------------------------------------------------------------------------
+# 边界契约：直传 payload 上限（root 模块 direct_payload_cap）下命令必须仍 <= 8192
+# ---------------------------------------------------------------------------
+
+run "max_payload_stays_within_8192" {
+  command = plan
+
+  variables {
+    # 6200 字节 base64 payload（'0' 为合法 base64 字符）+ 长 target_path，
+    # 模拟最坏直传场景（range 上限 1024，改用 format 宽度填充）
+    content = format("%06200d", 0)
+    # 长目标路径（在命令中约嵌入 4 处，验证可变路径余量）
+    target_path = "/data/applications/production/services/instance-exec-file-transfer/payload.bin"
+  }
+
+  assert {
+    condition     = length(qiniu_compute_instance_exec.publish.command) <= 8192
+    error_message = "最大直传 payload + 长路径时命令必须仍 <= 8192 字节"
+  }
+
+  assert {
+    condition     = can(regex("^[\\x00-\\x7F]*$", qiniu_compute_instance_exec.publish.command))
+    error_message = "最大直传 payload 时命令必须仍是纯 ASCII"
   }
 }

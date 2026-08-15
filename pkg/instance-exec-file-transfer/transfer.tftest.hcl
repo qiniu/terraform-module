@@ -150,3 +150,57 @@ run "outputs_reference_published_path" {
     error_message = "completed 应引用完成的 exec 资源"
   }
 }
+
+# ---------------------------------------------------------------------------
+# 契约：直传阈值边界——恰好等于 direct_payload_cap 的内容走 direct 直传
+# ---------------------------------------------------------------------------
+
+run "at_threshold_content_routes_to_direct" {
+  command = apply
+
+  variables {
+    # 6200 字节 base64 payload（ceil(6200/4)*3=4650 字节原始内容），恰好等于直传阈值。
+    # 原始内容用 'a' 重复（'a' 解码为合法 UTF-8），range 上限 1024 内分 5 段拼接。
+    content        = base64encode(join("", [for i in range(5) : join("", [for j in range(930) : "a"])]))
+    content_sha256 = sha256(join("", [for i in range(5) : join("", [for j in range(930) : "a"])]))
+  }
+
+  assert {
+    condition     = length(module.direct) == 1
+    error_message = "等于直传阈值的内容应路由到 module.direct"
+  }
+
+  assert {
+    condition     = length(module.chunked) == 0
+    error_message = "等于直传阈值的内容不应路由到 module.chunked"
+  }
+}
+
+# ---------------------------------------------------------------------------
+# 契约：超过直传阈值 1 字节即走 chunked 分片
+# ---------------------------------------------------------------------------
+
+run "over_threshold_content_routes_to_chunked" {
+  command = apply
+
+  variables {
+    # 6204 字节 base64 payload（4653 字节原始 'a' 内容），超过直传阈值 4 字节
+    content        = base64encode(join("", [for i in range(9) : join("", [for j in range(517) : "a"])]))
+    content_sha256 = sha256(join("", [for i in range(9) : join("", [for j in range(517) : "a"])]))
+  }
+
+  assert {
+    condition     = length(module.direct) == 0
+    error_message = "超过直传阈值的内容不应路由到 module.direct"
+  }
+
+  assert {
+    condition     = length(module.chunked) == 1
+    error_message = "超过直传阈值的内容应路由到 module.chunked"
+  }
+
+  assert {
+    condition     = module.chunked[0].chunk_count > 1
+    error_message = "超过直传阈值的内容必须分片传输"
+  }
+}

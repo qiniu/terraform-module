@@ -36,7 +36,7 @@ resource "qiniu_compute_instance_exec" "next" {
 
 | 内容大小 | 路径 | 说明 |
 | --- | --- | --- |
-| base64 payload ≤ 6592 字节 | `modules/direct` | 单条短命令直传（staging/marker + SHA 校验 + 同目录原子 mv） |
+| base64 payload ≤ 6200 字节 | `modules/direct` | 单条短命令直传（staging/marker + SHA 校验 + 同目录原子 mv） |
 | 更大内容 | `modules/chunked` | `prepare`（hash staging/marker + 安全校验）→ 并发 `chunk`（每片独立 part 文件）→ `finalize`（完整序号/SHA 校验 + 目标同目录原子 mv） |
 
 两个子模块均可独立使用（`./modules/direct`、`./modules/chunked`），

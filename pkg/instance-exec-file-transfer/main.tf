@@ -10,10 +10,11 @@
 # ============================================================================
 
 locals {
-  # 直传命令阈值：publish.sh.tftpl 渲染后固定开销实测约 1141 字节（含 cover_guard、
-  # staging/target 路径），此处取保守上限 8192 - 1600 = 6592，为长 target_path /
-  # staging 路径留足余量。超过阈值自动走分片路径，分片命令长度由子模块按 8192 预算。
-  direct_payload_cap = 6592
+  # 直传命令阈值：publish.sh.tftpl 渲染后固定开销约 1477 字节（含 staging root/
+  # 目标父目录守卫、cover_guard、staging/target 路径），并为更长的 target_path
+  # 预留约 515 字节可变路径余量：8192 - 1477 - 515 = 6200。
+  # 超过阈值自动走分片路径，分片命令长度由子模块按 8192 预算。
+  direct_payload_cap = 6200
   # 命令长度/内容长度非敏感（可从公开输入推导），仅内容本身敏感
   small_file = nonsensitive(length(var.content)) <= local.direct_payload_cap
 }

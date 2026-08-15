@@ -4,12 +4,18 @@
 # existing target may only be overwritten when marker+SHA match (managed file).
 set -e
 D=${staging_dir}
+R=$(dirname "$D")
 T='${target_path}'
 TD=$(dirname "$T")
 [ -d "$TD" ]||exit 1
 [ "$(stat -c %U "$TD")" = root ]||exit 1
 [ ! -L "$TD" ]||exit 1
 [ "$(realpath -m "$TD")" = "$TD" ]||exit 1
+mkdir -p "$R"
+[ -d "$R" ]||exit 1
+[ "$(stat -c %U "$R")" = root ]||exit 1
+[ ! -L "$R" ]||exit 1
+[ "$(realpath -m "$R")" = "$R" ]||exit 1
 ${cover_guard}
 mkdir -p "$D"
 [ ! -L "$D" ]||exit 1

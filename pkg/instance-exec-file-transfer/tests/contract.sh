@@ -123,6 +123,16 @@ security_guard_present() {
 
 check "远端命令校验 root 所有/非 symlink/realpath" security_guard_present
 
+# staging root 必须是 root 所有、非 symlink、realpath 一致（direct 与 chunked 一致）
+staging_root_guard_present() {
+  grep -q 'stat -c %U "\$R"' modules/direct/templates/publish.sh.tftpl && \
+    grep -q 'realpath -m "\$R"' modules/direct/templates/publish.sh.tftpl && \
+    grep -q '! -L "\$R"' modules/direct/templates/publish.sh.tftpl && \
+    grep -q 'stat -c %U "\$R"' modules/chunked/templates/prepare.sh.tftpl
+}
+
+check "staging root 校验 root 所有/非 symlink/realpath" staging_root_guard_present
+
 unmanaged_target_rejected() {
   grep -q 'sha256sum -c -' modules/direct/templates/publish.sh.tftpl && \
     grep -q 'cat "\$D/marker"' modules/chunked/templates/prepare.sh.tftpl
