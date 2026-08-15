@@ -107,6 +107,45 @@ for executable in uv uvx; do
   mv -Tf "$${link_candidate}" "$${uv_link_dir}/$${executable}"
 done
 
+cleanup_superseded_uv() {
+  [ -d "$${managed_toolchains_dir}" ] || fail 'managed uv registry directory is missing'
+  [ ! -L "$${managed_toolchains_dir}" ] || fail 'unsafe managed uv registry directory'
+  [ "$(realpath -e "$${managed_toolchains_dir}")" = "$${managed_toolchains_dir}" ] || fail 'unsafe managed uv registry directory'
+  [ "$(stat -c '%u:%g' "$${managed_toolchains_dir}")" = '0:0' ] || fail 'unsafe managed uv registry directory'
+
+  current_registration="$${managed_toolchains_dir}/uv-v$${uv_version}"
+  find "$${managed_toolchains_dir}" -mindepth 1 -maxdepth 1 -name 'uv-v*' -print0 |
+    while IFS= read -r -d '' registration; do
+      [ "$${registration}" = "$${current_registration}" ] && continue
+      [ -f "$${registration}" ] || fail 'unsafe managed uv registration'
+      [ ! -L "$${registration}" ] || fail 'unsafe managed uv registration'
+      [ "$(stat -c '%u:%g' "$${registration}")" = '0:0' ] || fail 'unsafe managed uv registration'
+      [ "$(realpath -e "$${registration}")" = "$${registration}" ] || fail 'unsafe managed uv registration'
+
+      registered_version="$${registration##*/uv-v}"
+      case "$${registered_version}" in
+        ''|*[!0-9A-Za-z.+-]*) fail 'unsafe managed uv registration' ;;
+      esac
+      prefix="$(cat "$${registration}")"
+      expected_prefix="/opt/uv-v$${registered_version}"
+      [ "$${prefix}" = "$${expected_prefix}" ] || fail 'unsafe managed uv registration'
+      [ -d "$${prefix}" ] || fail 'unsafe managed uv registration'
+      [ ! -L "$${prefix}" ] || fail 'unsafe managed uv registration'
+      [ "$(realpath -e "$${prefix}")" = "$${expected_prefix}" ] || fail 'unsafe managed uv registration'
+      [ "$(stat -c '%u:%g' "$${prefix}")" = '0:0' ] || fail 'unsafe managed uv registration'
+
+      marker="$${prefix}/.las-dsh-managed"
+      [ -f "$${marker}" ] || fail 'unsafe managed uv registration'
+      [ ! -L "$${marker}" ] || fail 'unsafe managed uv registration'
+      [ "$(realpath -e "$${marker}")" = "$${marker}" ] || fail 'unsafe managed uv registration'
+      [ "$(stat -c '%u:%g' "$${marker}")" = '0:0' ] || fail 'unsafe managed uv registration'
+      [ "$(cat "$${marker}")" = "uv:$${registered_version}" ] || fail 'unsafe managed uv registration'
+
+      rm -rf -- "$${prefix}"
+      rm -f -- "$${registration}"
+    done
+}
+
 ansible_archive_path="$${work_dir}/ansible-runtime.tar.gz"
 printf '%s' "$${ansible_archive_base64}" | base64 --decode >"$${ansible_archive_path}"
 printf '%s  %s\n' "$${ansible_archive_sha256}" "$${ansible_archive_path}" | sha256sum -c -
@@ -139,3 +178,4 @@ export UV_PROJECT_ENVIRONMENT=/opt/las-dsh-installer/.venv
 export UV_CACHE_DIR=/var/cache/las-dsh-installer/uv
 uv sync --locked
 uv run --locked ansible-playbook -i inventory/localhost.yml playbooks/site.yml --extra-vars "@$${extra_vars_file}"
+cleanup_superseded_uv
