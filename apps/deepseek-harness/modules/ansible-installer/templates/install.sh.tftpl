@@ -67,17 +67,62 @@ uv_release_url="https://github.com/astral-sh/uv/releases/download/$${uv_version}
 uv_archive_path="$${work_dir}/$${uv_archive}"
 uv_checksum_path="$${work_dir}/$${uv_archive}.sha256"
 
+verify_existing_uv_prefix_is_managed() {
+  current_registration="$${managed_toolchains_dir}/uv-v$${uv_version}"
+  [ -d "$${managed_toolchains_dir}" ] || fail 'unsafe existing uv prefix'
+  [ ! -L "$${managed_toolchains_dir}" ] || fail 'unsafe existing uv prefix'
+  [ "$(realpath -e "$${managed_toolchains_dir}")" = "$${managed_toolchains_dir}" ] || fail 'unsafe existing uv prefix'
+  [ "$(stat -c '%u:%g' "$${managed_toolchains_dir}")" = '0:0' ] || fail 'unsafe existing uv prefix'
+  [ -d "$${uv_prefix}" ] || fail 'unsafe existing uv prefix'
+  [ ! -L "$${uv_prefix}" ] || fail 'unsafe existing uv prefix'
+  [ "$(realpath -e "$${uv_prefix}")" = "$${uv_prefix}" ] || fail 'unsafe existing uv prefix'
+  [ "$(stat -c '%u:%g' "$${uv_prefix}")" = '0:0' ] || fail 'unsafe existing uv prefix'
+  [ -f "$${uv_prefix}/.las-dsh-managed" ] || fail 'unsafe existing uv prefix'
+  [ ! -L "$${uv_prefix}/.las-dsh-managed" ] || fail 'unsafe existing uv prefix'
+  [ "$(realpath -e "$${uv_prefix}/.las-dsh-managed")" = "$${uv_prefix}/.las-dsh-managed" ] || fail 'unsafe existing uv prefix'
+  [ "$(stat -c '%u:%g' "$${uv_prefix}/.las-dsh-managed")" = '0:0' ] || fail 'unsafe existing uv prefix'
+  [ "$(cat "$${uv_prefix}/.las-dsh-managed")" = "uv:$${uv_version}" ] || fail 'unsafe existing uv prefix'
+  [ -f "$${current_registration}" ] || fail 'unsafe existing uv prefix'
+  [ ! -L "$${current_registration}" ] || fail 'unsafe existing uv prefix'
+  [ "$(realpath -e "$${current_registration}")" = "$${current_registration}" ] || fail 'unsafe existing uv prefix'
+  [ "$(stat -c '%u:%g' "$${current_registration}")" = '0:0' ] || fail 'unsafe existing uv prefix'
+  [ "$(cat "$${current_registration}")" = "$${uv_prefix}" ] || fail 'unsafe existing uv prefix'
+}
+
 uv_is_current=false
-if [ -x "$${uv_prefix}/uv" ] && [ -x "$${uv_prefix}/uvx" ] && [ -f "$${uv_prefix}/.las-dsh-managed" ] && [ "$(cat "$${uv_prefix}/.las-dsh-managed")" = "uv:$${uv_version}" ]; then
-  "$${uv_prefix}/uv" --version | grep -Eq "^uv $${uv_version}( |$)" && uv_is_current=true
+if [ -e "$${uv_prefix}" ] || [ -L "$${uv_prefix}" ]; then
+  verify_existing_uv_prefix_is_managed
+  if [ -x "$${uv_prefix}/uv" ] && [ -x "$${uv_prefix}/uvx" ]; then
+    "$${uv_prefix}/uv" --version | grep -Eq "^uv $${uv_version}( |$)" && uv_is_current=true
+  fi
 fi
 
 if [ "$${uv_is_current}" != true ]; then
   curl --fail --location --retry 5 --retry-all-errors --output "$${uv_archive_path}" "$${uv_release_url}/$${uv_archive}"
   curl --fail --location --retry 5 --retry-all-errors --output "$${uv_checksum_path}" "$${uv_release_url}/$${uv_archive}.sha256"
+  checksum_manifest="$${work_dir}/$${uv_archive}.exact"
+  if ! awk -v archive="$${uv_archive}" '
+    $2 == archive {
+      if (NF != 2 || $1 !~ /^[0-9A-Fa-f]{64}$/) {
+        invalid = 1
+        next
+      }
+      print $1 "  " $2
+      checksum_count++
+    }
+    END {
+      if (invalid || checksum_count != 1) exit 1
+    }
+  ' "$${uv_checksum_path}" >"$${checksum_manifest}"; then
+    fail 'uv checksum manifest is invalid'
+  fi
+  checksum_count="$(wc -l < "$${checksum_manifest}")"
+  if (( checksum_count != 1 )); then
+    fail 'uv checksum manifest is invalid'
+  fi
   (
     cd "$${work_dir}"
-    sha256sum -c "$${uv_archive}.sha256"
+    sha256sum -c "$${checksum_manifest}"
   )
 
   uv_candidate="$${work_dir}/uv-prefix"
@@ -102,7 +147,8 @@ printf '%s\n' "$${uv_prefix}" >"$${managed_toolchains_dir}/uv-v$${uv_version}"
 chown root:root "$${managed_toolchains_dir}/uv-v$${uv_version}"
 chmod 0644 "$${managed_toolchains_dir}/uv-v$${uv_version}"
 for executable in uv uvx; do
-  link_candidate="$${work_dir}/$${executable}.link"
+  link_candidate="$(mktemp "$${uv_link_dir}/.$${executable}.XXXXXX")"
+  rm -f -- "$${link_candidate}"
   ln -s "$${uv_prefix}/$${executable}" "$${link_candidate}"
   mv -Tf "$${link_candidate}" "$${uv_link_dir}/$${executable}"
 done
