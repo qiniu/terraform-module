@@ -1,5 +1,0 @@
----
-deployment_skill_name: las-dsh-environment
-dsh_preview_ports: [30080, 30081, 30082, 30083]
-uv_version: 0.12.5
-dsh_ansible_venv_dir: /opt/las-dsh-installer/.venv
