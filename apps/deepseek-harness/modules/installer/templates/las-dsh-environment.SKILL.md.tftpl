@@ -1,5 +1,5 @@
 ---
-name: deployment-environment
+name: las-dsh-environment
 disable-model-invocation: false
 description: 开发、启动、调试网页或向用户提供网页预览时必须使用此 skill，了解当前 DeepSeek Harness 部署环境与公开预览入口。
 ---
@@ -15,7 +15,7 @@ description: 开发、启动、调试网页或向用户提供网页预览时必�
 - Harness 数据目录：`DSH_HOME=/home/dsh/.dsh`
 - 默认工作目录：`/home/dsh/workspace`
 - 用户级 skill 目录：`/home/dsh/.agents/skills`
-- 当前 skill 文件：`/home/dsh/.agents/skills/deployment-environment/SKILL.md`
+- 当前 skill 文件：`/home/dsh/.agents/skills/las-dsh-environment/SKILL.md`
 - DeepSeek Harness：`https://${public_authority}`
 
 网页项目、配置文件和临时调试文件都应放在 `/home/dsh/workspace` 或其子目录中。不要把项目文件写入 `/etc`、`/usr` 或其他系统目录；需要安装系统服务时，应通过已有的项目安装流程处理。

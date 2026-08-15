@@ -61,10 +61,10 @@ Preview 数量通过 `preview_count` 配置，支持 `0..4` 个。用户网页�
 安装器会管理用户级运行环境 skill：
 
 ```text
-/home/dsh/.agents/skills/deployment-environment/SKILL.md
+/home/dsh/.agents/skills/las-dsh-environment/SKILL.md
 ```
 
-它会告知 Harness 网页开发时应使用的工作目录、监听地址和 `preview_url`。项目级同名 `deployment-environment` skill 的优先级更高，会遮蔽该用户级 skill，因此项目中应避免使用这个名称。skill 正文更新后，需在新会话中使用，或再次加载该 skill 才能看到新内容；已加载旧正文的会话不会被主动改写。
+它会告知 Harness 网页开发时应使用的工作目录、监听地址和 `preview_urls`。`las-dsh-environment` 是用户级 skill，项目级同名 skill 的优先级更高，会遮蔽它；如需覆盖，请明确使用项目级同名名称。skill 正文更新后，需在新会话中使用，或再次加载该 skill 才能看到新内容；已加载旧正文的会话不会被主动改写。
 
 ## 网络与 SSH
 

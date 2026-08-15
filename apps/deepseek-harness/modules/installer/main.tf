@@ -1,8 +1,8 @@
 locals {
   nginx_transaction_helper               = file("${path.module}/templates/nginx-transaction.sh")
-  deployment_environment_skill_installer = file("${path.module}/templates/deployment-environment-skill.py")
+  deployment_environment_skill_installer = file("${path.module}/templates/las-dsh-environment-skill.py")
 
-  deployment_environment_skill = templatefile("${path.module}/templates/deployment-environment.SKILL.md.tftpl", {
+  deployment_environment_skill = templatefile("${path.module}/templates/las-dsh-environment.SKILL.md.tftpl", {
     public_authority             = var.public_authority
     preview_count                = var.preview_count
     preview_ports                = var.preview_ports

@@ -423,7 +423,7 @@ run "renders_deployment_environment_skill" {
 
   assert {
     condition = (
-      strcontains(nonsensitive(output.install_command), "name: deployment-environment") &&
+      strcontains(nonsensitive(output.install_command), "name: las-dsh-environment") &&
       strcontains(nonsensitive(output.install_command), "disable-model-invocation: false") &&
       strcontains(nonsensitive(output.install_command), "开发、启动、调试网页或向用户提供网页预览时必须使用") &&
       strcontains(nonsensitive(output.install_command), "HOME=/home/dsh") &&
@@ -447,7 +447,7 @@ run "renders_deployment_environment_skill" {
       strcontains(nonsensitive(output.install_command), "O_NOFOLLOW") &&
       strcontains(nonsensitive(output.install_command), "os.replace(temporary, \"SKILL.md\"")
     )
-    error_message = "安装命令必须安全安装可路由的 deployment-environment skill，并注入完整运行环境。"
+    error_message = "安装命令必须安全安装可路由的 las-dsh-environment skill，并注入完整运行环境。"
   }
 }
 

@@ -2,8 +2,8 @@
 set -euo pipefail
 
 module_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-installer="$module_dir/templates/deployment-environment-skill.py"
-skill_template="$module_dir/templates/deployment-environment.SKILL.md.tftpl"
+installer="$module_dir/templates/las-dsh-environment-skill.py"
+skill_template="$module_dir/templates/las-dsh-environment.SKILL.md.tftpl"
 test_root="$(mktemp -d)"
 trap 'rm -rf "$test_root"' EXIT
 
@@ -59,7 +59,7 @@ printf '%s\n' 'first skill' > "$skill_one"
 printf '%s\n' 'second skill' > "$skill_two"
 
 run_installer "$skill_one"
-bundle="$test_root/home/.agents/skills/deployment-environment"
+bundle="$test_root/home/.agents/skills/las-dsh-environment"
 managed="$bundle/SKILL.md"
 test "$(cat "$managed")" = 'first skill' || fail "first install content"
 test "$(mode "$test_root/home/.agents")" = 700 || fail ".agents mode"
@@ -109,16 +109,16 @@ done
 run_short_write "$skill_one"
 test "$(cat "$managed")" = 'first skill' || fail "short write was not completed"
 
-for component in agents skills deployment-environment; do
+for component in agents skills las-dsh-environment; do
   case "$component" in
     agents) bad="$test_root/bad-agents"; link="$test_root/home/.agents" ;;
     skills) bad="$test_root/bad-skills"; link="$test_root/home/.agents/skills" ;;
-    deployment-environment) bad="$test_root/bad-bundle"; link="$test_root/home/.agents/skills/deployment-environment" ;;
+    las-dsh-environment) bad="$test_root/bad-bundle"; link="$test_root/home/.agents/skills/las-dsh-environment" ;;
   esac
   rm -rf "$test_root/home/.agents"
   case "$component" in
     skills) mkdir -p "$test_root/home/.agents" ;;
-    deployment-environment) mkdir -p "$test_root/home/.agents/skills" ;;
+    las-dsh-environment) mkdir -p "$test_root/home/.agents/skills" ;;
   esac
   mkdir "$bad"
   printf '%s\n' external > "$bad/sentinel"
@@ -131,31 +131,31 @@ for component in agents skills deployment-environment; do
 done
 
 rm -rf "$test_root/home/.agents"
-mkdir -p "$test_root/home/.agents/skills/deployment-environment"
+mkdir -p "$test_root/home/.agents/skills/las-dsh-environment"
 bad="$test_root/bad-file"
 printf '%s\n' external > "$bad"
 before="$(fingerprint "$bad")"
-ln -s "$bad" "$test_root/home/.agents/skills/deployment-environment/SKILL.md"
+ln -s "$bad" "$test_root/home/.agents/skills/las-dsh-environment/SKILL.md"
 expect_fail run_installer "$skill_one"
 test "$(fingerprint "$bad")" = "$before" || fail "skill-file symlink target changed"
 
 rm -rf "$test_root/home/.agents"
-mkdir -p "$test_root/home/.agents/skills/deployment-environment"
+mkdir -p "$test_root/home/.agents/skills/las-dsh-environment"
 bad="$test_root/hardlink-source"
 printf '%s\n' external > "$bad"
 chmod 0644 "$bad"
-ln "$bad" "$test_root/home/.agents/skills/deployment-environment/SKILL.md"
+ln "$bad" "$test_root/home/.agents/skills/las-dsh-environment/SKILL.md"
 before="$(fingerprint "$bad")"
 expect_fail run_installer "$skill_one"
 test "$(fingerprint "$bad")" = "$before" || fail "hardlink target changed"
 
-for component in agents skills deployment-environment skill-file; do
+for component in agents skills las-dsh-environment skill-file; do
   rm -rf "$test_root/home/.agents"
   case "$component" in
     agents) bad="$test_root/home/.agents" ;;
     skills) mkdir -p "$test_root/home/.agents"; bad="$test_root/home/.agents/skills" ;;
-    deployment-environment) mkdir -p "$test_root/home/.agents/skills"; bad="$test_root/home/.agents/skills/deployment-environment" ;;
-    skill-file) mkdir -p "$test_root/home/.agents/skills/deployment-environment"; bad="$test_root/home/.agents/skills/deployment-environment/SKILL.md" ;;
+    las-dsh-environment) mkdir -p "$test_root/home/.agents/skills"; bad="$test_root/home/.agents/skills/las-dsh-environment" ;;
+    skill-file) mkdir -p "$test_root/home/.agents/skills/las-dsh-environment"; bad="$test_root/home/.agents/skills/las-dsh-environment/SKILL.md" ;;
   esac
   if [ "$component" = skill-file ]; then
     mkdir "$bad"
