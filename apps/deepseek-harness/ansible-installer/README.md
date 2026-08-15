@@ -39,7 +39,9 @@ export DSH_CODE_SERVER_PASSWORD='replace-with-a-different-secret'
 
 ```bash
 bash tests/test-project.sh
+./tests/test-ansible-parity-contract.sh
 ./tests/test-preview-count-validation.sh
+./tests/test-port-validation.sh
 ./tests/test-nodejs-version-check.sh
 ./.tools/uv/uv run --locked ansible-playbook --syntax-check -i tests/inventory.yml playbooks/site.yml
 ```

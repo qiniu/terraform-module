@@ -151,6 +151,13 @@ require_regex "$nginx_step" '^[[:space:]]*run:[[:space:]]*bash[[:space:]]+apps/d
 require_regex "$code_server_step" '^[[:space:]]*run:[[:space:]]*bash[[:space:]]+apps/deepseek-harness/modules/installer/tests/code-server-install\.sh[[:space:]]*$' 'workflow runs code-server installer test'
 require_text "$ansible_step" 'bash tests/test-project.sh' 'workflow runs Ansible installer contract'
 require_text "$ansible_step" 'ansible-playbook --syntax-check' 'workflow validates Ansible playbook syntax'
+require_text "$ansible_step" 'bash tests/test-ansible-parity-contract.sh' 'workflow runs Ansible parity contract'
+require_text "$ansible_step" 'bash tests/test-port-validation.sh' 'workflow runs Ansible port validation'
+
+ansible_readme_file="$repo_dir/ansible-installer/README.md"
+ansible_readme_text="$(<"$ansible_readme_file")"
+require_text "$ansible_readme_text" 'tests/test-ansible-parity-contract.sh' 'Ansible README documents the parity contract'
+require_text "$ansible_readme_text" './tests/test-port-validation.sh' 'Ansible README documents port validation'
 
 readme_file="$repo_dir/README.md"
 outputs_file="$repo_dir/outputs.tf"
