@@ -98,7 +98,9 @@ jobs:
         working-directory: apps/deepseek-harness/ansible-installer
         run: |
           bash tests/test-project.sh
+          bash tests/test-ansible-parity-contract.sh
           source ./env.sh
           "$dsh_uv_dir/uv" run --locked ansible-playbook --syntax-check -i tests/inventory.yml playbooks/site.yml
           bash tests/test-preview-count-validation.sh
+          bash tests/test-port-validation.sh
           bash tests/test-nodejs-version-check.sh
