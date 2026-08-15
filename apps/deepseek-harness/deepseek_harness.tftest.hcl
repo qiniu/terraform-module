@@ -45,24 +45,22 @@ run "uses_fixed_versions_and_installer_contract" {
     condition = (
       var.preview_count == 1 &&
       local.preview_ports == [30080, 30081, 30082, 30083]
+      && local.uv_version == "0.12.5"
       && local.code_server_version == "4.132.0"
       && local.code_server_port == 3086
       && local.code_server_proxy_port == 3087
     )
-    error_message = "根模块必须固定 Preview 端口 30080 到 30083，并使用 code-server 3086/3087。"
+    error_message = "根模块必须固定 uv 0.12.5、Preview 端口 30080 到 30083，并使用 code-server 3086/3087。"
   }
 
   assert {
     condition = (
-      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "@deepseek-ai/dsh@0.1.0-rc.6") &&
-      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "node-v24.19.0") &&
-      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "--port 3080") &&
-      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "listen 0.0.0.0:3081") &&
-      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "--trusted-host dsh.example.test") &&
-      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "code-server") &&
-      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "web_username=\"admin\"")
+      issensitive(qiniu_compute_instance_exec.install_dsh.command) &&
+      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "uv_version='0.12.5'") &&
+      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "ansible_archive_base64='") &&
+      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "extra_vars_base64='")
     )
-    error_message = "根模块必须将固定版本、端口、authority、用户名和随机密码传给 installer。"
+    error_message = "根模块必须将固定 uv 版本及敏感自包含安装命令传给 instance_exec。"
   }
 
   assert {
