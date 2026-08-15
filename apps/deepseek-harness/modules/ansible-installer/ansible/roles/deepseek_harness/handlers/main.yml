@@ -1,0 +1,7 @@
+---
+- name: restart deepseek harness service
+  ansible.builtin.systemd_service:
+    name: deepseek-harness.service
+    daemon_reload: true
+    state: restarted
+  listen: restart deepseek harness

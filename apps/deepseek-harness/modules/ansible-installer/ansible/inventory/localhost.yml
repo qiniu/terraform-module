@@ -1,0 +1,6 @@
+all:
+  children:
+    deepseek_harness:
+      hosts:
+        localhost:
+          ansible_connection: local
