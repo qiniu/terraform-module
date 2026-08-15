@@ -14,6 +14,13 @@
   register: nodejs_binary
   tags: nodejs-version-check
 
+- name: Check the pinned Node.js prefix
+  ansible.builtin.stat:
+    path: "{{ nodejs_prefix }}"
+    follow: false
+  register: nodejs_prefix_path
+  tags: nodejs-version-check
+
 - name: Read the installed Node.js version
   ansible.builtin.command:
     argv:
@@ -30,6 +37,7 @@
     nodejs_needs_install: >-
       {{
         not nodejs_binary.stat.exists
+        or nodejs_prefix_path.stat.islnk | default(false)
         or nodejs_installed_version.rc | default(1) != 0
         or nodejs_installed_version.stdout | default('') | trim != 'v' ~ nodejs_version
       }}
@@ -74,6 +82,30 @@
   ansible.builtin.copy:
     content: "{{ nodejs_version }}\n"
     dest: "{{ nodejs_prefix }}/VERSION"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Mark the managed Node.js toolchain
+  ansible.builtin.copy:
+    content: "las-dsh-installer\n"
+    dest: "{{ nodejs_prefix }}/{{ nodejs_managed_marker }}"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Create the managed toolchain registry directory
+  ansible.builtin.file:
+    path: "{{ nodejs_managed_toolchains_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Register the managed Node.js toolchain
+  ansible.builtin.copy:
+    content: "{{ nodejs_prefix }}\n"
+    dest: "{{ nodejs_managed_toolchains_dir }}/node-v{{ nodejs_version }}"
     owner: root
     group: root
     mode: '0644'

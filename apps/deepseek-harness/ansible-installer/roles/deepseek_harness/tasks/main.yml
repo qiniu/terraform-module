@@ -25,19 +25,10 @@
     npm_config_cache: "{{ dsh_npm_cache_dir }}"
   become_user: "{{ dsh_user }}"
   when: dsh_cached_version.stdout | trim != dsh_version
-  async: 1800
-  poll: 0
-  register: dsh_prewarm_job
-
-- name: Wait for the DeepSeek Harness package prewarm
-  ansible.builtin.async_status:
-    jid: "{{ dsh_prewarm_job.ansible_job_id }}"
-  become_user: "{{ dsh_user }}"
-  when: dsh_cached_version.stdout | trim != dsh_version
   register: dsh_prewarm
-  retries: 180
-  delay: 10
-  until: dsh_prewarm.finished
+  retries: 5
+  delay: 3
+  until: dsh_prewarm.rc == 0
   notify: restart deepseek harness
 
 - name: Record the cached DeepSeek Harness version

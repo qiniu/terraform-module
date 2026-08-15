@@ -1,23 +1,61 @@
 ---
 name: las-dsh-environment
-description: 开发、启动、调试网页或向用户提供网页预览时必须使用。
+description: 开发、启动、调试网页或向用户提供网页预览时必须使用此 skill，了解当前 DeepSeek Harness 部署环境与公开预览入口。
 disable-model-invocation: false
 ---
 
-# Deployment Environment
+# Deployment environment
 
-运行用户为 `{{ dsh_user }}`，`HOME={{ dsh_home }}`，`DSH_HOME={{ dsh_state_dir }}`，工作目录是 `{{ dsh_workspace_dir }}`。
+## 当前运行环境
 
-Harness 地址为 `https://{{ dsh_public_authority }}`。
+你正在一台由 LAS 管理的云主机上，以无 sudo 权限的 `{{ dsh_user }}` 用户运行。该主机用于运行 DeepSeek Harness、网页开发服务和相关开发工具。
+
+- 用户主目录：`{{ dsh_home }}`
+- `HOME`：`{{ dsh_home }}`
+- Harness 数据目录：`DSH_HOME={{ dsh_state_dir }}`
+- 默认工作目录：`{{ dsh_workspace_dir }}`
+- 用户级 skill 目录：`{{ dsh_home }}/.agents/skills`
+- 当前 skill 文件：`{{ dsh_home }}/.agents/skills/{{ deployment_skill_name }}/SKILL.md`
+- DeepSeek Harness：`https://{{ dsh_public_authority }}`
+
+网页项目、配置文件和临时调试文件都应放在 `{{ dsh_workspace_dir }}` 或其子目录中。不要把项目文件写入 `/etc`、`/usr` 或其他系统目录；需要安装系统服务时，应通过已有的项目安装流程处理。
+
+## 网络与端口
+
+公网入口由 HTTPProxy 提供。除 HTTPProxy 目标端口外，应用不需要绑定公网网卡；应用服务应优先只监听 `127.0.0.1`。
+
+- Harness 应用：`127.0.0.1:{{ dsh_port }}`，由本机 Nginx `{{ nginx_proxy_port }}` 代理到公网 Harness 地址
+- code-server：`127.0.0.1:{{ code_server_port }}`，由本机 Nginx `{{ code_server_proxy_port }}` 代理到独立 code-server 地址
 
 {% if dsh_preview_count | int == 0 %}
-当前没有启用 Preview 槽位。
+- Preview：当前未启用 Preview 槽位
 {% else %}
-网页开发服务必须只监听对应 Preview 槽位的回环端口，不得绑定 `0.0.0.0` 或额外公开端口：
+Preview 槽位共 {{ dsh_preview_count }} 个。每个槽位由 HTTPProxy 直接转发到用户应用，不经过本机 Nginx：
 {% for index in range(dsh_preview_count | int) %}
-- Preview {{ index + 1 }}：`127.0.0.1:{{ dsh_preview_ports[index] }}` -> `https://{{ dsh_preview_public_authorities[index] }}`
+- Preview {{ index + 1 }}：应用监听 `127.0.0.1:{{ dsh_preview_ports[index] }}`，公网地址为 `https://{{ dsh_preview_public_authorities[index] }}`
 {% endfor %}
-Preview 由 HTTPProxy 直连服务，不经过 Nginx；未启动服务时返回 5xx（通常为 502，也可能为 503）属于正常状态。
 {% endif %}
 
-不要在网页、日志或命令中写入密码、令牌、私钥或其他敏感信息。
+不要占用其他 Preview 槽位的端口，也不要把开发服务绑定到 `0.0.0.0`。如果需要 WebSocket、HMR 或 SSE，直接在对应 Preview 槽位启动支持这些协议的开发服务器即可，HTTPProxy 会转发该连接。
+
+## 可用能力
+
+你可以在 `{{ dsh_workspace_dir }}` 创建、编辑和运行网页项目，使用 Node.js 工具链启动开发服务器、构建资源和运行测试，也可以通过 code-server 进行浏览器内编辑、终端操作和调试。code-server 使用独立密码认证。
+
+Node.js 固定安装在 `/opt/node-v{{ nodejs_version }}`，并通过 `/usr/local/bin/node`、`/usr/local/bin/npm` 和 `/usr/local/bin/npx` 发布。建议先运行 `node --version` 确认版本。
+
+uv 固定版本为 `{{ uv_version }}`，安装位置为 `/opt/uv-v{{ uv_version }}`，并通过 `/usr/local/bin/uv` 发布。建议先运行 `uv --version` 确认版本。本阶段不会安装或更新 uv。
+
+Python 项目应在 `{{ dsh_workspace_dir }}` 中使用自己的 `.venv`，例如 `uv init`、`uv sync` 和 `uv run`。不得改动 root 的 `/opt`、`/usr/local/bin` 或 `{{ dsh_ansible_venv_dir }}`。
+
+推荐流程是：在工作目录准备项目，选择一个 Preview 槽位，令开发服务器监听对应的 `127.0.0.1` 端口，确认本机访问正常后，再把对应公网 URL 告知用户。多个网页或独立服务可以分别使用不同槽位。
+
+## 检查与故障排查
+
+启动服务后，先用 `ss -ltnp` 确认服务监听的是预期的 loopback 端口，再用 `curl` 访问对应的 `127.0.0.1:<port>`。随后检查应用输出或日志；用户级 systemd 服务可使用 `systemctl --user status` 和 `journalctl --user`。最后访问对应公网 Preview URL。应用尚未启动时，HTTPProxy 返回 5xx（通常为 `502`，也可能为 `503`）是正常现象。
+
+## 安全边界
+
+Preview 地址是公开地址，任何知道 URL 的人都可以访问，不适用 Harness Basic Auth。不要在网页、终端输出、日志、提交内容或公开 Preview 中放入密码、令牌、私钥、云凭据或其他敏感信息。
+
+不要尝试绕过 code-server 密码认证，不要修改 Harness 或 Nginx 的现有认证配置，也不要自行新增公网监听端口。需要向用户展示内容时，只分享 Preview URL、非敏感的运行结果和必要的错误信息。
