@@ -62,8 +62,12 @@ reject_text "$harness_tasks" '^  async:'
 
 require_text "$node_defaults" 'nodejs_managed_marker: \.las-dsh-managed'
 require_text "$node_tasks" 'nodejs_managed_marker'
+require_text "$node_tasks" 'content: "node:\{\{ nodejs_version \}\}\\n"'
 require_text "$node_defaults" 'managed-toolchains'
 require_text "$node_cleanup" 'realpath'
+require_text "$node_cleanup" 'marker_version="\$\{registration##\*/node-v\}"'
+require_text "$node_cleanup" 'node:\$marker_version'
+require_text "$node_cleanup" 'cat "\$marker"'
 require_text "$node_cleanup" 'nodejs_cleanup'
 require_text "$node_defaults" 'nodejs_managed_toolchains_dir'
 

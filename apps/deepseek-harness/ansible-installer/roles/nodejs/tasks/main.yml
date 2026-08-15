@@ -88,7 +88,7 @@
 
 - name: Mark the managed Node.js toolchain
   ansible.builtin.copy:
-    content: "las-dsh-installer\n"
+    content: "node:{{ nodejs_version }}\n"
     dest: "{{ nodejs_prefix }}/{{ nodejs_managed_marker }}"
     owner: root
     group: root

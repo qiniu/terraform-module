@@ -26,6 +26,8 @@
           [ ! -L "$marker" ] || continue
           [ "$(stat -c '%u:%g' "$marker")" = '0:0' ] || continue
           [ "$(realpath -e "$marker")" = "$marker" ] || continue
+          marker_version="${registration##*/node-v}"
+          [ "$(cat "$marker")" = "node:$marker_version" ] || continue
 
           rm -rf -- "$prefix"
           rm -f -- "$registration"
