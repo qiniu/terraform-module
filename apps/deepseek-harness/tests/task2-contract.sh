@@ -111,7 +111,7 @@ require_assignment "$installer_block" 'preview_public_authorities' 'module\.infr
 require_assignment "$installer_block" 'code_server_port' 'local\.code_server_port' 'installer receives local.code_server_port'
 require_assignment "$installer_block" 'code_server_proxy_port' 'local\.code_server_proxy_port' 'installer receives local.code_server_proxy_port'
 require_assignment "$installer_block" 'code_server_public_authority' 'module\.infrastructure\.code_server_public_authority' 'installer receives infrastructure code-server authority'
-require_text "$(<"$ansible_installer_main")" 'uv_version                     = var.uv_version' 'Ansible bootstrap passes uv version to extra vars'
+require_regex "$(<"$ansible_installer_main")" '^[[:space:]]*uv_version[[:space:]]*=[[:space:]]*var\.uv_version[[:space:]]*$' 'Ansible bootstrap passes uv version to extra vars'
 
 workflow_text="$(<"$workflow_file")"
 require_text "$workflow_text" "'apps/deepseek-harness/**'" 'workflow triggers on DeepSeek Harness changes'
@@ -156,6 +156,7 @@ require_text "$readme_text" 'terraform output -json preview_urls' 'README shows 
 require_text "$readme_text" 'terraform output -raw code_server_url' 'README shows how to read code-server URL'
 require_text "$readme_text" 'code_server_password' 'README identifies code-server password output'
 require_text "$readme_text" 'code-server 自带密码' 'README explains code-server authentication'
+require_text "$readme_text" 'pypi.org/simple' 'README documents the Python package index required by uv sync'
 require_text "$readme_text" '127.0.0.1:3086' 'README documents the code-server loopback port'
 require_text "$readme_text" '127.0.0.1:30080' 'README requires the loopback preview listener'
 require_text "$readme_text" '502' 'README explains the expected no-upstream response'
