@@ -85,6 +85,19 @@ run "repairs_existing_ansible_venv_traversal_permissions" {
   }
 }
 
+run "repairs_existing_ansible_venv_read_permissions" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(base64decode(output.bootstrap.content), format("find \"%s{UV_PROJECT_ENVIRONMENT}\" -type d -exec chmod 0755", "$")) &&
+      strcontains(base64decode(output.bootstrap.content), format("find \"%s{UV_PROJECT_ENVIRONMENT}\" -type f -exec chmod 0644", "$")) &&
+      strcontains(base64decode(output.bootstrap.content), format("find \"%s{UV_PROJECT_ENVIRONMENT}/bin\" -type f -exec chmod 0755", "$"))
+    )
+    error_message = "既有 Ansible 虚拟环境的目录、文件和 bin 脚本必须恢复为 dsh 可读/执行权限。"
+  }
+}
+
 run "rejects_port_collisions" {
   command = plan
 
