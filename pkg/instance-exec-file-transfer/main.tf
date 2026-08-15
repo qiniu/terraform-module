@@ -1,15 +1,11 @@
 locals {
-  staging_root       = "/var/lib/instance-exec-file-transfer"
-  marker_name        = ".instance-exec-file-transfer-managed"
-  encoded_chunks     = [for characters in chunklist(split("", var.content_base64), var.chunk_size) : join("", characters)]
-  chunks             = { for index, payload in local.encoded_chunks : format("%06d", index) => payload }
-  destination_parent = dirname(var.destination_path)
-  destination_name   = basename(var.destination_path)
-
+  staging_root   = "/var/lib/instance-exec-file-transfer"
+  marker_name    = ".instance-exec-file-transfer-managed"
+  encoded_chunks = [for characters in chunklist(split("", var.content_base64), var.chunk_size) : join("", characters)]
+  chunks         = { for index, payload in local.encoded_chunks : format("%06d", index) => payload }
   prepare_command = templatefile("${path.module}/templates/prepare.sh.tftpl", {
     content_sha256   = var.content_sha256
     destination_path = var.destination_path
-    destination_name = local.destination_name
     marker_name      = local.marker_name
     staging_root     = local.staging_root
   })
@@ -28,7 +24,6 @@ locals {
     chunk_count      = length(local.chunks)
     content_sha256   = var.content_sha256
     destination_path = var.destination_path
-    destination_name = local.destination_name
     marker_name      = local.marker_name
     staging_root     = local.staging_root
   })
@@ -52,7 +47,7 @@ resource "qiniu_compute_instance_exec" "prepare" {
   user        = var.user
   port        = var.port
   private_key = var.private_key
-  shell       = var.shell
+  shell       = "bash"
   command     = local.prepare_command
 
   store_stdout = false
@@ -74,7 +69,7 @@ resource "qiniu_compute_instance_exec" "chunks" {
   user        = var.user
   port        = var.port
   private_key = var.private_key
-  shell       = var.shell
+  shell       = "bash"
   command     = local.chunk_commands[each.key]
 
   store_stdout = false
@@ -95,7 +90,7 @@ resource "qiniu_compute_instance_exec" "finalize" {
   user        = var.user
   port        = var.port
   private_key = var.private_key
-  shell       = var.shell
+  shell       = "bash"
   command     = local.finalize_command
 
   store_stdout = false

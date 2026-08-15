@@ -1,7 +1,7 @@
 set -euo pipefail
 umask 077
 sha='${content_sha256}'
-destination='${destination_path}'
+destination=${jsonencode(destination_path)}
 staging_root='${staging_root}'
 marker_name='${marker_name}'
 fail() { printf '%s\n' "$1" >&2; exit 1; }
@@ -23,11 +23,13 @@ marker_matches() { [ "$(marker_value "$1")" = "$sha" ]; }
 install -d -o root -g root -m 0700 -- "$staging_root"
 require_root_dir "$staging_root"
 runtime_parent="$(dirname -- "$destination")"
-current=/opt
+destination_name="$(basename -- "$destination")"
+current=/
 require_root_dir "$current"
-relative="$${destination#/opt/}"
+relative="$${destination#/}"
 IFS=/ read -r -a parts <<< "$relative"
 for part in "$${parts[@]:0:$${#parts[@]}-1}"; do
+  [ -n "$part" ] || continue
   current="$current/$part"
   if [ -e "$current" ] || [ -L "$current" ]; then require_root_dir "$current"; else install -d -o root -g root -m 0755 -- "$current"; require_root_dir "$current"; fi
 done
@@ -52,7 +54,7 @@ if [ -e "$destination" ] || [ -L "$destination" ]; then
   if [ -e "$target_marker" ] || [ -L "$target_marker" ]; then
     [ "$(marker_value "$target_marker")" = "$target_sha" ] || fail 'target marker hash mismatch'
   elif [ "$target_sha" = "$sha" ] && marker_matches "$marker"; then
-    target_marker_temporary="$(mktemp "$runtime_parent/.${destination_name}.marker.XXXXXX")"
+    target_marker_temporary="$(mktemp "$runtime_parent/.$destination_name.marker.XXXXXX")"
     printf '%s\n' "$sha" > "$target_marker_temporary"; chown root:root -- "$target_marker_temporary"; chmod 0600 -- "$target_marker_temporary"; mv -f -- "$target_marker_temporary" "$target_marker"
   else
     fail 'refusing unmanaged target'

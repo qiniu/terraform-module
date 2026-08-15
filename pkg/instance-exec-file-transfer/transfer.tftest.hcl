@@ -52,10 +52,20 @@ run "rejects_invalid_hash" {
   expect_failures = [var.content_sha256]
 }
 
-run "rejects_unsafe_destination" {
+run "rejects_relative_destination" {
   command = plan
-  variables { destination_path = "/opt/../etc/passwd" }
+  variables { destination_path = "relative/file.tar.gz" }
   expect_failures = [var.destination_path]
+}
+
+run "accepts_absolute_destination_outside_opt" {
+  command = plan
+  variables { destination_path = "/var/lib/example/runtime/test.tar.gz" }
+
+  assert {
+    condition     = output.destination_path == "/var/lib/example/runtime/test.tar.gz"
+    error_message = "公共传输模块必须接受 /opt 以外的受限绝对目标路径。"
+  }
 }
 
 run "keeps_maximum_rendered_chunk_below_limit" {

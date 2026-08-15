@@ -41,17 +41,6 @@ variable "private_key" {
   }
 }
 
-variable "shell" {
-  description = "远程命令解释器。"
-  type        = string
-  default     = "bash"
-
-  validation {
-    condition     = var.shell == "bash" || var.shell == "/bin/bash"
-    error_message = "shell 只能是 bash 或 /bin/bash。"
-  }
-}
-
 variable "content_base64" {
   description = "待传输内容的无换行 ASCII Base64 编码。"
   type        = string
@@ -76,19 +65,12 @@ variable "content_sha256" {
 }
 
 variable "destination_path" {
-  description = "受限的 /opt 下绝对目标文件路径。"
+  description = "远端绝对目标文件路径。"
   type        = string
 
   validation {
-    condition = (
-      can(regex("^/opt/[A-Za-z0-9][A-Za-z0-9._/-]*$", var.destination_path)) &&
-      !strcontains(var.destination_path, "//") &&
-      !strcontains(var.destination_path, "/./") &&
-      !strcontains(var.destination_path, "/../") &&
-      !endswith(var.destination_path, "/.") &&
-      !endswith(var.destination_path, "/..")
-    )
-    error_message = "destination_path 必须是不含控制字符、重复分隔符或 traversal 的受限 /opt 绝对文件路径。"
+    condition     = startswith(var.destination_path, "/")
+    error_message = "destination_path 必须是绝对路径。"
   }
 }
 

@@ -1,6 +1,6 @@
 set -euo pipefail
 umask 077
-sha='${content_sha256}'; destination='${destination_path}'; staging='${staging_root}/${content_sha256}'; marker="$staging/${marker_name}"; chunks="$staging/chunks"; expected=${chunk_count}
+sha='${content_sha256}'; destination=${jsonencode(destination_path)}; destination_name="$(basename -- "$destination")"; staging='${staging_root}/${content_sha256}'; marker="$staging/${marker_name}"; chunks="$staging/chunks"; expected=${chunk_count}
 fail() { printf '%s\n' "$1" >&2; exit 1; }
 require_root_dir() { [ -d "$1" ] && [ ! -L "$1" ] && [ "$(stat -c %u -- "$1")" = 0 ] && [ "$(realpath -e -- "$1")" = "$1" ] || fail "unsafe directory: $1"; }
 require_root_file() { [ -f "$1" ] && [ ! -L "$1" ] && [ "$(stat -c %u -- "$1")" = 0 ] && [ "$(realpath -e -- "$1")" = "$1" ] || fail "unsafe file: $1"; }
@@ -26,13 +26,13 @@ if [ -e "$destination" ] || [ -L "$destination" ]; then
   if [ -e "$target_marker" ] || [ -L "$target_marker" ]; then
     [ "$(marker_value "$target_marker")" = "$target_sha" ] || fail 'target marker hash mismatch'
   elif [ "$target_sha" = "$sha" ] && marker_matches "$marker"; then
-    marker_temporary="$(mktemp "$parent/.${destination_name}.marker.XXXXXX")"
+    marker_temporary="$(mktemp "$parent/.$destination_name.marker.XXXXXX")"
     printf '%s\n' "$sha" > "$marker_temporary"; chown root:root -- "$marker_temporary"; chmod 0600 -- "$marker_temporary"; mv -f -- "$marker_temporary" "$target_marker"
   else
     fail 'refusing unmanaged target'
   fi
 fi
-temporary="$(mktemp "$parent/.${destination_name}.XXXXXX")"; marker_temporary="$(mktemp "$parent/.${destination_name}.marker.XXXXXX")"
+temporary="$(mktemp "$parent/.$destination_name.XXXXXX")"; marker_temporary="$(mktemp "$parent/.$destination_name.marker.XXXXXX")"
 trap 'rm -f -- "$temporary" "$marker_temporary"' EXIT
 for index in $(seq 0 "$((expected - 1))"); do cat -- "$chunks/$(printf 'chunk-%06d' "$index")"; done | base64 -d > "$temporary"
 [ "$(sha256sum -- "$temporary" | awk '{print $1}')" = "$sha" ] || fail 'decoded content hash mismatch'
