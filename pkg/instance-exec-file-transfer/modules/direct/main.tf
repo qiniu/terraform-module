@@ -8,7 +8,6 @@
 
 locals {
   staging_dir    = "${var.staging_root}/${var.content_sha256}"
-  marker_path    = "${local.staging_dir}/marker"
   marker_content = "${var.content_sha256} ${var.file_mode} ${var.target_path}"
 
   # 目标已存在时，仅当 marker 与目标 SHA 严格匹配（受管文件）才允许覆盖

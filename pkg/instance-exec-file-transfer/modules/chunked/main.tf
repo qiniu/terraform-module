@@ -10,7 +10,6 @@
 
 locals {
   staging_dir    = "${var.staging_root}/${var.content_sha256}"
-  marker_path    = "${local.staging_dir}/marker"
   marker_content = "${var.content_sha256} ${var.file_mode} ${var.target_path}"
 
   # 目标已存在时，仅当 marker 与目标 SHA 严格匹配（受管文件）才允许覆盖
@@ -30,9 +29,8 @@ locals {
   chunk_payload_aligned = floor(local.chunk_payload_max / 4) * 4
   content_len           = nonsensitive(length(var.content))
   chunk_count           = max(1, ceil(local.content_len / local.chunk_payload_aligned))
-  chunk_indexes         = range(local.chunk_count)
   chunk_payloads = {
-    for i in local.chunk_indexes :
+    for i in range(local.chunk_count) :
     format("%05d", i) => substr(var.content, i * local.chunk_payload_aligned, local.chunk_payload_aligned)
   }
 

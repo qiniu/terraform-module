@@ -55,20 +55,19 @@ check "variable password 声明为 sensitive" var_is_sensitive password
 # ---------------------------------------------------------------------------
 exec_resources_no_store() {
   local exec_count=0
-  local stdout_false
-  local stderr_false
+  local stdout_false=0
+  local stderr_false=0
   for f in ${MAIN_TFS}; do
     exec_count=$((exec_count + $(grep -c 'resource "qiniu_compute_instance_exec"' "$f" || true)))
+    stdout_false=$((stdout_false + $(grep -c 'store_stdout[[:space:]]*=[[:space:]]*false' "$f" || true)))
+    stderr_false=$((stderr_false + $(grep -c 'store_stderr[[:space:]]*=[[:space:]]*false' "$f" || true)))
   done
   [ "${exec_count}" -ge 1 ] || return 1
-  stdout_false=$(grep -c 'store_stdout[[:space:]]*=[[:space:]]*false' ${MAIN_TFS} | awk -F: '{s+=$2} END{print s+0}')
-  stderr_false=$(grep -c 'store_stderr[[:space:]]*=[[:space:]]*false' ${MAIN_TFS} | awk -F: '{s+=$2} END{print s+0}')
   [ "${exec_count}" -eq "${stdout_false}" ] || return 1
   [ "${exec_count}" -eq "${stderr_false}" ] || return 1
 }
 
-check "所有 qiniu_compute_instance_exec 均 store_stdout = false" exec_resources_no_store
-check "所有 qiniu_compute_instance_exec 均 store_stderr = false" exec_resources_no_store
+check "所有 qiniu_compute_instance_exec 均禁用 stdout/stderr 保存" exec_resources_no_store
 
 # ---------------------------------------------------------------------------
 # 3~5. 根模块入口变量校验

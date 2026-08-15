@@ -175,10 +175,6 @@ resource "qiniu_compute_instance_exec" "verify" {
 
   command = <<-EOT
     set -e
-    echo "ACTUAL_HELLO=$(sha256sum /opt/if-test/hello.txt | awk '{print $1}')"
-    echo "ACTUAL_BIG=$(sha256sum /opt/if-test/uv.lock | awk '{print $1}')"
-    echo "MODE_H=$(stat -c %a /opt/if-test/hello.txt)"
-    echo "MODE_B=$(stat -c %a /opt/if-test/uv.lock)"
     [ "$(sha256sum /opt/if-test/hello.txt | awk '{print $1}')" = '${sha256(base64decode(local.hello_content))}' ] || { echo "hello.txt hash mismatch" >&2; exit 1; }
     [ "$(stat -c %a /opt/if-test/hello.txt)" = "644" ] || { echo "hello.txt mode mismatch" >&2; exit 1; }
     [ "$(sha256sum /opt/if-test/uv.lock | awk '{print $1}')" = '${sha256(base64decode(local.big_content))}' ] || { echo "uv.lock hash mismatch" >&2; exit 1; }
