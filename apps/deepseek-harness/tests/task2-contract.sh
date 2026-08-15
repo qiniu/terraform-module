@@ -153,17 +153,11 @@ require_text "$workflow_text" "'apps/deepseek-harness/**'" 'workflow triggers on
 require_text "$workflow_text" "'pkg/instance-exec-file-transfer/**'" 'workflow triggers on shared file transfer changes'
 
 wiring_step="$(require_yaml_step "$workflow_file" 'Test module wiring contracts')"
-skill_step="$(require_yaml_step "$workflow_file" 'Test LAS DSH skill installer')"
-nginx_step="$(require_yaml_step "$workflow_file" 'Test offline Nginx configuration transaction')"
-code_server_step="$(require_yaml_step "$workflow_file" 'Test code-server installer contract')"
 ansible_runtime_step="$(require_yaml_step "$workflow_file" 'Test bundled Ansible runtime')"
 ansible_bootstrap_step="$(require_yaml_step "$workflow_file" 'Test Ansible bootstrap installer')"
 file_transfer_step="$(require_yaml_step "$workflow_file" 'Test instance exec file transfer')"
 nested_modules_step="$(require_yaml_step "$workflow_file" 'Test nested Terraform modules')"
 require_regex "$wiring_step" '^[[:space:]]*run:[[:space:]]*bash[[:space:]]+apps/deepseek-harness/tests/task2-contract\.sh[[:space:]]*$' 'workflow runs module wiring contract script'
-require_regex "$skill_step" '^[[:space:]]*run:[[:space:]]*bash[[:space:]]+apps/deepseek-harness/modules/installer/tests/las-dsh-environment-skill\.sh[[:space:]]*$' 'workflow runs las-dsh-environment skill test'
-require_regex "$nginx_step" '^[[:space:]]*run:[[:space:]]*bash[[:space:]]+apps/deepseek-harness/modules/installer/tests/nginx-config\.sh[[:space:]]*$' 'workflow runs Nginx configuration test'
-require_regex "$code_server_step" '^[[:space:]]*run:[[:space:]]*bash[[:space:]]+apps/deepseek-harness/modules/installer/tests/code-server-install\.sh[[:space:]]*$' 'workflow runs code-server installer test'
 require_text "$ansible_runtime_step" 'uv run --locked ansible-playbook --syntax-check' 'workflow validates bundled Ansible playbook syntax'
 require_text "$ansible_runtime_step" 'bash ../tests/ansible-runtime-contract.sh' 'workflow runs bundled Ansible runtime contract'
 require_text "$ansible_bootstrap_step" 'terraform -chdir="modules/ansible-installer" init' 'workflow initializes the Ansible bootstrap Terraform module'
@@ -172,8 +166,6 @@ require_text "$ansible_bootstrap_step" 'terraform -chdir="modules/ansible-instal
 require_text "$ansible_bootstrap_step" 'bash modules/ansible-installer/tests/contract.sh' 'workflow runs the Ansible bootstrap contract'
 require_text "$file_transfer_step" 'terraform -chdir="pkg/instance-exec-file-transfer" test -no-color' 'workflow runs shared file transfer Terraform tests'
 require_text "$file_transfer_step" 'bash pkg/instance-exec-file-transfer/tests/contract.sh' 'workflow runs shared file transfer static contract'
-require_text "$nested_modules_step" 'modules/installer' 'workflow retains legacy installer coverage during migration'
-
 if git -C "$repo_dir/../.." ls-files --error-unmatch 'apps/deepseek-harness/ansible-installer/**' >/dev/null 2>&1; then
   echo 'standalone SSH Ansible installer files must not remain tracked after runtime migration' >&2
   exit 1

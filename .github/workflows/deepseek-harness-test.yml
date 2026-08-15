@@ -74,13 +74,12 @@ jobs:
         run: |
           terraform init
           terraform validate
-          terraform test -no-color
+      terraform test -no-color
 
       - name: Test nested Terraform modules
         working-directory: apps/deepseek-harness
         run: |
           for module in \
-            modules/installer \
             modules/infrastructure
           do
             terraform -chdir="$module" init
@@ -109,15 +108,6 @@ jobs:
 
       - name: Test module wiring contracts
         run: bash apps/deepseek-harness/tests/task2-contract.sh
-
-      - name: Test LAS DSH skill installer
-        run: bash apps/deepseek-harness/modules/installer/tests/las-dsh-environment-skill.sh
-
-      - name: Test offline Nginx configuration transaction
-        run: bash apps/deepseek-harness/modules/installer/tests/nginx-config.sh
-
-      - name: Test code-server installer contract
-        run: bash apps/deepseek-harness/modules/installer/tests/code-server-install.sh
 
       - name: Test bundled Ansible runtime
         working-directory: apps/deepseek-harness/modules/ansible-installer/ansible

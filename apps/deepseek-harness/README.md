@@ -105,13 +105,7 @@ terraform apply
 terraform apply -replace=qiniu_compute_instance_exec.install_dsh
 ```
 
-安装器会先预热 npm 缓存，再以离线模式启动固定版本。该验证需要真实访问 npm registry；不要在本地慢网络环境下载，按项目约定在可联网的七牛云虚机上执行：
-
-```bash
-bash modules/installer/tests/offline-cache.sh
-```
-
-该脚本以调用它的用户运行，并在 `mktemp` 临时目录中独立验证“在线预热后可离线启动”；它不读取服务用户 `dsh` 的 `/home/dsh/.npm` 生产缓存。
+安装器会先预热 npm 缓存，再以离线模式启动固定版本。首次部署需要真实访问 npm registry；后续重复执行会复用服务用户 `dsh` 的生产缓存。
 
 ## 备份与持久化
 
