@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# finalize (issue #58): verify marker+all shards, concat+decode, SHA check,
+# safe target parent, same-dir tmp + atomic mv publish.
+set -e
+D=${staging_dir}
+[ -f "$D/marker" ] || exit 1
+[ "$(cat "$D/marker")" = '${marker_content}' ] || exit 1
+n=$(ls "$D"/part.* 2>/dev/null | wc -l)
+[ "$n" -eq ${chunk_count} ] || exit 1
+i=0
+while [ $i -lt ${chunk_count} ]; do
+  p=$(printf '%05d' $i)
+  [ -f "$D/part.$p" ] || exit 1
+  i=$((i+1))
+done
+cat "$D"/part.* | base64 -d > "$D/merged.tmp"
+printf '%s  %s\n' '${content_sha256}' "$D/merged.tmp" | sha256sum -c - >/dev/null
+chmod ${file_mode} "$D/merged.tmp"
+T='${target_path}'
+TD=$(dirname "$T")
+[ -d "$TD" ]||exit 1
+[ "$(stat -c %U "$TD")" = root ]||exit 1
+[ ! -L "$TD" ]||exit 1
+[ "$(realpath -m "$TD")" = "$TD" ]||exit 1
+if [ -e "$T" ]||[ -L "$T" ];then printf '%s  %s\n' '${content_sha256}' "$T"|sha256sum -c - >/dev/null 2>&1||exit 1;fi
+B=$(basename "$T")
+tmp_fin="$(mktemp "$${TD}/.$${B}.qiniu-finalize.XXXXXX")"
+cp "$D/merged.tmp" "$tmp_fin"
+chmod ${file_mode} "$tmp_fin"
+mv -f "$tmp_fin" "$T"

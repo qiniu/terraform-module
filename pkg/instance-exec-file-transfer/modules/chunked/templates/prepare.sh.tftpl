@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# prepare (issue #58): safe staging under hash dir; root-owned, non-symlink roots;
+# reuse existing staging only when marker matches (clear old parts), else refuse.
+set -e
+R=${staging_root}
+D=${staging_dir}
+T='${target_path}'
+TD=$(dirname "$T")
+mkdir -p "$R"
+[ -d "$R" ]||exit 1
+[ "$(stat -c %U "$R")" = root ]||exit 1
+[ ! -L "$R" ]||exit 1
+[ "$(realpath -m "$R")" = "$R" ]||exit 1
+[ -d "$TD" ]||exit 1
+[ "$(stat -c %U "$TD")" = root ]||exit 1
+[ ! -L "$TD" ]||exit 1
+[ "$(realpath -m "$TD")" = "$TD" ]||exit 1
+${cover_guard}
+if [ -e "$D" ]; then
+  [ -d "$D" ]||exit 1
+  [ "$(stat -c %U "$D")" = root ]||exit 1
+  [ ! -L "$D" ]||exit 1
+  [ "$(realpath -m "$D")" = "$D" ]||exit 1
+  [ -f "$D/marker" ]||exit 1
+  [ "$(cat "$D/marker")" = '${marker_content}' ]||exit 1
+  rm -f "$D"/part.*
+else
+  mkdir -p "$D"
+  printf '%s' '${marker_content}' > "$D/marker"
+fi

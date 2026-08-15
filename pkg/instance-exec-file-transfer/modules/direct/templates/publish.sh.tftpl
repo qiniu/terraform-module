@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# direct publish (issue #58): decode->SHA check->atomic mv; target parent must be
+# root-owned, non-symlink; existing target only overwritten when marker+SHA match.
+set -e
+D=${staging_dir}
+R=$(dirname "$D")
+T='${target_path}'
+TD=$(dirname "$T")
+[ -d "$TD" ]||exit 1
+[ "$(stat -c %U "$TD")" = root ]||exit 1
+[ ! -L "$TD" ]||exit 1
+[ "$(realpath -m "$TD")" = "$TD" ]||exit 1
+mkdir -p "$R"
+[ -d "$R" ]||exit 1
+[ "$(stat -c %U "$R")" = root ]||exit 1
+[ ! -L "$R" ]||exit 1
+[ "$(realpath -m "$R")" = "$R" ]||exit 1
+${cover_guard}
+mkdir -p "$D"
+[ ! -L "$D" ]||exit 1
+printf '%s' '${marker_content}' > "$D/marker"
+tmp_pub="$(mktemp "$${TD}/.qiniu-pub.XXXXXX")"
+printf '%s' '${content}' | base64 -d > "$tmp_pub"
+printf '%s  %s\n' '${content_sha256}' "$tmp_pub" | sha256sum -c - >/dev/null
+chmod ${file_mode} "$tmp_pub"
+mv -f "$tmp_pub" "$T"

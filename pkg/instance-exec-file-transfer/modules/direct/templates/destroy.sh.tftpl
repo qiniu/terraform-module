@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# destroy cleanup (issue #58): remove managed file+staging only when marker+SHA match.
+set -e
+D=${staging_dir}
+T='${target_path}'
+if [ -f "$D/marker" ] && [ "$(cat "$D/marker")" = '${marker_content}' ]; then
+  if [ -f "$T" ]; then
+    if printf '%s  %s\n' '${content_sha256}' "$T" | sha256sum -c - >/dev/null 2>&1; then
+      rm -f "$T"
+    fi
+  fi
+  rm -rf "$D"
+fi

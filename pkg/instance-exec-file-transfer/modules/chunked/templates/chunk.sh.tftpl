@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# chunk (issue #58): write own part; same-dir tmp + atomic mv keeps concurrent runs safe.
+set -e
+D=${staging_dir}
+printf '%s' '${payload}' > "$D/part.${index}.tmp"
+mv -f "$D/part.${index}.tmp" "$D/part.${index}"
