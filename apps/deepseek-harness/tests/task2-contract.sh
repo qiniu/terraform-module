@@ -28,25 +28,6 @@ extract_simple_block() {
   ' "$file"
 }
 
-extract_template_vars() {
-  local file="$1"
-
-  awk '
-    BEGIN { found = 0; complete = 0 }
-    /^[[:space:]]*install_command[[:space:]]*=[[:space:]]*templatefile\([^,]+,[[:space:]]*\{[[:space:]]*$/ {
-      if (found) exit 1
-      found = 1
-      next
-    }
-    found && /^[[:space:]]*}\)[[:space:]]*$/ {
-      complete = 1
-      exit
-    }
-    found { print }
-    END { if (!found || !complete) exit 1 }
-  ' "$file"
-}
-
 require_assignment() {
   local block="$1"
   local field="$2"
@@ -109,33 +90,28 @@ require_regex() {
 }
 
 root_main="$repo_dir/main.tf"
-installer_main="$repo_dir/modules/installer/main.tf"
+ansible_installer_main="$repo_dir/modules/ansible-installer/main.tf"
 workflow_file="$repo_dir/../../.github/workflows/deepseek-harness-test.yml"
 
 locals_block="$(extract_simple_block "$root_main" locals)"
 infrastructure_block="$(extract_simple_block "$root_main" module infrastructure)"
 installer_block="$(extract_simple_block "$root_main" module installer)"
-template_vars="$(extract_template_vars "$installer_main")"
 
 require_assignment "$locals_block" 'preview_ports' '\[30080, 30081, 30082, 30083\]' 'root local.preview_ports'
+require_assignment "$locals_block" 'uv_version' '"0\.12\.5"' 'root local.uv_version = 0.12.5'
 require_assignment "$locals_block" 'code_server_port' '3086' 'root local.code_server_port = 3086'
 require_assignment "$locals_block" 'code_server_proxy_port' '3087' 'root local.code_server_proxy_port = 3087'
 require_assignment "$infrastructure_block" 'preview_count' 'var\.preview_count' 'infrastructure receives preview_count'
 require_assignment "$infrastructure_block" 'code_server_proxy_port' 'local\.code_server_proxy_port' 'infrastructure receives local.code_server_proxy_port'
+require_assignment "$installer_block" 'source' '"\./modules/ansible-installer"' 'root uses the Ansible bootstrap installer module'
+require_assignment "$installer_block" 'uv_version' 'local\.uv_version' 'installer receives fixed uv version'
 require_assignment "$installer_block" 'preview_count' 'var\.preview_count' 'installer receives preview_count'
 require_assignment "$installer_block" 'preview_ports' 'local\.preview_ports' 'installer receives preview ports'
 require_assignment "$installer_block" 'preview_public_authorities' 'module\.infrastructure\.preview_public_authorities' 'installer directly receives preview authorities'
 require_assignment "$installer_block" 'code_server_port' 'local\.code_server_port' 'installer receives local.code_server_port'
 require_assignment "$installer_block" 'code_server_proxy_port' 'local\.code_server_proxy_port' 'installer receives local.code_server_proxy_port'
 require_assignment "$installer_block" 'code_server_public_authority' 'module\.infrastructure\.code_server_public_authority' 'installer receives infrastructure code-server authority'
-require_assignment "$template_vars" 'preview_count' 'var\.preview_count' 'templatefile receives var.preview_count'
-require_assignment "$template_vars" 'preview_ports' 'var\.preview_ports' 'templatefile receives var.preview_ports'
-require_assignment "$template_vars" 'preview_public_authorities' 'var\.preview_public_authorities' 'templatefile receives var.preview_public_authorities'
-require_assignment "$template_vars" 'code_server_version' 'var\.code_server_version' 'templatefile receives var.code_server_version'
-require_assignment "$template_vars" 'code_server_port' 'var\.code_server_port' 'templatefile receives var.code_server_port'
-require_assignment "$template_vars" 'code_server_proxy_port' 'var\.code_server_proxy_port' 'templatefile receives var.code_server_proxy_port'
-require_assignment "$template_vars" 'code_server_public_authority' 'var\.code_server_public_authority' 'templatefile receives var.code_server_public_authority'
-require_assignment "$template_vars" 'code_server_password_base64' 'base64encode\(var\.code_server_password\)' 'templatefile receives encoded code-server password'
+require_text "$(<"$ansible_installer_main")" 'uv_version                     = var.uv_version' 'Ansible bootstrap passes uv version to extra vars'
 
 workflow_text="$(<"$workflow_file")"
 require_text "$workflow_text" "'apps/deepseek-harness/**'" 'workflow triggers on DeepSeek Harness changes'
@@ -146,6 +122,7 @@ nginx_step="$(require_yaml_step "$workflow_file" 'Test offline Nginx configurati
 code_server_step="$(require_yaml_step "$workflow_file" 'Test code-server installer contract')"
 ansible_step="$(require_yaml_step "$workflow_file" 'Test Ansible installer')"
 ansible_bootstrap_step="$(require_yaml_step "$workflow_file" 'Test Ansible bootstrap installer')"
+nested_modules_step="$(require_yaml_step "$workflow_file" 'Test nested Terraform modules')"
 require_regex "$wiring_step" '^[[:space:]]*run:[[:space:]]*bash[[:space:]]+apps/deepseek-harness/tests/task2-contract\.sh[[:space:]]*$' 'workflow runs module wiring contract script'
 require_regex "$skill_step" '^[[:space:]]*run:[[:space:]]*bash[[:space:]]+apps/deepseek-harness/modules/installer/tests/las-dsh-environment-skill\.sh[[:space:]]*$' 'workflow runs las-dsh-environment skill test'
 require_regex "$nginx_step" '^[[:space:]]*run:[[:space:]]*bash[[:space:]]+apps/deepseek-harness/modules/installer/tests/nginx-config\.sh[[:space:]]*$' 'workflow runs Nginx configuration test'
@@ -158,6 +135,7 @@ require_text "$ansible_bootstrap_step" 'terraform -chdir="modules/ansible-instal
 require_text "$ansible_bootstrap_step" 'terraform -chdir="modules/ansible-installer" validate' 'workflow validates the Ansible bootstrap Terraform module'
 require_text "$ansible_bootstrap_step" 'terraform -chdir="modules/ansible-installer" test -no-color' 'workflow runs Ansible bootstrap Terraform tests'
 require_text "$ansible_bootstrap_step" 'bash modules/ansible-installer/tests/contract.sh' 'workflow runs the Ansible bootstrap contract'
+require_text "$nested_modules_step" 'modules/installer' 'workflow retains legacy installer coverage during migration'
 
 ansible_readme_file="$repo_dir/ansible-installer/README.md"
 ansible_readme_text="$(<"$ansible_readme_file")"

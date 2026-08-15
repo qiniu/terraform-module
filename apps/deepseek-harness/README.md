@@ -9,7 +9,7 @@
 - Terraform `>= 1.6.0`；
 - Qiniu Provider `1.0.0`，按仓库根目录的[本地安装说明](../../README.md#基于本地-terraform-运行)安装；
 - 支持 `public_access_http_proxy`、且恰好存在一个 Ubuntu 24.04 LTS 官方镜像的七牛云区域；
-- ECS 能访问 Ubuntu 软件源、nodejs.org 和 npm registry。
+- ECS 能访问 Ubuntu 软件源、Node.js/npm registry 及 GitHub 的 uv release。
 
 设置七牛云凭证和区域（不要把真实值写入源码）：
 
@@ -86,7 +86,7 @@ enable_ssh_port_forward = true
 
 ## 升级与离线缓存验证
 
-Harness 固定为 `@deepseek-ai/dsh@0.1.0-rc.6`，Node.js 固定为 `24.19.0`。升级时修改 `main.tf` 中的固定版本，审阅 plan 后应用：
+Harness 固定为 `@deepseek-ai/dsh@0.1.0-rc.6`，Node.js 固定为 `24.19.0`，本机 Ansible 引导使用 uv `0.12.5`。升级时修改 `main.tf` 中的固定版本，审阅 plan 后应用。Node.js 和 uv 分别安装至带版本号的 `/opt/node-v<version>` 与 `/opt/uv-v<version>`，健康检查完成后切换 `/usr/local/bin` 软链接：
 
 ```bash
 terraform plan
