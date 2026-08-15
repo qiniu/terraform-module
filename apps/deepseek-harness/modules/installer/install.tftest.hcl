@@ -2,7 +2,7 @@ variables {
   dsh_version                  = "0.1.2"
   node_version                 = "22.17.0"
   dsh_port                     = 13000
-  proxy_port                   = 8443
+  nginx_proxy_port             = 8443
   public_authority             = "dsh.example.test"
   preview_count                = 1
   preview_ports                = [30080, 30081, 30082, 30083]
@@ -384,10 +384,10 @@ run "rejects_invalid_web_username" {
 run "rejects_out_of_range_or_fractional_ports" {
   command = plan
   variables {
-    dsh_port   = 65536
-    proxy_port = 8443.5
+    dsh_port         = 65536
+    nginx_proxy_port = 8443.5
   }
-  expect_failures = [var.dsh_port, var.proxy_port]
+  expect_failures = [var.dsh_port, var.nginx_proxy_port]
 }
 
 run "rejects_invalid_preview_count" {
@@ -467,8 +467,8 @@ run "preview_authority_changes_skill_install_command" {
 run "rejects_equal_ports" {
   command = plan
   variables {
-    dsh_port   = 13000
-    proxy_port = 13000
+    dsh_port         = 13000
+    nginx_proxy_port = 13000
   }
   expect_failures = [output.install_command]
 }

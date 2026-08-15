@@ -331,7 +331,7 @@ map $http_upgrade $connection_upgrade {
 }
 
 server {
-    listen 0.0.0.0:${proxy_port};
+    listen 0.0.0.0:${nginx_proxy_port};
     server_name _;
 
     location / {
@@ -420,7 +420,7 @@ fi
 for _ in $(seq 1 60); do
   if systemctl is-active --quiet deepseek-harness.service; then
     dsh_http_code="$(curl --silent --output /dev/null --write-out '%%{http_code}' --max-time 2 http://127.0.0.1:${dsh_port}/ || true)"
-    nginx_http_code="$(curl --silent --output /dev/null --write-out '%%{http_code}' --max-time 2 http://127.0.0.1:${proxy_port}/ || true)"
+    nginx_http_code="$(curl --silent --output /dev/null --write-out '%%{http_code}' --max-time 2 http://127.0.0.1:${nginx_proxy_port}/ || true)"
     code_server_http_code="$(curl --silent --output /dev/null --write-out '%%{http_code}' --max-time 2 http://127.0.0.1:${code_server_port}/ || true)"
     code_server_proxy_http_code="$(curl --silent --output /dev/null --write-out '%%{http_code}' --max-time 2 http://127.0.0.1:${code_server_proxy_port}/ || true)"
     case "$dsh_http_code" in

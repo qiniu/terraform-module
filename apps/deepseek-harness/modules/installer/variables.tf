@@ -28,13 +28,13 @@ variable "dsh_port" {
   }
 }
 
-variable "proxy_port" {
+variable "nginx_proxy_port" {
   description = "Nginx 对外监听端口。"
   type        = number
 
   validation {
-    condition     = var.proxy_port >= 1 && var.proxy_port <= 65535 && floor(var.proxy_port) == var.proxy_port
-    error_message = "proxy_port 必须是 1 到 65535 之间的整数。"
+    condition     = var.nginx_proxy_port >= 1 && var.nginx_proxy_port <= 65535 && floor(var.nginx_proxy_port) == var.nginx_proxy_port
+    error_message = "nginx_proxy_port 必须是 1 到 65535 之间的整数。"
   }
 }
 

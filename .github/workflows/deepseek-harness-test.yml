@@ -1,29 +1,21 @@
-name: Terraform Module Tests
+name: DeepSeek Harness Tests
 
 on:
   push:
     branches: [main]
     paths:
-      - '**/*.tf'
-      - '**/*.tftest.hcl'
-      - '.github/workflows/terraform-test.yml'
+      - 'apps/deepseek-harness/**'
+      - '.github/workflows/deepseek-harness-test.yml'
   pull_request:
     paths:
-      - '**/*.tf'
-      - '**/*.tftest.hcl'
-      - '.github/workflows/terraform-test.yml'
+      - 'apps/deepseek-harness/**'
+      - '.github/workflows/deepseek-harness-test.yml'
   workflow_dispatch:
 
 jobs:
   test:
-    name: 'Test ${{ matrix.module }}'
+    name: DeepSeek Harness Tests
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        module:
-          - openclaw
-          - apps/ci-runner/single
 
     steps:
       - uses: actions/checkout@v4
@@ -47,17 +39,10 @@ jobs:
           mkdir -p "${MIRROR_DIR}"
           PROVIDER_TMP="$(mktemp "${MIRROR_DIR}/.terraform-provider-qiniu.XXXXXX")"
           trap 'rm -f "${PROVIDER_TMP}"' EXIT
-
-          curl -fsSL \
-            --retry 5 \
-            --retry-delay 10 \
-            --retry-max-time 300 \
-            --retry-all-errors \
-            --connect-timeout 30 \
-            --max-time 600 \
+          curl -fsSL --retry 5 --retry-delay 10 --retry-max-time 300 \
+            --retry-all-errors --connect-timeout 30 --max-time 600 \
             -o "${PROVIDER_TMP}" \
             "https://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/qiniu/qiniu/1.0.0/linux_amd64/terraform-provider-qiniu"
-
           printf '%s  %s\n' "${PROVIDER_SHA256}" "${PROVIDER_TMP}" | sha256sum -c -
           chmod +x "${PROVIDER_TMP}"
           mv "${PROVIDER_TMP}" "${MIRROR_DIR}/terraform-provider-qiniu"
@@ -65,10 +50,8 @@ jobs:
       - name: Configure Terraform provider mirror
         run: |
           mkdir -p "${HOME}/.terraform.d/plugin-cache"
-
           cat > "${HOME}/.terraformrc" << EOF
           plugin_cache_dir = "${HOME}/.terraform.d/plugin-cache"
-
           provider_installation {
             filesystem_mirror {
               path    = "${HOME}/.terraform.d/plugin-mirror"
@@ -80,13 +63,42 @@ jobs:
           }
           EOF
 
-      - name: Run terraform test
-        working-directory: ${{ matrix.module }}
+      - name: Test root module
+        working-directory: apps/deepseek-harness
         run: |
-          if ls *.tftest.hcl 1>/dev/null 2>&1; then
-            terraform init
-            terraform validate
-            terraform test -no-color
-          else
-            echo "::notice::No test files in ${{ matrix.module }}, skipping"
-          fi
+          terraform init
+          terraform validate
+          terraform test -no-color
+
+      - name: Test nested Terraform modules
+        working-directory: apps/deepseek-harness
+        run: |
+          for module in \
+            modules/installer \
+            modules/infrastructure
+          do
+            terraform -chdir="$module" init
+            terraform -chdir="$module" validate
+            terraform -chdir="$module" test -no-color
+          done
+
+      - name: Test module wiring contracts
+        run: bash apps/deepseek-harness/tests/task2-contract.sh
+
+      - name: Test LAS DSH skill installer
+        run: bash apps/deepseek-harness/modules/installer/tests/las-dsh-environment-skill.sh
+
+      - name: Test offline Nginx configuration transaction
+        run: bash apps/deepseek-harness/modules/installer/tests/nginx-config.sh
+
+      - name: Test code-server installer contract
+        run: bash apps/deepseek-harness/modules/installer/tests/code-server-install.sh
+
+      - name: Test Ansible installer
+        working-directory: apps/deepseek-harness/ansible-installer
+        run: |
+          bash tests/test-project.sh
+          source ./env.sh
+          "$dsh_uv_dir/uv" run --locked ansible-playbook --syntax-check -i tests/inventory.yml playbooks/site.yml
+          bash tests/test-preview-count-validation.sh
+          bash tests/test-nodejs-version-check.sh
