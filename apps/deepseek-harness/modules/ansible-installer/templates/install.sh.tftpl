@@ -220,5 +220,6 @@ export UV_CACHE_DIR=/var/cache/las-dsh-installer/uv
 # Ansible modules run as dsh in some roles, so its root-managed interpreter must be traversable.
 umask 022
 uv sync --locked
+chmod 0755 "$${UV_PROJECT_ENVIRONMENT}" "$${UV_PROJECT_ENVIRONMENT}/bin"
 uv run --locked ansible-playbook -i inventory/localhost.yml playbooks/site.yml --extra-vars "@$${extra_vars_file}"
 cleanup_superseded_uv

@@ -69,6 +69,22 @@ run "restores_executable_umask_before_ansible_sync" {
   }
 }
 
+run "repairs_existing_ansible_venv_traversal_permissions" {
+  command = plan
+
+  assert {
+    condition = strcontains(
+      base64decode(output.bootstrap.content),
+      format(
+        "chmod 0755 \"%s{UV_PROJECT_ENVIRONMENT}\" \"%s{UV_PROJECT_ENVIRONMENT}/bin\"",
+        "$",
+        "$",
+      ),
+    )
+    error_message = "既有 root-only Ansible 虚拟环境必须恢复为可供 dsh 执行模块解释器的权限。"
+  }
+}
+
 run "rejects_port_collisions" {
   command = plan
 
