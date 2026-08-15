@@ -16,19 +16,19 @@ variables {
   code_server_password         = "Code-server-safe-1234"
 }
 
-run "renders_sensitive_self_contained_command" {
+run "renders_sensitive_manifest_bootstrap_command" {
   command = plan
 
   assert {
     condition = (
-      strcontains(nonsensitive(output.install_command), "uv_version='0.12.5'") &&
-      strcontains(nonsensitive(output.install_command), "ansible_archive_base64='") &&
-      strcontains(nonsensitive(output.install_command), "extra_vars_base64='") &&
+      strcontains(nonsensitive(output.install_command), "/opt/las-dsh-installer/bootstrap/install.sh' '0.12.5'") &&
+      strcontains(nonsensitive(output.install_command), "/opt/las-dsh-installer/project/.runtime-sha256") &&
+      !strcontains(nonsensitive(output.install_command), "ansible_archive") &&
       !strcontains(nonsensitive(output.install_command), "web-password-must-not-appear") &&
       !strcontains(nonsensitive(output.install_command), "Code-server-safe-1234") &&
-      length(nonsensitive(output.install_command)) <= 131072
+      length(nonsensitive(output.install_command)) <= 8192
     )
-    error_message = "安装命令必须携带受限归档和编码后的变量，并不得泄露密码明文。"
+    error_message = "安装命令必须只携带运行时清单校验值和编码后的变量，并不得泄露密码明文。"
   }
 }
 
@@ -40,8 +40,20 @@ run "uv_version_changes_rendered_command" {
   }
 
   assert {
-    condition     = strcontains(nonsensitive(output.install_command), "uv_version='0.12.6'")
+    condition     = strcontains(nonsensitive(output.install_command), "install.sh' '0.12.6'")
     error_message = "修改 uv_version 必须改变引导命令中的固定版本。"
+  }
+}
+
+run "renders_bootstrap_shell_escapes_before_transfer" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(base64decode(output.bootstrap.content), format("project_dir=\"%s{installer_root}/project\"", "$")) &&
+      !strcontains(base64decode(output.bootstrap.content), format("%s%s{installer_root}", "$", "$"))
+    )
+    error_message = "传输前必须渲染 bootstrap 的 Terraform shell 转义。"
   }
 }
 

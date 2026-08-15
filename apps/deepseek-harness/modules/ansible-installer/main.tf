@@ -1,4 +1,6 @@
 locals {
+  project_dir = "/opt/las-dsh-installer/project"
+
   ansible_runtime_files = {
     "ansible.cfg"                                                  = "${path.module}/ansible/ansible.cfg"
     "inventory/localhost.yml"                                      = "${path.module}/ansible/inventory/localhost.yml"
@@ -49,24 +51,40 @@ locals {
     dsh_code_server_password       = var.code_server_password
   }))
 
-  install_command = templatefile("${path.module}/templates/install.sh.tftpl", {
-    uv_version             = var.uv_version
-    ansible_archive_base64 = filebase64(data.archive_file.ansible_runtime.output_path)
-    ansible_archive_sha256 = data.archive_file.ansible_runtime.output_sha256
-    extra_vars_base64      = local.extra_vars_base64
-  })
-}
+  runtime_file_contents = {
+    for relative_path, source_path in local.ansible_runtime_files :
+    relative_path => filebase64(source_path)
+  }
 
-data "archive_file" "ansible_runtime" {
-  type        = "tar.gz"
-  output_path = "${path.module}/.terraform/ansible-runtime.tar.gz"
-
-  dynamic "source" {
-    for_each = local.ansible_runtime_files
-
-    content {
-      content  = file(source.value)
-      filename = source.key
+  runtime_file_metadata = {
+    for relative_path, source_path in local.ansible_runtime_files :
+    relative_path => {
+      file_mode   = "0644"
+      sha256      = filesha256(source_path)
+      target_path = "${local.project_dir}/${relative_path}"
     }
   }
+
+  runtime_manifest_content = join("", [
+    for relative_path in sort(keys(local.runtime_file_metadata)) :
+    "${local.runtime_file_metadata[relative_path].sha256}  ${relative_path}\n"
+  ])
+
+  runtime_manifest = {
+    content     = base64encode(local.runtime_manifest_content)
+    file_mode   = "0644"
+    sha256      = sha256(local.runtime_manifest_content)
+    target_path = "${local.project_dir}/.runtime-sha256"
+  }
+
+  bootstrap_content = templatefile("${path.module}/templates/install.sh.tftpl", {})
+
+  bootstrap = {
+    content     = base64encode(local.bootstrap_content)
+    file_mode   = "0700"
+    sha256      = sha256(local.bootstrap_content)
+    target_path = "/opt/las-dsh-installer/bootstrap/install.sh"
+  }
+
+  install_command = "exec '${local.bootstrap.target_path}' '${var.uv_version}' '${local.runtime_manifest.target_path}' '${local.runtime_manifest.sha256}' '${local.extra_vars_base64}'"
 }

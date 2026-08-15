@@ -2,10 +2,15 @@
 set -euo pipefail
 umask 077
 
-uv_version='${uv_version}'
-ansible_archive_base64='${ansible_archive_base64}'
-ansible_archive_sha256='${ansible_archive_sha256}'
-extra_vars_base64='${extra_vars_base64}'
+[ "$#" -eq 4 ] || {
+  printf '%s\n' 'expected uv version, runtime manifest path, runtime manifest SHA-256 and extra vars' >&2
+  exit 2
+}
+
+uv_version="$1"
+runtime_manifest_path="$2"
+runtime_manifest_sha256="$3"
+extra_vars_base64="$4"
 installer_root=/opt/las-dsh-installer
 project_dir="$${installer_root}/project"
 managed_toolchains_dir=/var/lib/las-dsh-installer/managed-toolchains
@@ -192,28 +197,18 @@ cleanup_superseded_uv() {
     done
 }
 
-ansible_archive_path="$${work_dir}/ansible-runtime.tar.gz"
-printf '%s' "$${ansible_archive_base64}" | base64 --decode >"$${ansible_archive_path}"
-printf '%s  %s\n' "$${ansible_archive_sha256}" "$${ansible_archive_path}" | sha256sum -c -
-
-project_hash_file="$${project_dir}/.archive-sha256"
-if [ ! -f "$${project_hash_file}" ] || [ "$(cat "$${project_hash_file}")" != "$${ansible_archive_sha256}" ]; then
-  project_candidate="$${work_dir}/project"
-  mkdir -p "$${project_candidate}"
-  tar -xzf "$${ansible_archive_path}" -C "$${project_candidate}" --no-same-owner
-  [ -f "$${project_candidate}/ansible.cfg" ] || fail 'Ansible runtime is missing ansible.cfg'
-  [ -f "$${project_candidate}/playbooks/site.yml" ] || fail 'Ansible runtime is missing playbook'
-  [ -f "$${project_candidate}/pyproject.toml" ] || fail 'Ansible runtime is missing pyproject.toml'
-  printf '%s\n' "$${ansible_archive_sha256}" >"$${project_candidate}/.archive-sha256"
-  chown -R root:root "$${project_candidate}"
-  chmod -R u=rwX,go=rX "$${project_candidate}"
-  install -d -o root -g root -m 0755 "$${installer_root}"
-  if [ -e "$${project_dir}" ]; then
-    mv "$${project_dir}" "$${work_dir}/previous-project"
-  fi
-  mv "$${project_candidate}" "$${project_dir}"
-  rm -rf -- "$${work_dir}/previous-project"
-fi
+[ -f "$${runtime_manifest_path}" ] || fail 'Ansible runtime manifest is missing'
+[ ! -L "$${runtime_manifest_path}" ] || fail 'Ansible runtime manifest is unsafe'
+[ "$(realpath -e "$${runtime_manifest_path}")" = "$${runtime_manifest_path}" ] || fail 'Ansible runtime manifest is unsafe'
+[ "$(stat -c '%u:%g' "$${runtime_manifest_path}")" = '0:0' ] || fail 'Ansible runtime manifest is unsafe'
+printf '%s  %s\n' "$${runtime_manifest_sha256}" "$${runtime_manifest_path}" | sha256sum -c - >/dev/null || fail 'runtime manifest SHA-256 mismatch'
+[ -f "$${project_dir}/ansible.cfg" ] || fail 'Ansible runtime is missing ansible.cfg'
+[ -f "$${project_dir}/playbooks/site.yml" ] || fail 'Ansible runtime is missing playbook'
+[ -f "$${project_dir}/pyproject.toml" ] || fail 'Ansible runtime is missing pyproject.toml'
+(
+  cd "$${project_dir}"
+  sha256sum -c .runtime-sha256 >/dev/null
+)
 
 printf '%s' "$${extra_vars_base64}" | base64 --decode >"$${extra_vars_file}"
 chmod 600 "$${extra_vars_file}"
