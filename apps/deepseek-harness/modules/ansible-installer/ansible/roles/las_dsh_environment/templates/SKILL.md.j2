@@ -44,7 +44,7 @@ Preview 槽位共 {{ dsh_preview_count }} 个。每个槽位由 HTTPProxy 直接
 
 Node.js 固定安装在 `/opt/node-v{{ nodejs_version }}`，并通过 `/usr/local/bin/node`、`/usr/local/bin/npm` 和 `/usr/local/bin/npx` 发布。建议先运行 `node --version` 确认版本。
 
-uv 固定版本为 `{{ uv_version }}`，安装位置为 `/opt/uv-v{{ uv_version }}`，并通过 `/usr/local/bin/uv` 发布。建议先运行 `uv --version` 确认版本。本阶段不会安装或更新 uv。
+uv 固定版本为 `{{ uv_version }}`，安装位置为 `/opt/uv-v{{ uv_version }}`，并通过 `/usr/local/bin/uv` 和 `/usr/local/bin/uvx` 发布。建议先运行 `uv --version` 和 `uvx --version` 确认版本。
 
 Python 项目应在 `{{ dsh_workspace_dir }}` 中使用自己的 `.venv`，例如 `uv init`、`uv sync` 和 `uv run`。不得改动 root 的 `/opt`、`/usr/local/bin` 或 `{{ dsh_ansible_venv_dir }}`。
 

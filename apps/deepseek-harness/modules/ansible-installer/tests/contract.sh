@@ -33,8 +33,9 @@ main_tf="$module_dir/main.tf"
 variables_tf="$module_dir/variables.tf"
 versions_tf="$module_dir/versions.tf"
 bootstrap="$module_dir/templates/install.sh.tftpl"
+skill_template="$module_dir/ansible/roles/las_dsh_environment/templates/SKILL.md.j2"
 
-for file in "$main_tf" "$variables_tf" "$versions_tf" "$bootstrap"; do
+for file in "$main_tf" "$variables_tf" "$versions_tf" "$bootstrap" "$skill_template"; do
   require_file "$file"
 done
 
@@ -87,6 +88,9 @@ require_text "$bootstrap" 'mktemp'
 require_text "$bootstrap" 'chmod 600'
 reject_text "$bootstrap" 'web_password='
 reject_text "$bootstrap" 'code_server_password='
+require_text "$skill_template" '/usr/local/bin/uvx'
+require_text "$skill_template" 'uvx --version'
+reject_text "$skill_template" '本阶段不会安装或更新 uv'
 
 for forbidden in '.tools' '.venv' 'tests/' 'docs/' 'deploy.sh' 'env.sh' 'inventory/hosts.yml.example'; do
   reject_text "$main_tf" "$forbidden"
