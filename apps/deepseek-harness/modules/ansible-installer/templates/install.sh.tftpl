@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+set -euo pipefail
+umask 077
+
+uv_version='${uv_version}'
+ansible_archive_base64='${ansible_archive_base64}'
+ansible_archive_sha256='${ansible_archive_sha256}'
+extra_vars_base64='${extra_vars_base64}'
+installer_root=/opt/las-dsh-installer
+project_dir="$${installer_root}/project"
+managed_toolchains_dir=/var/lib/las-dsh-installer/managed-toolchains
+uv_prefix="/opt/uv-v$${uv_version}"
+uv_link_dir=/usr/local/bin
+work_dir="$(mktemp -d)"
+extra_vars_file="$(mktemp)"
+
+cleanup() {
+  rm -rf -- "$${work_dir}"
+  rm -f -- "$${extra_vars_file}"
+}
+trap cleanup EXIT
+
+fail() {
+  printf '%s\n' "$1" >&2
+  exit 1
+}
+
+[ "$${EUID}" -eq 0 ] || fail 'must run as root'
+[ -r /etc/os-release ] || fail 'unsupported operating system'
+. /etc/os-release
+[ "$${ID}" = ubuntu ] || fail 'unsupported operating system'
+
+required_packages=(ca-certificates curl tar gzip coreutils)
+missing_packages=()
+for package in "$${required_packages[@]}"; do
+  dpkg-query -W -f='$${db:Status-Status}' "$${package}" 2>/dev/null | grep -qx installed || missing_packages+=("$${package}")
+done
+
+retry() {
+  local attempts="$1"
+  shift
+  local attempt=1
+  until "$@"; do
+    [ "$${attempt}" -ge "$${attempts}" ] && return 1
+    sleep "$${attempt}"
+    attempt=$((attempt + 1))
+  done
+}
+
+if [ "$${#missing_packages[@]}" -gt 0 ]; then
+  retry 5 apt-get update
+  retry 5 apt-get install -y --no-install-recommends "$${missing_packages[@]}"
+fi
+
+for command in curl tar gzip base64 sha256sum; do
+  command -v "$${command}" >/dev/null || fail "missing required bootstrap command: $${command}"
+done
+
+case "$(uname -m)" in
+  x86_64) uv_target=x86_64-unknown-linux-gnu ;;
+  aarch64) uv_target=aarch64-unknown-linux-gnu ;;
+  *) fail "unsupported architecture: $(uname -m)" ;;
+esac
+
+uv_archive="uv-$${uv_target}.tar.gz"
+uv_release_url="https://github.com/astral-sh/uv/releases/download/$${uv_version}"
+uv_archive_path="$${work_dir}/$${uv_archive}"
+uv_checksum_path="$${work_dir}/$${uv_archive}.sha256"
+
+uv_is_current=false
+if [ -x "$${uv_prefix}/uv" ] && [ -x "$${uv_prefix}/uvx" ] && [ -f "$${uv_prefix}/.las-dsh-managed" ] && [ "$(cat "$${uv_prefix}/.las-dsh-managed")" = "uv:$${uv_version}" ]; then
+  "$${uv_prefix}/uv" --version | grep -Eq "^uv $${uv_version}( |$)" && uv_is_current=true
+fi
+
+if [ "$${uv_is_current}" != true ]; then
+  curl --fail --location --retry 5 --retry-all-errors --output "$${uv_archive_path}" "$${uv_release_url}/$${uv_archive}"
+  curl --fail --location --retry 5 --retry-all-errors --output "$${uv_checksum_path}" "$${uv_release_url}/$${uv_archive}.sha256"
+  (
+    cd "$${work_dir}"
+    sha256sum -c "$${uv_archive}.sha256"
+  )
+
+  uv_candidate="$${work_dir}/uv-prefix"
+  mkdir -p "$${uv_candidate}"
+  tar -xzf "$${uv_archive_path}" -C "$${uv_candidate}" --strip-components=1
+  [ -x "$${uv_candidate}/uv" ] && [ -x "$${uv_candidate}/uvx" ] || fail 'uv archive is missing required executables'
+  "$${uv_candidate}/uv" --version | grep -Eq "^uv $${uv_version}( |$)" || fail 'downloaded uv version does not match requested version'
+
+  rm -rf -- "$${uv_prefix}.new"
+  mkdir -p "$${uv_prefix}.new"
+  install -m 0755 "$${uv_candidate}/uv" "$${uv_prefix}.new/uv"
+  install -m 0755 "$${uv_candidate}/uvx" "$${uv_prefix}.new/uvx"
+  printf 'uv:%s\n' "$${uv_version}" >"$${uv_prefix}.new/.las-dsh-managed"
+  chown -R root:root "$${uv_prefix}.new"
+  chmod 0755 "$${uv_prefix}.new"
+  rm -rf -- "$${uv_prefix}"
+  mv "$${uv_prefix}.new" "$${uv_prefix}"
+fi
+
+install -d -o root -g root -m 0755 "$${managed_toolchains_dir}"
+printf '%s\n' "$${uv_prefix}" >"$${managed_toolchains_dir}/uv-v$${uv_version}"
+chown root:root "$${managed_toolchains_dir}/uv-v$${uv_version}"
+chmod 0644 "$${managed_toolchains_dir}/uv-v$${uv_version}"
+for executable in uv uvx; do
+  link_candidate="$${work_dir}/$${executable}.link"
+  ln -s "$${uv_prefix}/$${executable}" "$${link_candidate}"
+  mv -Tf "$${link_candidate}" "$${uv_link_dir}/$${executable}"
+done
+
+ansible_archive_path="$${work_dir}/ansible-runtime.tar.gz"
+printf '%s' "$${ansible_archive_base64}" | base64 --decode >"$${ansible_archive_path}"
+printf '%s  %s\n' "$${ansible_archive_sha256}" "$${ansible_archive_path}" | sha256sum -c -
+
+project_hash_file="$${project_dir}/.archive-sha256"
+if [ ! -f "$${project_hash_file}" ] || [ "$(cat "$${project_hash_file}")" != "$${ansible_archive_sha256}" ]; then
+  project_candidate="$${work_dir}/project"
+  mkdir -p "$${project_candidate}"
+  tar -xzf "$${ansible_archive_path}" -C "$${project_candidate}" --no-same-owner
+  [ -f "$${project_candidate}/ansible.cfg" ] || fail 'Ansible runtime is missing ansible.cfg'
+  [ -f "$${project_candidate}/playbooks/site.yml" ] || fail 'Ansible runtime is missing playbook'
+  [ -f "$${project_candidate}/pyproject.toml" ] || fail 'Ansible runtime is missing pyproject.toml'
+  printf '%s\n' "$${ansible_archive_sha256}" >"$${project_candidate}/.archive-sha256"
+  chown -R root:root "$${project_candidate}"
+  chmod -R u=rwX,go=rX "$${project_candidate}"
+  install -d -o root -g root -m 0755 "$${installer_root}"
+  if [ -e "$${project_dir}" ]; then
+    mv "$${project_dir}" "$${work_dir}/previous-project"
+  fi
+  mv "$${project_candidate}" "$${project_dir}"
+  rm -rf -- "$${work_dir}/previous-project"
+fi
+
+printf '%s' "$${extra_vars_base64}" | base64 --decode >"$${extra_vars_file}"
+chmod 600 "$${extra_vars_file}"
+install -d -o root -g root -m 0755 /var/cache/las-dsh-installer/uv
+
+cd "$${project_dir}"
+export UV_PROJECT_ENVIRONMENT=/opt/las-dsh-installer/.venv
+export UV_CACHE_DIR=/var/cache/las-dsh-installer/uv
+uv sync --locked
+uv run --locked ansible-playbook -i inventory/localhost.yml playbooks/site.yml --extra-vars "@$${extra_vars_file}"

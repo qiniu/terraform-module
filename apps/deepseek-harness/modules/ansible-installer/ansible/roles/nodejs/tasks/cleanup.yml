@@ -1,0 +1,44 @@
+---
+- name: Remove superseded registered Node.js toolchains
+  ansible.builtin.shell:
+    cmd: |
+      set -eu
+      managed_dir="$1"
+      current_registration="$2"
+      find "$managed_dir" -mindepth 1 -maxdepth 1 -type f -name 'node-v*' -print0 |
+        while IFS= read -r -d '' registration; do
+          [ "$registration" = "$current_registration" ] && continue
+          [ ! -L "$registration" ] || continue
+          [ "$(stat -c '%u:%g' "$registration")" = '0:0' ] || continue
+
+          prefix="$(cat "$registration")"
+          case "$prefix" in
+            /opt/node-v*) ;;
+            *) continue ;;
+          esac
+          [ "$prefix" = "/opt/${registration##*/}" ] || continue
+          [ -d "$prefix" ] || continue
+          [ "$(realpath -e "$prefix")" = "$prefix" ] || continue
+          [ "$(stat -c '%u:%g' "$prefix")" = '0:0' ] || continue
+
+          marker="$prefix/{{ nodejs_managed_marker }}"
+          [ -f "$marker" ] || continue
+          [ ! -L "$marker" ] || continue
+          [ "$(stat -c '%u:%g' "$marker")" = '0:0' ] || continue
+          [ "$(realpath -e "$marker")" = "$marker" ] || continue
+          marker_version="${registration##*/node-v}"
+          [ "$(cat "$marker")" = "node:$marker_version" ] || continue
+
+          rm -rf -- "$prefix"
+          rm -f -- "$registration"
+          printf 'removed %s\n' "$prefix"
+        done
+    argv:
+      - /bin/bash
+      - -c
+      - ''
+      - /bin/bash
+      - "{{ nodejs_managed_toolchains_dir }}"
+      - "{{ nodejs_managed_toolchains_dir }}/node-v{{ nodejs_version }}"
+  register: nodejs_cleanup
+  changed_when: nodejs_cleanup.stdout | length > 0
