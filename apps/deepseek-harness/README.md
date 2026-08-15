@@ -9,7 +9,7 @@
 - Terraform `>= 1.6.0`；
 - Qiniu Provider `1.0.0`，按仓库根目录的[本地安装说明](../../README.md#基于本地-terraform-运行)安装；
 - 支持 `public_access_http_proxy`、且恰好存在一个 Ubuntu 24.04 LTS 官方镜像的七牛云区域；
-- ECS 能访问 Ubuntu 软件源、Node.js/npm registry 及 GitHub 的 uv release。
+- ECS 能访问 Ubuntu 软件源、Node.js/npm registry、GitHub 的 uv release，以及供 `uv sync --locked` 使用的 PyPI（`pypi.org/simple`）或已配置的 Python package index。
 
 设置七牛云凭证和区域（不要把真实值写入源码）：
 
