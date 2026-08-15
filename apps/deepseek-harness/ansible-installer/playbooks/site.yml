@@ -27,7 +27,7 @@
     - code_server
     - deepseek_harness
     - nginx
-    - deployment_skill
+    - las_dsh_environment
   post_tasks:
     - name: Apply pending service handlers before health checks
       ansible.builtin.meta: flush_handlers

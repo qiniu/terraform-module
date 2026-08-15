@@ -47,7 +47,7 @@ git -C "$project_dir/../../.." check-ignore -q -- \
   exit 1
 }
 
-for role in base nodejs code_server deepseek_harness nginx deployment_skill; do
+for role in base nodejs code_server deepseek_harness nginx las_dsh_environment; do
   require_file "$project_dir/roles/$role/tasks/main.yml"
   require_file "$project_dir/roles/$role/defaults/main.yml"
   require_text "$project_dir/playbooks/site.yml" "^    - $role$"
@@ -88,11 +88,11 @@ require_text "$project_dir/playbooks/site.yml" 'dsh_preview_public_authorities i
 require_text "$project_dir/playbooks/site.yml" "dsh_preview_count_raw is match\('^\\(0|\[1-4\]\)\\$'\)"
 require_text "$project_dir/roles/nodejs/tasks/main.yml" 'Read the installed Node.js version'
 require_text "$project_dir/roles/nodejs/tasks/main.yml" 'nodejs_needs_install'
-require_text "$project_dir/roles/deployment_skill/templates/SKILL.md.j2" 'dsh_preview_ports'
-require_text "$project_dir/roles/deployment_skill/templates/SKILL.md.j2" '503'
+require_text "$project_dir/roles/las_dsh_environment/templates/SKILL.md.j2" 'dsh_preview_ports'
+require_text "$project_dir/roles/las_dsh_environment/templates/SKILL.md.j2" '503'
 require_text "$project_dir/tests/terraform/main.tf" 'preview_count'
 require_text "$project_dir/tests/terraform/main.tf" 'preview_public_authorities'
-require_text "$project_dir/roles/deployment_skill/templates/SKILL.md.j2" 'las-dsh-environment'
+require_text "$project_dir/roles/las_dsh_environment/templates/SKILL.md.j2" 'las-dsh-environment'
 require_text "$project_dir/playbooks/site.yml" 'ansible\.builtin\.uri'
 require_text "$project_dir/tests/provision-qiniu.sh" 'apps/ci-runner/single/env.sh'
 require_text "$project_dir/tests/provision-qiniu.sh" 'chmod 600'

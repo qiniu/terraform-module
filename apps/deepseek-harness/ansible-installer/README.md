@@ -9,7 +9,7 @@
 - `roles/base`：基础包、受限 `dsh` 用户和数据目录。
 - `roles/nodejs`、`roles/code_server`、`roles/deepseek_harness`：固定版本运行时、服务单元及 DSH 离线 npm 缓存。
 - `roles/nginx`：Harness Basic Auth 与 code-server 反代入口；Preview 由 HTTPProxy 直连应用。
-- `roles/deployment_skill`：`dsh` 用户级网页开发 skill。
+- `roles/las_dsh_environment`：`dsh` 用户级 LAS 开发环境 skill。
 
 ## 部署已有主机
 
