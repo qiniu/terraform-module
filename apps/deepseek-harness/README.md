@@ -9,7 +9,7 @@
 - Terraform `>= 1.6.0`；
 - Qiniu Provider `1.0.0`，按仓库根目录的[本地安装说明](../../README.md#基于本地-terraform-运行)安装；
 - 支持 `public_access_http_proxy`、且恰好存在一个 Ubuntu 24.04 LTS 官方镜像的七牛云区域；
-- ECS 能访问 Ubuntu 软件源、Node.js/npm registry、GitHub 的 uv release，以及供 `uv sync --locked` 使用的 PyPI（`pypi.org/simple`）或已配置的 Python package index。
+- ECS 能访问 Ubuntu 软件源、nodejs.org 和 npm registry。
 
 设置七牛云凭证和区域（不要把真实值写入源码）：
 
@@ -86,12 +86,18 @@ enable_ssh_port_forward = true
 
 ## 升级与离线缓存验证
 
-Harness 固定为 `@deepseek-ai/dsh@0.1.0-rc.6`，Node.js 固定为 `24.19.0`，本机 Ansible 引导使用 uv `0.12.5`。升级时修改 `main.tf` 中的固定版本，审阅 plan 后应用。Node.js 和 uv 分别安装至带版本号的 `/opt/node-v<version>` 与 `/opt/uv-v<version>`，健康检查完成后切换 `/usr/local/bin` 软链接：
+Harness 固定为 `@deepseek-ai/dsh@0.1.0-rc.6`，Node.js 固定为 `24.19.0`。升级时修改 `main.tf` 中的固定版本，审阅 plan 后应用：
 
 ```bash
 terraform plan
 terraform apply
 ```
+
+### Ansible 安装器迁移状态
+
+迁移门禁未满足：实际 `qiniu_compute_instance_exec` 对 131072 个 ASCII 字符的无敏感 no-op 命令返回 `/bin/bash: Argument list too long`。因此根模块当前继续使用 `modules/installer`，不会使用单命令 Base64 传递 Ansible 归档的 `modules/ansible-installer`。
+
+`modules/ansible-installer` 会保留并继续由 CI 测试；它需要访问 GitHub 的 uv release，以及供 `uv sync --locked` 使用的 PyPI（`pypi.org/simple`）或已配置的 Python package index。后续只有采用不受该命令长度限制的传输方式并完成真实 instance_exec 验证后，才会重新切换根模块。
 
 若版本和配置没有变化，但需要强制重新执行安装：
 
