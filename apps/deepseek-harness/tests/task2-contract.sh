@@ -28,6 +28,24 @@ extract_simple_block() {
   ' "$file"
 }
 
+extract_extra_vars_map() {
+  local file="$1"
+
+  awk '
+    BEGIN { found = 0; complete = 0 }
+    !found && /^[[:space:]]*extra_vars_base64[[:space:]]*=[[:space:]]*base64encode\(jsonencode\(\{[[:space:]]*$/ {
+      found = 1
+      next
+    }
+    found && /^[[:space:]]*}\)\)[[:space:]]*$/ {
+      complete = 1
+      exit
+    }
+    found { print }
+    END { if (!found || !complete) exit 1 }
+  ' "$file"
+}
+
 require_assignment() {
   local block="$1"
   local field="$2"
@@ -96,6 +114,7 @@ workflow_file="$repo_dir/../../.github/workflows/deepseek-harness-test.yml"
 locals_block="$(extract_simple_block "$root_main" locals)"
 infrastructure_block="$(extract_simple_block "$root_main" module infrastructure)"
 installer_block="$(extract_simple_block "$root_main" module installer)"
+ansible_extra_vars_map="$(extract_extra_vars_map "$ansible_installer_main")"
 
 require_assignment "$locals_block" 'preview_ports' '\[30080, 30081, 30082, 30083\]' 'root local.preview_ports'
 require_assignment "$locals_block" 'uv_version' '"0\.12\.5"' 'root local.uv_version = 0.12.5'
@@ -111,7 +130,7 @@ require_assignment "$installer_block" 'preview_public_authorities' 'module\.infr
 require_assignment "$installer_block" 'code_server_port' 'local\.code_server_port' 'installer receives local.code_server_port'
 require_assignment "$installer_block" 'code_server_proxy_port' 'local\.code_server_proxy_port' 'installer receives local.code_server_proxy_port'
 require_assignment "$installer_block" 'code_server_public_authority' 'module\.infrastructure\.code_server_public_authority' 'installer receives infrastructure code-server authority'
-require_regex "$(<"$ansible_installer_main")" '^[[:space:]]*uv_version[[:space:]]*=[[:space:]]*var\.uv_version[[:space:]]*$' 'Ansible bootstrap passes uv version to extra vars'
+require_assignment "$ansible_extra_vars_map" 'uv_version' 'var\.uv_version' 'Ansible bootstrap passes uv version to extra vars'
 
 workflow_text="$(<"$workflow_file")"
 require_text "$workflow_text" "'apps/deepseek-harness/**'" 'workflow triggers on DeepSeek Harness changes'
