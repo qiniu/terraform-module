@@ -95,9 +95,9 @@ terraform apply
 
 ### Ansible 安装器迁移状态
 
-迁移门禁未满足：实际 `qiniu_compute_instance_exec` 对 131072 个 ASCII 字符的无敏感 no-op 命令返回 `/bin/bash: Argument list too long`。因此根模块当前继续使用 `modules/installer`，不会使用单命令 Base64 传递 Ansible 归档的 `modules/ansible-installer`。
+实际 `qiniu_compute_instance_exec` 对 131072 个 ASCII 字符的无敏感 no-op 命令返回 `/bin/bash: Argument list too long`。根模块因此使用 `modules/ansible-installer` 的显式 Ansible 文件清单：每个运行时文件和无敏感 bootstrap 脚本都由上游 `instance-exec-file-transfer` 模块逐个传输，完成后发布 `.runtime-sha256`。最终短命令先验证该清单及全部文件，再运行 bootstrap；不会传输或解压 Ansible 归档。
 
-`modules/ansible-installer` 会保留并继续由 CI 测试；它需要访问 GitHub 的 uv release，以及供 `uv sync --locked` 使用的 PyPI（`pypi.org/simple`）或已配置的 Python package index。后续只有采用不受该命令长度限制的传输方式并完成真实 instance_exec 验证后，才会重新切换根模块。
+`modules/ansible-installer` 需要访问 GitHub 的 uv release，以及供 `uv sync --locked` 使用的 PyPI（`pypi.org/simple`）或已配置的 Python package index。CI 同时覆盖 Ansible bootstrap、根模块接线和公共文件传输模块；仍需在一次性七牛云主机完成真实双次安装验收后才能删除 legacy installer。
 
 若版本和配置没有变化，但需要强制重新执行安装：
 

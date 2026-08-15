@@ -54,15 +54,25 @@ run "uses_fixed_versions_and_installer_contract" {
 
   assert {
     condition = (
-      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "@deepseek-ai/dsh@0.1.0-rc.6") &&
-      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "node-v24.19.0") &&
-      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "--port 3080") &&
-      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "listen 0.0.0.0:3081") &&
-      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "--trusted-host dsh.example.test") &&
-      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "code-server") &&
-      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "web_username=\"admin\"")
+      local.dsh_version == "0.1.0-rc.6" &&
+      local.node_version == "24.19.0" &&
+      local.uv_version == "0.12.5" &&
+      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "exec '/opt/las-dsh-installer/bootstrap/install.sh' '0.12.5'") &&
+      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "/opt/las-dsh-installer/project/.runtime-sha256") &&
+      !strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "@deepseek-ai/dsh") &&
+      length(nonsensitive(qiniu_compute_instance_exec.install_dsh.command)) <= 8192
     )
-    error_message = "根模块必须将固定版本、端口、authority、用户名和随机密码传给 installer。"
+    error_message = "根模块必须固定版本，并以短命令调用已传输的 Ansible bootstrap。"
+  }
+
+  assert {
+    condition = (
+      length(module.ansible_runtime_file) == length(module.installer.runtime_file_metadata) &&
+      module.ansible_runtime_manifest.published_path == "/opt/las-dsh-installer/project/.runtime-sha256" &&
+      module.ansible_bootstrap.published_path == "/opt/las-dsh-installer/bootstrap/install.sh" &&
+      contains(local.ansible_runtime_directories, "/opt/las-dsh-installer/project/roles/nodejs/tasks")
+    )
+    error_message = "根模块必须逐个传输显式 Ansible 文件清单、校验清单和 bootstrap 脚本，并预先创建每个目标父目录。"
   }
 
   assert {
