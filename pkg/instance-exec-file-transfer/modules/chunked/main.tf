@@ -1,10 +1,9 @@
 # ============================================================================
 # chunked 子模块：大文件并发分片传输（issue #58）
 # ============================================================================
-# 大文件场景的独立传输子模块：
-#   prepare（hash 命名 staging/marker + 安全边界）→ chunks（并发，每片写入
-#   独立 part 文件）→ finalize（完整序号/SHA 校验 + 目标同目录原子 mv）。
-# 所有渲染命令 <= 8192 字节且为纯 ASCII；payload 为安全字符集 base64。
+# 流程：prepare（hash 命名 staging/marker + 安全边界）→ chunks（并发，每片
+# 独立 part 文件）→ finalize（序号/SHA 校验 + 目标同目录原子 mv）。
+# 所有渲染命令 <= 8192 字节且为纯 ASCII。
 # 远端脚本模板见 templates/{prepare,chunk,finalize,destroy}.sh.tftpl。
 # ============================================================================
 
@@ -16,8 +15,8 @@ locals {
   target_cover_guard = "if [ -e \"$T\" ]||[ -L \"$T\" ];then [ -f \"$D/marker\" ]||exit 1;[ \"$(cat \"$D/marker\")\" = '${local.marker_content}' ]||exit 1;printf '%s  %s\\n' '${var.content_sha256}' \"$T\"|sha256sum -c - >/dev/null 2>&1||exit 1;fi"
 
   # ---- 分片计算 ----
-  # 分片命令固定开销 = 渲染空 payload 后的模板长度；payload 上限 =
-  # 8192 - 固定开销 - 安全余量，再按 4 对齐（base64 字符）。
+  # 单片命令固定开销 = 空 payload 模板长度；payload 上限 =
+  # 8192 - 固定开销 - 余量，再按 4 对齐（base64 字符）。
   chunk_empty = templatefile("${path.module}/templates/chunk.sh.tftpl", {
     staging_dir = local.staging_dir
     index       = "00000"
@@ -63,9 +62,6 @@ locals {
   })
 }
 
-# ============================================================================
-# prepare → chunks（并发）→ finalize
-# ============================================================================
 resource "qiniu_compute_instance_exec" "prepare" {
   instance_id = var.instance_id
   user        = var.user

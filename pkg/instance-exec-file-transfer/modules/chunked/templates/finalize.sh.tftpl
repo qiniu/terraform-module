@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# finalize script (large-file chunking postamble, issue #58)
-# verify marker match -> all shards present -> concat+decode -> SHA check ->
-# target parent safety check -> same-dir temp file + atomic mv publish.
+# finalize (issue #58): verify marker+all shards, concat+decode, SHA check,
+# safe target parent, same-dir tmp + atomic mv publish.
 set -e
 D=${staging_dir}
 [ -f "$D/marker" ] || exit 1

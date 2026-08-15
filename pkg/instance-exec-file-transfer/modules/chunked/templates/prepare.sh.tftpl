@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
-# prepare script (large-file chunking preamble, issue #58)
-# staging root and target parent must be root-owned, non-symlink, realpath;
-# existing target may only be overwritten when marker+SHA match (managed file);
-# reuse existing staging only when marker matches exactly (clear old parts), otherwise refuse.
+# prepare (issue #58): safe staging under hash dir; root-owned, non-symlink roots;
+# reuse existing staging only when marker matches (clear old parts), else refuse.
 set -e
 R=${staging_root}
 D=${staging_dir}

@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# direct single-command publish script (issue #58)
-# rendered by module: set -e; target parent dir must be root-owned, non-symlink, realpath;
-# existing target may only be overwritten when marker+SHA match (managed file).
+# direct publish (issue #58): decode->SHA check->atomic mv; target parent must be
+# root-owned, non-symlink; existing target only overwritten when marker+SHA match.
 set -e
 D=${staging_dir}
 R=$(dirname "$D")

@@ -19,9 +19,6 @@ variables {
   file_mode      = "0644"
 }
 
-# ---------------------------------------------------------------------------
-# 契约：内容哈希必须匹配解码内容
-# ---------------------------------------------------------------------------
 
 run "rejects_mismatched_content_sha256" {
   command = plan
@@ -34,9 +31,6 @@ run "rejects_mismatched_content_sha256" {
   expect_failures = [check.content_sha256_match]
 }
 
-# ---------------------------------------------------------------------------
-# 契约：content 必须是无换行 ASCII base64
-# ---------------------------------------------------------------------------
 
 run "rejects_content_with_newline" {
   command = plan
@@ -48,9 +42,6 @@ run "rejects_content_with_newline" {
   expect_failures = [var.content]
 }
 
-# ---------------------------------------------------------------------------
-# 契约：target_path 必须是绝对路径
-# ---------------------------------------------------------------------------
 
 run "rejects_relative_target_path" {
   command = plan
@@ -62,9 +53,6 @@ run "rejects_relative_target_path" {
   expect_failures = [var.target_path]
 }
 
-# ---------------------------------------------------------------------------
-# 契约：file_mode 必须是 4 位八进制
-# ---------------------------------------------------------------------------
 
 run "rejects_invalid_file_mode" {
   command = plan
@@ -76,9 +64,6 @@ run "rejects_invalid_file_mode" {
   expect_failures = [var.file_mode]
 }
 
-# ---------------------------------------------------------------------------
-# 契约：小文件走 module.direct 单命令直传，无分片
-# ---------------------------------------------------------------------------
 
 run "small_file_routes_to_direct" {
   command = apply
@@ -99,9 +84,6 @@ run "small_file_routes_to_direct" {
   }
 }
 
-# ---------------------------------------------------------------------------
-# 契约：大文件自动分流到 module.chunked 分片上传
-# ---------------------------------------------------------------------------
 
 run "large_file_routes_to_chunked" {
   command = apply
@@ -133,9 +115,6 @@ run "large_file_routes_to_chunked" {
   }
 }
 
-# ---------------------------------------------------------------------------
-# 契约：输出引用已发布路径与完成依赖
-# ---------------------------------------------------------------------------
 
 run "outputs_reference_published_path" {
   command = apply
@@ -151,9 +130,6 @@ run "outputs_reference_published_path" {
   }
 }
 
-# ---------------------------------------------------------------------------
-# 契约：直传阈值边界——恰好等于 direct_payload_cap 的内容走 direct 直传
-# ---------------------------------------------------------------------------
 
 run "at_threshold_content_routes_to_direct" {
   command = apply
@@ -176,9 +152,6 @@ run "at_threshold_content_routes_to_direct" {
   }
 }
 
-# ---------------------------------------------------------------------------
-# 契约：超过直传阈值 1 字节即走 chunked 分片
-# ---------------------------------------------------------------------------
 
 run "over_threshold_content_routes_to_chunked" {
   command = apply

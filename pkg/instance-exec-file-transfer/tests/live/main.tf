@@ -1,15 +1,11 @@
 # ============================================================================
 # instance-exec-file-transfer 真实环境集成测试（Live Acceptance）
 # ============================================================================
-# 前置条件（凭证）：source apps/ci-runner/single/env.sh 后，
-#   export TF_VAR_instance_password='<strong-password>'
-# 然后 terraform init && terraform apply。
-# 流程：
-#   1. 创建一台临时 Ubuntu 实例与部署 key pair；
-#   2. 用本模块发布一个小文件（hello.txt，走 direct 直传）与一个大文件
-#      （uv.lock 真实内容，base64 后约 78 KiB，走 chunked 分片）；
-#   3. verify 校验两文件 SHA-256 与权限（0644）与发布声明一致，失败则 apply 失败。
-#   terraform destroy 会清理实例、key pair 与发布文件（destroy_command）。
+# 前置：source apps/ci-runner/single/env.sh 并 export
+#   TF_VAR_instance_password='<strong-password>'，再 terraform init && apply。
+# 流程：创建临时 Ubuntu 实例 → 发布小文件（hello.txt 直传）与大文件
+# （uv.lock 真实内容，分片）→ verify 校验 SHA-256/0644，不符则 apply 失败。
+# destroy 会清理实例、key pair 与发布文件。
 # ============================================================================
 
 resource "random_string" "suffix" {

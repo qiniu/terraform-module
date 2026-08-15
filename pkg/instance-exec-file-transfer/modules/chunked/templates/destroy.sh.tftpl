@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# destroy cleanup script (issue #58)
-# delete managed file and staging ONLY when marker content and target SHA match exactly;
-# otherwise treat as unmanaged and do nothing.
+# destroy cleanup (issue #58): remove managed file+staging only when marker+SHA match.
 set -e
 D=${staging_dir}
 T='${target_path}'
