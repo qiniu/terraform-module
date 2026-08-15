@@ -97,7 +97,7 @@ terraform apply
 
 实际 `qiniu_compute_instance_exec` 对 131072 个 ASCII 字符的无敏感 no-op 命令返回 `/bin/bash: Argument list too long`。根模块因此使用 `modules/ansible-installer` 的显式 Ansible 文件清单：每个运行时文件和无敏感 bootstrap 脚本都由上游 `instance-exec-file-transfer` 模块逐个传输，完成后发布 `.runtime-sha256`。最终短命令先验证该清单及全部文件，再运行 bootstrap；不会传输或解压 Ansible 归档。
 
-`modules/ansible-installer` 需要访问 GitHub 的 uv release，以及供 `uv sync --locked` 使用的 PyPI（`pypi.org/simple`）或已配置的 Python package index。CI 同时覆盖 Ansible bootstrap、根模块接线和公共文件传输模块；仍需在一次性七牛云主机完成真实双次安装验收后才能删除 legacy installer。
+`modules/ansible-installer` 需要访问 GitHub 的 uv release，以及供 `uv sync --locked` 使用的 PyPI（`pypi.org/simple`）或已配置的 Python package index。CI 同时覆盖 Ansible bootstrap、根模块接线和公共文件传输模块。一次性七牛云主机已完成真实双次安装验收：第二次运行结果为 `changed=0 failed=0`，Harness 与 code-server 认证边界、未启动 Preview 的 `503` 响应，以及 `dsh` 用户的 Node.js、uv、uvx 和部署技能均已验证。
 
 若版本和配置没有变化，但需要强制重新执行安装：
 
