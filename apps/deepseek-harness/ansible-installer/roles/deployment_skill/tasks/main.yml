@@ -1,7 +1,7 @@
 ---
 - name: Create the managed deployment skill directory
   ansible.builtin.file:
-    path: "{{ dsh_home }}/.agents/skills/deployment-environment"
+    path: "{{ dsh_home }}/.agents/skills/{{ deployment_skill_name }}"
     state: directory
     owner: "{{ dsh_user }}"
     group: "{{ dsh_group }}"
@@ -10,7 +10,7 @@
 - name: Render the deployment environment skill
   ansible.builtin.template:
     src: SKILL.md.j2
-    dest: "{{ dsh_home }}/.agents/skills/deployment-environment/SKILL.md"
+    dest: "{{ dsh_home }}/.agents/skills/{{ deployment_skill_name }}/SKILL.md"
     owner: "{{ dsh_user }}"
     group: "{{ dsh_group }}"
     mode: '0600'

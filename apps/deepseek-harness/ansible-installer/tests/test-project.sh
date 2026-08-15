@@ -92,7 +92,7 @@ require_text "$project_dir/roles/deployment_skill/templates/SKILL.md.j2" 'dsh_pr
 require_text "$project_dir/roles/deployment_skill/templates/SKILL.md.j2" '503'
 require_text "$project_dir/tests/terraform/main.tf" 'preview_count'
 require_text "$project_dir/tests/terraform/main.tf" 'preview_public_authorities'
-require_text "$project_dir/roles/deployment_skill/templates/SKILL.md.j2" 'deployment-environment'
+require_text "$project_dir/roles/deployment_skill/templates/SKILL.md.j2" 'las-dsh-environment'
 require_text "$project_dir/playbooks/site.yml" 'ansible\.builtin\.uri'
 require_text "$project_dir/tests/provision-qiniu.sh" 'apps/ci-runner/single/env.sh'
 require_text "$project_dir/tests/provision-qiniu.sh" 'chmod 600'

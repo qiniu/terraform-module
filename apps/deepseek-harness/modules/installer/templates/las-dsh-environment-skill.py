@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Safely install the sole deployment-environment skill file."""
+"""Safely install the sole las-dsh-environment skill file."""
 import argparse
 import os
 import secrets
@@ -86,7 +86,7 @@ def main():
         try:
             skills_fd = directory(agents_fd, "skills", uid, gid)
             try:
-                bundle_fd = directory(skills_fd, "deployment-environment", uid, gid)
+                bundle_fd = directory(skills_fd, "las-dsh-environment", uid, gid)
                 try:
                     current_fd = existing_skill(bundle_fd)
                     if current_fd is not None:
@@ -138,5 +138,5 @@ if __name__ == "__main__":
     try:
         main()
     except (OSError, RuntimeError) as error:
-        print(f"deployment-environment skill installation failed: {error}", file=sys.stderr)
+        print(f"las-dsh-environment skill installation failed: {error}", file=sys.stderr)
         sys.exit(1)

@@ -120,7 +120,7 @@ jobs:
 
       - name: Test deployment environment skill installer
         if: matrix.module == 'apps/deepseek-harness'
-        run: bash apps/deepseek-harness/modules/installer/tests/deployment-environment-skill.sh
+        run: bash apps/deepseek-harness/modules/installer/tests/las-dsh-environment-skill.sh
 
       - name: Test offline Nginx configuration transaction
         if: matrix.module == 'apps/deepseek-harness'
