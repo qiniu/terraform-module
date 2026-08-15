@@ -8,3 +8,6 @@ custom-plugins/
 *.auto.*
 env.sh
 *.tfvars
+docs/superpowers/
+.tools
+.playwright-cli
