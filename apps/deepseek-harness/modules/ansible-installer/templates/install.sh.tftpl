@@ -217,6 +217,8 @@ install -d -o root -g root -m 0755 /var/cache/las-dsh-installer/uv
 cd "$${project_dir}"
 export UV_PROJECT_ENVIRONMENT=/opt/las-dsh-installer/.venv
 export UV_CACHE_DIR=/var/cache/las-dsh-installer/uv
+# Ansible modules run as dsh in some roles, so its root-managed interpreter must be traversable.
+umask 022
 uv sync --locked
 uv run --locked ansible-playbook -i inventory/localhost.yml playbooks/site.yml --extra-vars "@$${extra_vars_file}"
 cleanup_superseded_uv

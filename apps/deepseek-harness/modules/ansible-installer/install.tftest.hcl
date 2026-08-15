@@ -57,6 +57,18 @@ run "renders_bootstrap_shell_escapes_before_transfer" {
   }
 }
 
+run "restores_executable_umask_before_ansible_sync" {
+  command = plan
+
+  assert {
+    condition = strcontains(
+      base64decode(output.bootstrap.content),
+      "umask 022\nuv sync --locked",
+    )
+    error_message = "uv 虚拟环境必须在可执行的 umask 下创建，以支持 dsh 用户运行 Ansible 模块。"
+  }
+}
+
 run "rejects_port_collisions" {
   command = plan
 
