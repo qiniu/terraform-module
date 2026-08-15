@@ -33,7 +33,7 @@ export DSH_CODE_SERVER_PASSWORD='replace-with-a-different-secret'
 ./deploy.sh
 ```
 
-`deploy.sh` 会自动安装受项目管理的 `uv`，并以 `uv run --locked ansible-playbook` 执行单个 playbook。`DSH_PREVIEW_COUNT` 支持 `0..4`，`DSH_PREVIEW_PUBLIC_AUTHORITIES` 必须是长度相同的 JSON 字符串列表；Preview 对应固定回环端口 `30080..30083`，由 HTTPProxy 直连。Node.js、code-server 与 DeepSeek Harness 的版本和端口默认与现有 Terraform 部署一致；通过 `ansible-playbook -e key=value` 覆盖时须同时审阅对应下载校验值。
+`deploy.sh` 会自动安装受项目管理的 `uv`，并以 `uv run --locked ansible-playbook` 执行单个 playbook。`DSH_PREVIEW_COUNT` 支持 `0..4`，`DSH_PREVIEW_PUBLIC_AUTHORITIES` 必须是长度相同的 JSON 字符串列表；Preview 对应固定回环端口 `30080..30083`，由 HTTPProxy 直连。Node.js、code-server 与 DeepSeek Harness 的版本和端口默认与现有 Terraform 部署一致（Harness Nginx 端口变量为 `nginx_proxy_port`）；通过 `ansible-playbook -e key=value` 覆盖时须同时审阅对应下载校验值。
 
 ## 本地检查
 

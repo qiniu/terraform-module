@@ -5,6 +5,11 @@ dsh_public_authority: "{{ lookup('ansible.builtin.env', 'DSH_PUBLIC_AUTHORITY') 
 dsh_preview_count_raw: "{{ lookup('ansible.builtin.env', 'DSH_PREVIEW_COUNT') | default('1', true) }}"
 dsh_preview_count: "{{ dsh_preview_count_raw | int }}"
 dsh_preview_public_authorities: "{{ lookup('ansible.builtin.env', 'DSH_PREVIEW_PUBLIC_AUTHORITIES') | default('[]', true) | from_json }}"
+dsh_port: 3080
+nginx_proxy_port: 3081
+code_server_port: 3086
+code_server_proxy_port: 3087
+dsh_preview_ports: [30080, 30081, 30082, 30083]
 code_server_public_authority: "{{ lookup('ansible.builtin.env', 'DSH_CODE_SERVER_PUBLIC_AUTHORITY') }}"
 dsh_web_password: "{{ lookup('ansible.builtin.env', 'DSH_WEB_PASSWORD') }}"
 dsh_code_server_password: "{{ lookup('ansible.builtin.env', 'DSH_CODE_SERVER_PASSWORD') }}"

@@ -35,6 +35,8 @@ require_file "$project_dir/README.md"
 require_file "$project_dir/tests/inventory.yml"
 require_file "$project_dir/tests/nodejs-version-check.yml"
 require_file "$project_dir/tests/test-nodejs-version-check.sh"
+require_file "$project_dir/tests/test-ansible-parity-contract.sh"
+require_file "$project_dir/tests/test-port-validation.sh"
 
 git -C "$project_dir/../../.." check-ignore -q -- \
   "apps/deepseek-harness/ansible-installer/env.sh" && {
@@ -67,14 +69,14 @@ require_text "$project_dir/roles/code_server/tasks/main.yml" 'ansible\.builtin\.
 require_text "$project_dir/roles/code_server/tasks/main.yml" 'ansible\.builtin\.systemd_service'
 require_text "$project_dir/roles/deepseek_harness/tasks/main.yml" '/usr/local/bin/npm'
 require_text "$project_dir/roles/deepseek_harness/tasks/main.yml" '^      - exec$'
-require_text "$project_dir/roles/deepseek_harness/tasks/main.yml" '^  async: 1800$'
-require_text "$project_dir/roles/deepseek_harness/tasks/main.yml" 'ansible\.builtin\.async_status'
+require_text "$project_dir/roles/deepseek_harness/tasks/main.yml" 'retries: 5'
+require_text "$project_dir/roles/deepseek_harness/tasks/main.yml" 'until: dsh_prewarm.rc == 0'
 require_text "$project_dir/roles/deepseek_harness/templates/deepseek-harness.service.j2" -- '--offline'
 require_text "$project_dir/roles/nginx/tasks/main.yml" 'htpasswd'
 require_text "$project_dir/roles/nginx/handlers/main.yml" '^      - nginx$'
 require_text "$project_dir/roles/nginx/handlers/main.yml" '^      - -t$'
 require_text "$project_dir/roles/nginx/templates/deepseek-harness.conf.j2" 'proxy_pass http://127.0.0.1:'
-require_text "$project_dir/roles/nginx/defaults/main.yml" 'dsh_proxy_port: 3081'
+require_text "$project_dir/roles/nginx/defaults/main.yml" 'nginx_proxy_port: 3081'
 require_text "$project_dir/roles/nginx/defaults/main.yml" 'code_server_proxy_port: 3087'
 ! rg -q 'preview_proxy_port|preview_port' "$project_dir/roles/nginx" || {
   printf 'Preview must use direct HTTPProxy instead of an Nginx proxy\n' >&2
@@ -90,6 +92,7 @@ require_text "$project_dir/roles/nodejs/tasks/main.yml" 'Read the installed Node
 require_text "$project_dir/roles/nodejs/tasks/main.yml" 'nodejs_needs_install'
 require_text "$project_dir/roles/las_dsh_environment/templates/SKILL.md.j2" 'dsh_preview_ports'
 require_text "$project_dir/roles/las_dsh_environment/templates/SKILL.md.j2" '503'
+require_text "$project_dir/roles/las_dsh_environment/defaults/main.yml" 'uv_version: 0.12.5'
 require_text "$project_dir/tests/terraform/main.tf" 'preview_count'
 require_text "$project_dir/tests/terraform/main.tf" 'preview_public_authorities'
 require_text "$project_dir/roles/las_dsh_environment/templates/SKILL.md.j2" 'las-dsh-environment'
