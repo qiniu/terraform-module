@@ -5,12 +5,10 @@ on:
     branches: [main]
     paths:
       - 'apps/deepseek-harness/**'
-      - 'pkg/instance-exec-file-transfer/**'
       - '.github/workflows/deepseek-harness-test.yml'
   pull_request:
     paths:
       - 'apps/deepseek-harness/**'
-      - 'pkg/instance-exec-file-transfer/**'
       - '.github/workflows/deepseek-harness-test.yml'
   workflow_dispatch:
 
@@ -93,17 +91,6 @@ jobs:
           terraform -chdir="modules/ansible-installer" init
           terraform -chdir="modules/ansible-installer" validate
           terraform -chdir="modules/ansible-installer" test -no-color
-
-      - name: Test instance exec file transfer
-        run: |
-          terraform -chdir="pkg/instance-exec-file-transfer" init
-          terraform -chdir="pkg/instance-exec-file-transfer" validate
-          terraform -chdir="pkg/instance-exec-file-transfer" test -no-color
-          terraform -chdir="pkg/instance-exec-file-transfer/modules/direct" init
-          terraform -chdir="pkg/instance-exec-file-transfer/modules/direct" test -no-color
-          terraform -chdir="pkg/instance-exec-file-transfer/modules/chunked" init
-          terraform -chdir="pkg/instance-exec-file-transfer/modules/chunked" test -no-color
-          bash pkg/instance-exec-file-transfer/tests/contract.sh
 
       - name: Test bundled Ansible runtime
         working-directory: apps/deepseek-harness/modules/ansible-installer/ansible

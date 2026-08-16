@@ -6,11 +6,13 @@ on:
     paths:
       - '**/*.tf'
       - '**/*.tftest.hcl'
+      - 'pkg/instance-exec-file-transfer/**'
       - '.github/workflows/terraform-test.yml'
   pull_request:
     paths:
       - '**/*.tf'
       - '**/*.tftest.hcl'
+      - 'pkg/instance-exec-file-transfer/**'
       - '.github/workflows/terraform-test.yml'
   workflow_dispatch:
 
@@ -24,6 +26,9 @@ jobs:
         module:
           - openclaw
           - apps/ci-runner/single
+          - pkg/instance-exec-file-transfer
+          - pkg/instance-exec-file-transfer/modules/direct
+          - pkg/instance-exec-file-transfer/modules/chunked
 
     steps:
       - uses: actions/checkout@v4
@@ -90,3 +95,7 @@ jobs:
           else
             echo "::notice::No test files in ${{ matrix.module }}, skipping"
           fi
+
+      - name: Test instance exec file transfer contract
+        if: matrix.module == 'pkg/instance-exec-file-transfer'
+        run: bash pkg/instance-exec-file-transfer/tests/contract.sh
