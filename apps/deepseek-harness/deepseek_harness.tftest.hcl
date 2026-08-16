@@ -66,7 +66,7 @@ run "uses_fixed_versions_and_installer_contract" {
 
   assert {
     condition = (
-      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "exec '/opt/las-dsh-installer/bootstrap/install.sh' '") &&
+      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "exec '/opt/las-dsh-installer/bootstrap/bootstrap.sh' '") &&
       !strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "runtime-sha256") &&
       !strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "@deepseek-ai/dsh") &&
       length(nonsensitive(qiniu_compute_instance_exec.install_dsh.command)) <= 8192

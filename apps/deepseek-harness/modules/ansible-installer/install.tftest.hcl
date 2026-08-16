@@ -15,7 +15,7 @@ run "renders_sensitive_bootstrap_command" {
 
   assert {
     condition = (
-      strcontains(nonsensitive(output.install_command), "exec '/opt/las-dsh-installer/bootstrap/install.sh' '") &&
+      strcontains(nonsensitive(output.install_command), "exec '/opt/las-dsh-installer/bootstrap/bootstrap.sh' '") &&
       !strcontains(nonsensitive(output.install_command), "runtime-sha256") &&
       !strcontains(nonsensitive(output.install_command), "ansible_archive") &&
       !strcontains(nonsensitive(output.install_command), "web-password-must-not-appear") &&

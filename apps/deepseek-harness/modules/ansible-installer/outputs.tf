@@ -12,13 +12,13 @@ output "install_command" {
 
 output "runtime_file_contents" {
   description = "显式 Ansible 运行时白名单中每个文件的无换行 base64 内容。"
-  value       = local.runtime_file_contents
+  value       = module.ansible_runtime.runtime_file_contents
   sensitive   = true
 }
 
 output "runtime_file_metadata" {
   description = "显式 Ansible 运行时白名单中每个文件的目标路径、权限和 SHA-256。"
-  value       = local.runtime_file_metadata
+  value       = module.ansible_runtime.runtime_file_metadata
 }
 
 output "bootstrap" {
