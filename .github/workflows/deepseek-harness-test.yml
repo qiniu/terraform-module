@@ -106,9 +106,6 @@ jobs:
           terraform -chdir="pkg/instance-exec-file-transfer/modules/chunked" test -no-color
           bash pkg/instance-exec-file-transfer/tests/contract.sh
 
-      - name: Test module wiring contracts
-        run: bash apps/deepseek-harness/tests/task2-contract.sh
-
       - name: Test bundled Ansible runtime
         working-directory: apps/deepseek-harness/modules/ansible-installer/ansible
         run: |

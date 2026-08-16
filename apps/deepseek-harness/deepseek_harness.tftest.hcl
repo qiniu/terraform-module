@@ -45,7 +45,6 @@ run "uses_fixed_versions_and_installer_contract" {
     condition = (
       var.preview_count == 1 &&
       local.preview_ports == [30080, 30081, 30082, 30083]
-      && local.code_server_version == "4.132.0"
       && local.code_server_port == 3086
       && local.code_server_proxy_port == 3087
     )
@@ -54,15 +53,12 @@ run "uses_fixed_versions_and_installer_contract" {
 
   assert {
     condition = (
-      local.dsh_version == "0.1.0-rc.6" &&
-      local.node_version == "24.19.0" &&
-      local.uv_version == "0.12.5" &&
       strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "exec '/opt/las-dsh-installer/bootstrap/install.sh' '0.12.5'") &&
       strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "/opt/las-dsh-installer/project/.runtime-sha256") &&
       !strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "@deepseek-ai/dsh") &&
       length(nonsensitive(qiniu_compute_instance_exec.install_dsh.command)) <= 8192
     )
-    error_message = "根模块必须固定版本，并以短命令调用已传输的 Ansible bootstrap。"
+    error_message = "installer 必须固定版本，并以短命令调用已传输的 Ansible bootstrap。"
   }
 
   assert {

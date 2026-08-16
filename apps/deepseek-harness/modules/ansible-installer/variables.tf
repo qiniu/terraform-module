@@ -1,34 +1,3 @@
-variable "dsh_version" {
-  description = "要安装的 @deepseek-ai/dsh 版本。"
-  type        = string
-
-  validation {
-    condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$", var.dsh_version))
-    error_message = "dsh_version 必须是完整的 semver（可包含 prerelease 或 build metadata）。"
-  }
-}
-
-variable "node_version" {
-  description = "要安装的 Node.js 版本。"
-  type        = string
-
-  validation {
-    condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$", var.node_version))
-    error_message = "node_version 必须是完整的 semver（可包含 prerelease 或 build metadata）。"
-  }
-}
-
-variable "uv_version" {
-  description = "本机 Ansible 安装器使用的 uv 版本。"
-  type        = string
-  default     = "0.12.5"
-
-  validation {
-    condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$", var.uv_version))
-    error_message = "uv_version 必须是完整的 semver（可包含 prerelease 或 build metadata）。"
-  }
-}
-
 variable "dsh_port" {
   description = "DeepSeek Harness 回环监听端口。"
   type        = number
@@ -66,16 +35,6 @@ variable "preview_ports" {
   validation {
     condition     = length(var.preview_ports) == 4 && alltrue([for port in var.preview_ports : port >= 1 && port <= 65535 && floor(port) == port])
     error_message = "preview_ports 必须包含 4 个有效整数端口。"
-  }
-}
-
-variable "code_server_version" {
-  description = "固定的 code-server 版本。"
-  type        = string
-
-  validation {
-    condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+$", var.code_server_version))
-    error_message = "code_server_version 必须是三段数字版本。"
   }
 }
 

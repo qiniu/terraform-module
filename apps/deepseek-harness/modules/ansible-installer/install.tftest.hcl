@@ -1,13 +1,10 @@
 variables {
-  dsh_version                  = "0.1.2"
-  node_version                 = "24.19.0"
   dsh_port                     = 3080
   nginx_proxy_port             = 3081
   preview_count                = 1
   preview_ports                = [30080, 30081, 30082, 30083]
   public_authority             = "dsh.example.test"
   preview_public_authorities   = ["preview.example.test"]
-  code_server_version          = "4.132.0"
   code_server_port             = 3086
   code_server_proxy_port       = 3087
   code_server_public_authority = "code.example.test"
@@ -29,19 +26,6 @@ run "renders_sensitive_manifest_bootstrap_command" {
       length(nonsensitive(output.install_command)) <= 8192
     )
     error_message = "安装命令必须只携带运行时清单校验值和编码后的变量，并不得泄露密码明文。"
-  }
-}
-
-run "uv_version_changes_rendered_command" {
-  command = plan
-
-  variables {
-    uv_version = "0.12.6"
-  }
-
-  assert {
-    condition     = strcontains(nonsensitive(output.install_command), "install.sh' '0.12.6'")
-    error_message = "修改 uv_version 必须改变引导命令中的固定版本。"
   }
 }
 
