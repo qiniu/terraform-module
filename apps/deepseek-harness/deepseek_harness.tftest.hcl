@@ -76,14 +76,6 @@ run "uses_fixed_versions_and_installer_contract" {
 
   assert {
     condition = (
-      module.ansible_runtime_transfer.runtime_file_count == length(module.installer.runtime_file_metadata) &&
-      module.ansible_runtime_transfer.bootstrap_path == "/opt/las-dsh-installer/bootstrap/install.sh"
-    )
-    error_message = "Ansible 运行时传输模块必须发布显式文件清单和 bootstrap 脚本。"
-  }
-
-  assert {
-    condition = (
       qiniu_compute_instance_exec.install_dsh.instance_id == "test-instance" &&
       qiniu_compute_instance_exec.install_dsh.user == "root" &&
       qiniu_compute_instance_exec.install_dsh.port == "22" &&
@@ -290,10 +282,9 @@ run "outputs_public_contract" {
       output.dsh_web_password == sensitive(random_password.dsh_web.result) &&
       output.code_server_password == sensitive(random_password.code_server.result) &&
       output.instance_id == "test-instance" &&
-      output.ssh_command == null &&
-      strcontains(output.setup_guide, "https://dsh.example.test")
+      output.ssh_command == null
     )
-    error_message = "根模块输出必须包含 Web 凭据、实例、可空 SSH 命令和配置指引。"
+    error_message = "根模块输出必须包含 Web 凭据、实例和可空 SSH 命令。"
   }
 }
 

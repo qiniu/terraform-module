@@ -22,12 +22,10 @@ locals {
     "roles/las_dsh_environment/defaults/main.yml"                  = "${path.module}/ansible/roles/las_dsh_environment/defaults/main.yml"
     "roles/las_dsh_environment/tasks/main.yml"                     = "${path.module}/ansible/roles/las_dsh_environment/tasks/main.yml"
     "roles/las_dsh_environment/templates/SKILL.md.j2"              = "${path.module}/ansible/roles/las_dsh_environment/templates/SKILL.md.j2"
-    "roles/nginx/defaults/main.yml"                                = "${path.module}/ansible/roles/nginx/defaults/main.yml"
     "roles/nginx/handlers/main.yml"                                = "${path.module}/ansible/roles/nginx/handlers/main.yml"
     "roles/nginx/tasks/main.yml"                                   = "${path.module}/ansible/roles/nginx/tasks/main.yml"
     "roles/nginx/templates/deepseek-harness.conf.j2"               = "${path.module}/ansible/roles/nginx/templates/deepseek-harness.conf.j2"
     "roles/nodejs/defaults/main.yml"                               = "${path.module}/ansible/roles/nodejs/defaults/main.yml"
-    "roles/nodejs/handlers/main.yml"                               = "${path.module}/ansible/roles/nodejs/handlers/main.yml"
     "roles/nodejs/tasks/cleanup.yml"                               = "${path.module}/ansible/roles/nodejs/tasks/cleanup.yml"
     "roles/nodejs/tasks/main.yml"                                  = "${path.module}/ansible/roles/nodejs/tasks/main.yml"
   }
