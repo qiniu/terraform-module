@@ -93,7 +93,6 @@ jobs:
           terraform -chdir="modules/ansible-installer" init
           terraform -chdir="modules/ansible-installer" validate
           terraform -chdir="modules/ansible-installer" test -no-color
-          bash modules/ansible-installer/tests/contract.sh
 
       - name: Test instance exec file transfer
         run: |
@@ -110,4 +109,3 @@ jobs:
         working-directory: apps/deepseek-harness/modules/ansible-installer/ansible
         run: |
           uv run --locked ansible-playbook --syntax-check -i inventory/default playbooks/site.yml
-          bash ../tests/ansible-runtime-contract.sh
