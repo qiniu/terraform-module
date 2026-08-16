@@ -21,12 +21,12 @@ output "code_server_password" {
 
 output "dsh_web_username" {
   description = "Web Basic Auth 用户名。"
-  value       = local.web_username
+  value       = local.dsh_web_username
 }
 
 output "dsh_web_password" {
   description = "Web Basic Auth 随机密码。"
-  value       = random_password.web.result
+  value       = random_password.dsh_web.result
   sensitive   = true
 }
 

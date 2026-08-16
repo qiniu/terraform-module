@@ -21,11 +21,7 @@ output "dsh_web_port" {
 }
 
 output "preview_ports" {
-  value = local.preview_ports
-}
-
-output "preview_public_url" {
-  value = try("https://${qiniu_compute_instance_public_access.preview[0].endpoint}", null)
+  value = slice(local.preview_slot_ports, 0, var.preview_count)
 }
 
 output "preview_public_authorities" {

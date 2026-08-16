@@ -16,7 +16,7 @@ disable-model-invocation: false
 - 默认工作目录：`{{ dsh_workspace_dir }}`
 - 用户级 skill 目录：`{{ dsh_home }}/.agents/skills`
 - 当前 skill 文件：`{{ dsh_home }}/.agents/skills/{{ deployment_skill_name }}/SKILL.md`
-- DeepSeek Harness：`https://{{ dsh_public_authority }}`
+- DeepSeek Harness：`https://{{ dsh_web_public_authority }}`
 
 网页项目、配置文件和临时调试文件都应放在 `{{ dsh_workspace_dir }}` 或其子目录中。不要把项目文件写入 `/etc`、`/usr` 或其他系统目录；需要安装系统服务时，应通过已有的项目安装流程处理。
 
@@ -27,12 +27,12 @@ disable-model-invocation: false
 - Harness 应用：`127.0.0.1:{{ dsh_port }}`，由本机 Nginx `{{ nginx_proxy_port }}` 代理到公网 Harness 地址
 - code-server：`127.0.0.1:{{ code_server_port }}`，由本机 Nginx `{{ code_server_proxy_port }}` 代理到独立 code-server 地址
 
-{% if dsh_preview_ports | length == 0 %}
+{% if preview_ports | length == 0 %}
 - Preview：当前未启用 Preview 槽位
 {% else %}
-Preview 槽位共 {{ dsh_preview_ports | length }} 个。每个槽位由 HTTPProxy 直接转发到用户应用，不经过本机 Nginx：
-{% for port in dsh_preview_ports %}
-- Preview {{ loop.index }}：应用监听 `127.0.0.1:{{ port }}`，公网地址为 `https://{{ dsh_preview_public_authorities[loop.index0] }}`
+Preview 槽位共 {{ preview_ports | length }} 个。每个槽位由 HTTPProxy 直接转发到用户应用，不经过本机 Nginx：
+{% for port in preview_ports %}
+- Preview {{ loop.index }}：应用监听 `127.0.0.1:{{ port }}`，公网地址为 `https://{{ preview_public_authorities[loop.index0] }}`
 {% endfor %}
 {% endif %}
 

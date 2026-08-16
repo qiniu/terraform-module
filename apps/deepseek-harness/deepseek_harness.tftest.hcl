@@ -18,8 +18,7 @@ override_module {
     dsh_web_public_authority     = "dsh.example.test"
     dsh_web_public_url           = "https://dsh.example.test"
     dsh_web_port                 = 3081
-    preview_ports                = [30080, 30081, 30082, 30083]
-    preview_public_url           = "https://preview.example.test"
+    preview_ports                = [30080]
     preview_public_authorities   = ["preview.example.test"]
     preview_public_urls          = ["https://preview.example.test"]
     code_server_public_authority = "code.example.test"
@@ -47,7 +46,7 @@ run "uses_fixed_versions_and_installer_contract" {
     condition = (
       var.preview_count == 1 &&
       module.infrastructure.dsh_web_port == 3081 &&
-      module.infrastructure.preview_ports == [30080, 30081, 30082, 30083] &&
+      module.infrastructure.preview_ports == [30080] &&
       module.infrastructure.code_server_web_port == 3087
     )
     error_message = "infrastructure 必须固定 DSH Web、Preview 和 code-server 代理端口。"
@@ -89,12 +88,12 @@ run "uses_fixed_versions_and_installer_contract" {
 
   assert {
     condition = (
-      random_password.web.length == 24 &&
-      random_password.web.upper &&
-      random_password.web.lower &&
-      random_password.web.numeric &&
-      random_password.web.special &&
-      random_password.web.override_special == "-._~"
+      random_password.dsh_web.length == 24 &&
+      random_password.dsh_web.upper &&
+      random_password.dsh_web.lower &&
+      random_password.dsh_web.numeric &&
+      random_password.dsh_web.special &&
+      random_password.dsh_web.override_special == "-._~"
     )
     error_message = "Web 密码必须为 24 位并包含所有字符类别，特殊字符须对 URL、Basic Auth 与 shell 安全。"
   }
@@ -231,8 +230,7 @@ run "outputs_ssh_command_when_enabled" {
       dsh_web_public_authority     = "dsh.example.test"
       dsh_web_public_url           = "https://dsh.example.test"
       dsh_web_port                 = 3081
-      preview_ports                = [30080, 30081, 30082, 30083]
-      preview_public_url           = "https://preview.example.test"
+      preview_ports                = [30080]
       preview_public_authorities   = ["preview.example.test"]
       preview_public_urls          = ["https://preview.example.test"]
       code_server_public_authority = "code.example.test"
@@ -279,7 +277,7 @@ run "outputs_public_contract" {
       !issensitive(output.preview_public_urls) &&
       !issensitive(output.code_server_public_url) &&
       output.dsh_web_username == "admin" &&
-      output.dsh_web_password == sensitive(random_password.web.result) &&
+      output.dsh_web_password == sensitive(random_password.dsh_web.result) &&
       output.code_server_password == sensitive(random_password.code_server.result) &&
       output.instance_id == "test-instance" &&
       output.ssh_command == null &&
@@ -302,8 +300,7 @@ run "supports_zero_preview_slots" {
       dsh_web_public_authority     = "dsh.example.test"
       dsh_web_public_url           = "https://dsh.example.test"
       dsh_web_port                 = 3081
-      preview_ports                = [30080, 30081, 30082, 30083]
-      preview_public_url           = null
+      preview_ports                = []
       preview_public_authorities   = []
       preview_public_urls          = []
       code_server_public_authority = "code.example.test"

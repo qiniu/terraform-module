@@ -5,8 +5,8 @@ variables {
   preview_public_authorities   = ["preview.example.test"]
   code_server_web_port         = 3087
   code_server_public_authority = "code.example.test"
-  web_username                 = "admin"
-  web_password                 = "web-password-must-not-appear"
+  dsh_web_username             = "admin"
+  dsh_web_password             = "web-password-must-not-appear"
   code_server_password         = "Code-server-safe-1234"
 }
 

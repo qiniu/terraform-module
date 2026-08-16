@@ -3,7 +3,7 @@ map_hash_bucket_size 512;
 map $http_origin $dsh_origin_allowed {
     default 0;
     "" 1;
-    "https://{{ dsh_public_authority }}" 1;
+    "https://{{ dsh_web_public_authority }}" 1;
 }
 
 map $http_sec_fetch_site $dsh_fetch_site_allowed {

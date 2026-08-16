@@ -32,15 +32,15 @@ locals {
   }
 
   extra_vars_base64 = base64encode(jsonencode({
-    nginx_proxy_port               = var.dsh_web_port
-    dsh_public_authority           = var.dsh_web_public_authority
-    dsh_preview_public_authorities = var.preview_public_authorities
-    dsh_preview_ports              = var.preview_ports
-    code_server_proxy_port         = var.code_server_web_port
-    code_server_public_authority   = var.code_server_public_authority
-    dsh_web_username               = var.web_username
-    dsh_web_password               = var.web_password
-    dsh_code_server_password       = var.code_server_password
+    nginx_proxy_port             = var.dsh_web_port
+    dsh_web_public_authority     = var.dsh_web_public_authority
+    preview_public_authorities   = var.preview_public_authorities
+    preview_ports                = var.preview_ports
+    code_server_proxy_port       = var.code_server_web_port
+    code_server_public_authority = var.code_server_public_authority
+    dsh_web_username             = var.dsh_web_username
+    dsh_web_password             = var.dsh_web_password
+    code_server_password         = var.code_server_password
   }))
 
   runtime_file_contents = {

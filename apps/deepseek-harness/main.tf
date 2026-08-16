@@ -1,8 +1,8 @@
 locals {
-  web_username = "admin"
+  dsh_web_username = "admin"
 }
 
-resource "random_password" "web" {
+resource "random_password" "dsh_web" {
   length           = 24
   upper            = true
   lower            = true
@@ -39,12 +39,12 @@ module "installer" {
 
   dsh_web_port                 = module.infrastructure.dsh_web_port
   dsh_web_public_authority     = module.infrastructure.dsh_web_public_authority
-  preview_ports                = slice(module.infrastructure.preview_ports, 0, var.preview_count)
+  preview_ports                = module.infrastructure.preview_ports
   preview_public_authorities   = module.infrastructure.preview_public_authorities
   code_server_web_port         = module.infrastructure.code_server_web_port
   code_server_public_authority = module.infrastructure.code_server_public_authority
-  web_username                 = local.web_username
-  web_password                 = random_password.web.result
+  dsh_web_username             = local.dsh_web_username
+  dsh_web_password             = random_password.dsh_web.result
   code_server_password         = random_password.code_server.result
 }
 

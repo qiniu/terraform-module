@@ -8,7 +8,7 @@ resource "random_string" "suffix" {
 locals {
   instance_name        = "deepseek-harness-${random_string.suffix.result}"
   dsh_web_port         = 3081
-  preview_ports        = [30080, 30081, 30082, 30083]
+  preview_slot_ports   = [30080, 30081, 30082, 30083]
   code_server_web_port = 3087
 }
 
@@ -86,7 +86,7 @@ resource "qiniu_compute_instance_public_access" "preview" {
   count = var.preview_count
 
   instance_id   = qiniu_compute_instance.deepseek_harness.id
-  internal_port = local.preview_ports[count.index]
+  internal_port = local.preview_slot_ports[count.index]
   type          = "HTTPProxy"
 }
 
@@ -99,7 +99,7 @@ resource "qiniu_compute_instance_public_access" "code_server" {
     precondition {
       condition = (
         local.code_server_web_port != local.dsh_web_port &&
-        !contains(local.preview_ports, local.code_server_web_port)
+        !contains(local.preview_slot_ports, local.code_server_web_port)
       )
       error_message = "code_server_web_port 不得与 dsh_web_port 或 Preview 端口重复。"
     }

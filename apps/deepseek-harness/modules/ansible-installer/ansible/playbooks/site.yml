@@ -7,29 +7,29 @@
     - name: Verify the Preview port collection
       ansible.builtin.assert:
         that:
-          - dsh_preview_ports is sequence
-          - dsh_preview_ports is not string
-          - dsh_preview_ports is not mapping
-          - dsh_preview_ports | length <= 4
+          - preview_ports is sequence
+          - preview_ports is not string
+          - preview_ports is not mapping
+          - preview_ports | length <= 4
         fail_msg: Provide valid endpoint authorities, passwords, and distinct service ports through inventory or extra vars.
 
     - name: Collect service and Preview ports
       ansible.builtin.set_fact:
-        dsh_all_ports: "{{ [dsh_port, nginx_proxy_port, code_server_port, code_server_proxy_port] + dsh_preview_ports }}"
+        dsh_all_ports: "{{ [dsh_port, nginx_proxy_port, code_server_port, code_server_proxy_port] + preview_ports }}"
 
     - name: Verify required deployment variables
       ansible.builtin.assert:
         that:
-          - dsh_public_authority | default('') | length > 0
+          - dsh_web_public_authority | default('') | length > 0
           - code_server_public_authority | default('') | length > 0
-          - dsh_preview_public_authorities is sequence
-          - dsh_preview_public_authorities is not string
-          - dsh_preview_public_authorities is not mapping
-          - dsh_preview_public_authorities | length == dsh_preview_ports | length
-          - dsh_preview_public_authorities | select('string') | list | length == dsh_preview_ports | length
-          - dsh_preview_public_authorities | map('trim') | reject('equalto', '') | list | length == dsh_preview_ports | length
+          - preview_public_authorities is sequence
+          - preview_public_authorities is not string
+          - preview_public_authorities is not mapping
+          - preview_public_authorities | length == preview_ports | length
+          - preview_public_authorities | select('string') | list | length == preview_ports | length
+          - preview_public_authorities | map('trim') | reject('equalto', '') | list | length == preview_ports | length
           - dsh_web_password | default('') | length > 0
-          - dsh_code_server_password | default('') | length > 0
+          - code_server_password | default('') | length > 0
           - dsh_all_ports | map('string') | select('match', '^[1-9][0-9]{0,4}$') | list | length == dsh_all_ports | length
           - dsh_all_ports | map('int') | select('>=', 1) | list | length == dsh_all_ports | length
           - dsh_all_ports | map('int') | select('<=', 65535) | list | length == dsh_all_ports | length

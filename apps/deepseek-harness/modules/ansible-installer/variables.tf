@@ -64,17 +64,17 @@ variable "code_server_public_authority" {
   }
 }
 
-variable "web_username" {
+variable "dsh_web_username" {
   description = "Nginx Basic Auth 用户名。"
   type        = string
 
   validation {
-    condition     = can(regex("^[A-Za-z0-9._-]{1,64}$", var.web_username))
-    error_message = "web_username 只能包含字母、数字、点、下划线和连字符，长度为 1 到 64。"
+    condition     = can(regex("^[A-Za-z0-9._-]{1,64}$", var.dsh_web_username))
+    error_message = "dsh_web_username 只能包含字母、数字、点、下划线和连字符，长度为 1 到 64。"
   }
 }
 
-variable "web_password" {
+variable "dsh_web_password" {
   description = "Nginx Basic Auth 密码。"
   type        = string
   sensitive   = true

@@ -12,7 +12,7 @@ Environment=DSH_HOME={{ dsh_state_dir }}
 Environment=PATH={{ nodejs_prefix }}/bin:/usr/local/bin:/usr/bin:/bin
 Environment=npm_config_cache={{ dsh_npm_cache_dir }}
 WorkingDirectory={{ dsh_workspace_dir }}
-ExecStart=/usr/local/bin/npx --offline --yes @deepseek-ai/dsh@{{ dsh_version }} web --port {{ dsh_port }} --trusted-host {{ dsh_public_authority }}
+ExecStart=/usr/local/bin/npx --offline --yes @deepseek-ai/dsh@{{ dsh_version }} web --port {{ dsh_port }} --trusted-host {{ dsh_web_public_authority }}
 Restart=on-failure
 RestartSec=5s
 
