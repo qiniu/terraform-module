@@ -74,7 +74,7 @@ jobs:
         run: |
           terraform init
           terraform validate
-      terraform test -no-color
+          terraform test -no-color
 
       - name: Test nested Terraform modules
         working-directory: apps/deepseek-harness
