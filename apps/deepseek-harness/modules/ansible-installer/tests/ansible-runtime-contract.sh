@@ -35,6 +35,7 @@ harness_tasks="$runtime_dir/roles/deepseek_harness/tasks/main.yml"
 nginx_defaults="$runtime_dir/roles/nginx/defaults/main.yml"
 nginx_template="$runtime_dir/roles/nginx/templates/deepseek-harness.conf.j2"
 skill_defaults="$runtime_dir/roles/las_dsh_environment/defaults/main.yml"
+skill_tasks="$runtime_dir/roles/las_dsh_environment/tasks/main.yml"
 skill_template="$runtime_dir/roles/las_dsh_environment/templates/SKILL.md.j2"
 
 for role in base nodejs code_server deepseek_harness nginx las_dsh_environment; do
@@ -79,6 +80,12 @@ require_text "$node_cleanup" '^  environment:'
 reject_text "$node_cleanup" '^    argv:'
 require_text "$skill_defaults" '^dsh_environment_skill_name: las-dsh-environment$'
 reject_text "$skill_defaults" '^(preview_ports|uv_version|dsh_ansible_venv_dir):'
+require_text "$skill_tasks" 'Validate required deployment environment inputs'
+require_text "$skill_tasks" 'ansible\.builtin\.assert:'
+require_text "$skill_tasks" 'preview_ports is defined'
+require_text "$skill_tasks" 'preview_public_authorities is defined'
+require_text "$skill_tasks" 'uv_version \| default\('\''\'\''\) \| length > 0'
+require_text "$skill_tasks" 'dsh_ansible_venv_dir \| default\('\''\'\''\) \| length > 0'
 require_text "$skill_template" '/opt/node-v\{\{ nodejs_version \}\}'
 require_text "$skill_template" '/opt/uv-v\{\{ uv_version \}\}'
 require_text "$skill_template" 'uv init'
