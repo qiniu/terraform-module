@@ -58,6 +58,10 @@ module "ansible_runtime_transfer" {
   file_metadata = module.installer.file_metadata
 }
 
+resource "terraform_data" "install_dsh_runtime" {
+  triggers_replace = nonsensitive(module.installer.file_metadata)
+}
+
 resource "qiniu_compute_instance_exec" "install_dsh" {
   depends_on = [module.ansible_runtime_transfer]
 
@@ -77,6 +81,8 @@ resource "qiniu_compute_instance_exec" "install_dsh" {
   }
 
   lifecycle {
+    replace_triggered_by = [terraform_data.install_dsh_runtime]
+
     precondition {
       condition = nonsensitive(
         !var.enable_ssh_port_forward ||

@@ -87,6 +87,14 @@ run "uses_fixed_versions_and_installer_contract" {
 
   assert {
     condition = (
+      nonsensitive(terraform_data.install_dsh_runtime.triggers_replace) ==
+      nonsensitive(module.installer.file_metadata)
+    )
+    error_message = "运行时文件变更必须触发最终安装 exec 重新执行。"
+  }
+
+  assert {
+    condition = (
       random_password.dsh_web.length == 24 &&
       random_password.dsh_web.upper &&
       random_password.dsh_web.lower &&
