@@ -1,5 +1,4 @@
 ---
-nodejs_version: 24.19.0
 nodejs_platforms:
   x86_64: linux-x64
   aarch64: linux-arm64

@@ -4,6 +4,7 @@ locals {
   ansible_runtime_files = {
     "ansible.cfg"                                                  = "${path.module}/ansible/ansible.cfg"
     "inventory/default/hosts.yml"                                  = "${path.module}/ansible/inventory/default/hosts.yml"
+    "inventory/default/group_vars/all/main.yml"                    = "${path.module}/ansible/inventory/default/group_vars/all/main.yml"
     "playbooks/site.yml"                                           = "${path.module}/ansible/playbooks/site.yml"
     "pyproject.toml"                                               = "${path.module}/ansible/pyproject.toml"
     "uv.lock"                                                      = "${path.module}/ansible/uv.lock"

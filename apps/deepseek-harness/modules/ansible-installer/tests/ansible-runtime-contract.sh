@@ -26,14 +26,18 @@ reject_text() {
 site="$runtime_dir/playbooks/site.yml"
 ansible_cfg="$runtime_dir/ansible.cfg"
 inventory="$runtime_dir/inventory/default/hosts.yml"
+group_vars="$runtime_dir/inventory/default/group_vars/all/main.yml"
 variables_tf="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)/variables.tf"
 base_tasks="$runtime_dir/roles/base/tasks/main.yml"
 node_tasks="$runtime_dir/roles/nodejs/tasks/main.yml"
 node_cleanup="$runtime_dir/roles/nodejs/tasks/cleanup.yml"
 node_defaults="$runtime_dir/roles/nodejs/defaults/main.yml"
 harness_tasks="$runtime_dir/roles/deepseek_harness/tasks/main.yml"
+harness_defaults="$runtime_dir/roles/deepseek_harness/defaults/main.yml"
 nginx_defaults="$runtime_dir/roles/nginx/defaults/main.yml"
 nginx_template="$runtime_dir/roles/nginx/templates/deepseek-harness.conf.j2"
+code_server_defaults="$runtime_dir/roles/code_server/defaults/main.yml"
+code_server_tasks="$runtime_dir/roles/code_server/tasks/main.yml"
 skill_defaults="$runtime_dir/roles/las_dsh_environment/defaults/main.yml"
 skill_tasks="$runtime_dir/roles/las_dsh_environment/tasks/main.yml"
 skill_template="$runtime_dir/roles/las_dsh_environment/templates/SKILL.md.j2"
@@ -45,7 +49,7 @@ for role in base nodejs code_server deepseek_harness nginx las_dsh_environment; 
 done
 
 [[ -f "$inventory" ]] || exit 1
-[[ ! -e "$runtime_dir/inventory/default/group_vars" ]] || exit 1
+[[ -f "$group_vars" ]] || exit 1
 require_text "$ansible_cfg" '^inventory = ./inventory/default$'
 reject_text "$site" 'vars_files:'
 reject_text "$site" 'dsh_preview_count'
@@ -56,7 +60,17 @@ reject_text "$site" 'dsh_code_server_password'
 require_text "$site" 'preview_public_authorities \| length == preview_ports \| length'
 
 require_text "$runtime_dir/pyproject.toml" 'ansible-core==2\.20\.2'
-require_text "$nginx_defaults" '^nginx_proxy_port: 3081$'
+require_text "$group_vars" '^dsh_port: 3080$'
+require_text "$group_vars" '^nodejs_version: 24\.19\.0$'
+require_text "$group_vars" '^code_server_version: 4\.132\.0$'
+require_text "$group_vars" '^code_server_port: 3086$'
+reject_text "$harness_defaults" '^dsh_port:'
+reject_text "$node_defaults" '^nodejs_version:'
+reject_text "$code_server_defaults" '^(code_server_version|code_server_port):'
+reject_text "$nginx_defaults" '^(nginx_proxy_port|code_server_proxy_port|dsh_web_username):'
+require_text "$code_server_tasks" 'Validate required code-server inputs'
+require_text "$code_server_tasks" 'code_server_version \| default\('\''\'\''\) \| length > 0'
+require_text "$code_server_tasks" 'code_server_port is defined'
 reject_text "$nginx_defaults" 'dsh_proxy_port'
 require_text "$nginx_template" 'nginx_proxy_port'
 reject_text "$nginx_template" 'dsh_proxy_port'

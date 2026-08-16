@@ -1,4 +1,13 @@
 ---
+- name: Validate required code-server inputs
+  ansible.builtin.assert:
+    that:
+      - code_server_version | default('') | length > 0
+      - code_server_port is defined
+      - code_server_port | string is match('^[1-9][0-9]{0,4}$')
+      - code_server_port | int <= 65535
+    fail_msg: code_server requires a version and a valid loopback port.
+
 - name: Select the code-server release for this architecture
   ansible.builtin.set_fact:
     code_server_release: "{{ code_server_releases[ansible_facts['architecture']] | default({}) }}"

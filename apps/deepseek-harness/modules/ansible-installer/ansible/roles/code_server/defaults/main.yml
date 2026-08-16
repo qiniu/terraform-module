@@ -1,6 +1,4 @@
 ---
-code_server_version: 4.132.0
-code_server_port: 3086
 code_server_prefix: "/opt/code-server-{{ code_server_version }}"
 code_server_releases:
   x86_64:
