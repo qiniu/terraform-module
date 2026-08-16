@@ -7,18 +7,13 @@ output "deployment_private_key" {
   sensitive = true
 }
 
-output "public_authority" {
+output "dsh_public_authority" {
   description = "HTTPProxy 公网 authority（不含 scheme）。"
   value       = qiniu_compute_instance_public_access.web.endpoint
 }
 
-output "public_url" {
+output "dsh_public_url" {
   value = "https://${qiniu_compute_instance_public_access.web.endpoint}"
-}
-
-output "preview_public_authority" {
-  description = "Preview HTTPProxy 公网 authority（不含 scheme）。"
-  value       = try(qiniu_compute_instance_public_access.preview[0].endpoint, null)
 }
 
 output "preview_public_url" {

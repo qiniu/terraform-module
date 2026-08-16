@@ -42,7 +42,7 @@ locals {
     dsh_version                    = local.dsh_version
     dsh_port                       = var.dsh_port
     nginx_proxy_port               = var.nginx_proxy_port
-    dsh_public_authority           = var.public_authority
+    dsh_public_authority           = var.dsh_public_authority
     dsh_preview_count_raw          = tostring(var.preview_count)
     dsh_preview_public_authorities = var.preview_public_authorities
     dsh_preview_ports              = var.preview_ports

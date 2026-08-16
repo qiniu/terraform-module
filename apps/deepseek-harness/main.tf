@@ -46,7 +46,7 @@ module "installer" {
 
   dsh_port                     = local.dsh_port
   nginx_proxy_port             = local.nginx_proxy_port
-  public_authority             = module.infrastructure.public_authority
+  dsh_public_authority         = module.infrastructure.dsh_public_authority
   preview_count                = var.preview_count
   preview_ports                = local.preview_ports
   preview_public_authorities   = module.infrastructure.preview_public_authorities

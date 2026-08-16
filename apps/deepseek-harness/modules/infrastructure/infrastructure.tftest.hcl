@@ -118,7 +118,6 @@ run "plans_complete_instance_and_public_access" {
       qiniu_compute_instance_public_access.preview[0].instance_id == qiniu_compute_instance.deepseek_harness.id &&
       qiniu_compute_instance_public_access.preview[0].internal_port == 30080 &&
       qiniu_compute_instance_public_access.preview[0].type == "HTTPProxy" &&
-      output.preview_public_authority == qiniu_compute_instance_public_access.preview[0].endpoint &&
       output.preview_public_url == "https://${qiniu_compute_instance_public_access.preview[0].endpoint}" &&
       length(output.preview_public_urls) == 1 &&
       qiniu_compute_instance_public_access.code_server.instance_id == qiniu_compute_instance.deepseek_harness.id &&
@@ -205,12 +204,11 @@ run "accepts_zero_preview_count" {
   assert {
     condition = (
       length(qiniu_compute_instance_public_access.preview) == 0 &&
-      output.preview_public_authority == null &&
       output.preview_public_url == null &&
       output.preview_public_authorities == [] &&
       output.preview_public_urls == []
     )
-    error_message = "preview_count=0 时不应创建 Preview HTTPProxy，兼容单数输出应为 null，列表输出应为空。"
+    error_message = "preview_count=0 时不应创建 Preview HTTPProxy，Preview URL 输出应为空。"
   }
 }
 

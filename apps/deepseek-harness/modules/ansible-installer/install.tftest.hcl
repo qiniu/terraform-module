@@ -3,7 +3,7 @@ variables {
   nginx_proxy_port             = 3081
   preview_count                = 1
   preview_ports                = [30080, 30081, 30082, 30083]
-  public_authority             = "dsh.example.test"
+  dsh_public_authority         = "dsh.example.test"
   preview_public_authorities   = ["preview.example.test"]
   code_server_port             = 3086
   code_server_proxy_port       = 3087

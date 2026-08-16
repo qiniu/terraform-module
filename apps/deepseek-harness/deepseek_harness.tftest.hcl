@@ -15,9 +15,8 @@ override_module {
   outputs = {
     instance_id                  = "test-instance"
     deployment_private_key       = "test-private-key"
-    public_authority             = "dsh.example.test"
-    public_url                   = "https://dsh.example.test"
-    preview_public_authority     = "preview.example.test"
+    dsh_public_authority         = "dsh.example.test"
+    dsh_public_url               = "https://dsh.example.test"
     preview_public_url           = "https://preview.example.test"
     preview_public_authorities   = ["preview.example.test"]
     preview_public_urls          = ["https://preview.example.test"]
@@ -226,9 +225,8 @@ run "outputs_ssh_command_when_enabled" {
     outputs = {
       instance_id                  = "test-instance"
       deployment_private_key       = "test-private-key"
-      public_authority             = "dsh.example.test"
-      public_url                   = "https://dsh.example.test"
-      preview_public_authority     = "preview.example.test"
+      dsh_public_authority         = "dsh.example.test"
+      dsh_public_url               = "https://dsh.example.test"
       preview_public_url           = "https://preview.example.test"
       preview_public_authorities   = ["preview.example.test"]
       preview_public_urls          = ["https://preview.example.test"]
@@ -295,9 +293,8 @@ run "supports_zero_preview_slots" {
     outputs = {
       instance_id                  = "test-instance"
       deployment_private_key       = "test-private-key"
-      public_authority             = "dsh.example.test"
-      public_url                   = "https://dsh.example.test"
-      preview_public_authority     = null
+      dsh_public_authority         = "dsh.example.test"
+      dsh_public_url               = "https://dsh.example.test"
       preview_public_url           = null
       preview_public_authorities   = []
       preview_public_urls          = []
