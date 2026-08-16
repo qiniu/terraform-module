@@ -48,93 +48,19 @@ module "installer" {
   code_server_password         = random_password.code_server.result
 }
 
-locals {
-  ansible_runtime_directories = sort(distinct(concat(
-    [
-      "/opt/las-dsh-installer",
-      "/opt/las-dsh-installer/bootstrap",
-    ],
-    [for metadata in values(module.installer.runtime_file_metadata) : dirname(metadata.target_path)],
-  )))
+module "ansible_runtime_transfer" {
+  source = "./modules/ansible-runtime-transfer"
 
-  ansible_runtime_prepare_command = <<-EOT
-    set -euo pipefail
-
-    ensure_root_directory() {
-      local directory="$1"
-      if [ -e "$${directory}" ] || [ -L "$${directory}" ]; then
-        [ -d "$${directory}" ] && [ ! -L "$${directory}" ] || exit 1
-        [ "$(realpath -e "$${directory}")" = "$${directory}" ] || exit 1
-        [ "$(stat -c '%u:%g' "$${directory}")" = '0:0' ] || exit 1
-      else
-        install -d -o root -g root -m 0755 "$${directory}"
-      fi
-    }
-
-${join("\n", [for directory in local.ansible_runtime_directories : "    ensure_root_directory '${directory}'"])}
-  EOT
-}
-
-resource "qiniu_compute_instance_exec" "ansible_runtime_prepare" {
-  instance_id = module.infrastructure.instance_id
-  user        = "root"
-  port        = "22"
-  private_key = module.infrastructure.deployment_private_key
-  shell       = "bash"
-  command     = local.ansible_runtime_prepare_command
-
-  store_stdout = false
-  store_stderr = false
-}
-
-module "ansible_runtime_file" {
-  for_each = module.installer.runtime_file_metadata
-  source   = "./modules/instance-exec-file-transfer"
-
-  depends_on = [qiniu_compute_instance_exec.ansible_runtime_prepare]
-
-  instance_id    = module.infrastructure.instance_id
-  user           = "root"
-  port           = "22"
-  private_key    = module.infrastructure.deployment_private_key
-  content        = module.installer.runtime_file_contents[each.key]
-  content_sha256 = each.value.sha256
-  target_path    = each.value.target_path
-  file_mode      = each.value.file_mode
-}
-
-module "ansible_runtime_manifest" {
-  source = "./modules/instance-exec-file-transfer"
-
-  depends_on = [module.ansible_runtime_file]
-
-  instance_id    = module.infrastructure.instance_id
-  user           = "root"
-  port           = "22"
-  private_key    = module.infrastructure.deployment_private_key
-  content        = module.installer.runtime_manifest.content
-  content_sha256 = module.installer.runtime_manifest.sha256
-  target_path    = module.installer.runtime_manifest.target_path
-  file_mode      = module.installer.runtime_manifest.file_mode
-}
-
-module "ansible_bootstrap" {
-  source = "./modules/instance-exec-file-transfer"
-
-  depends_on = [qiniu_compute_instance_exec.ansible_runtime_prepare]
-
-  instance_id    = module.infrastructure.instance_id
-  user           = "root"
-  port           = "22"
-  private_key    = module.infrastructure.deployment_private_key
-  content        = module.installer.bootstrap.content
-  content_sha256 = module.installer.bootstrap.sha256
-  target_path    = module.installer.bootstrap.target_path
-  file_mode      = module.installer.bootstrap.file_mode
+  instance_id           = module.infrastructure.instance_id
+  private_key           = module.infrastructure.deployment_private_key
+  runtime_file_contents = module.installer.runtime_file_contents
+  runtime_file_metadata = module.installer.runtime_file_metadata
+  runtime_manifest      = module.installer.runtime_manifest
+  bootstrap             = module.installer.bootstrap
 }
 
 resource "qiniu_compute_instance_exec" "install_dsh" {
-  depends_on = [module.ansible_runtime_manifest, module.ansible_bootstrap]
+  depends_on = [module.ansible_runtime_transfer]
 
   instance_id = module.infrastructure.instance_id
   user        = "root"

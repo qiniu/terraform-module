@@ -64,12 +64,11 @@ run "uses_fixed_versions_and_installer_contract" {
 
   assert {
     condition = (
-      length(module.ansible_runtime_file) == length(module.installer.runtime_file_metadata) &&
-      module.ansible_runtime_manifest.published_path == "/opt/las-dsh-installer/project/.runtime-sha256" &&
-      module.ansible_bootstrap.published_path == "/opt/las-dsh-installer/bootstrap/install.sh" &&
-      contains(local.ansible_runtime_directories, "/opt/las-dsh-installer/project/roles/nodejs/tasks")
+      module.ansible_runtime_transfer.runtime_file_count == length(module.installer.runtime_file_metadata) &&
+      module.ansible_runtime_transfer.runtime_manifest_path == "/opt/las-dsh-installer/project/.runtime-sha256" &&
+      module.ansible_runtime_transfer.bootstrap_path == "/opt/las-dsh-installer/bootstrap/install.sh"
     )
-    error_message = "根模块必须逐个传输显式 Ansible 文件清单、校验清单和 bootstrap 脚本，并预先创建每个目标父目录。"
+    error_message = "Ansible 运行时传输模块必须发布显式文件清单、校验清单和 bootstrap 脚本。"
   }
 
   assert {
