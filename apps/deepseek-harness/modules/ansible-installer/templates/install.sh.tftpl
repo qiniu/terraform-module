@@ -13,14 +13,11 @@ runtime_manifest_sha256="$2"
 extra_vars_base64="$3"
 installer_root=/opt/las-dsh-installer
 project_dir="$${installer_root}/project"
-managed_toolchains_dir=/var/lib/las-dsh-installer/managed-toolchains
-uv_prefix="/opt/uv-v$${uv_version}"
+uv_bin_dir=/opt/las-dsh-installer/bin
 uv_link_dir=/usr/local/bin
-work_dir="$(mktemp -d)"
 extra_vars_file="$(mktemp)"
 
 cleanup() {
-  rm -rf -- "$${work_dir}"
   rm -f -- "$${extra_vars_file}"
 }
 trap cleanup EXIT
@@ -35,7 +32,7 @@ fail() {
 . /etc/os-release
 [ "$${ID}" = ubuntu ] || fail 'unsupported operating system'
 
-required_packages=(ca-certificates curl tar gzip coreutils)
+required_packages=(ca-certificates curl)
 missing_packages=()
 for package in "$${required_packages[@]}"; do
   dpkg-query -W -f='$${db:Status-Status}' "$${package}" 2>/dev/null | grep -qx installed || missing_packages+=("$${package}")
@@ -57,145 +54,19 @@ if [ "$${#missing_packages[@]}" -gt 0 ]; then
   retry 5 apt-get install -y --no-install-recommends "$${missing_packages[@]}"
 fi
 
-for command in curl tar gzip base64 sha256sum; do
+for command in curl base64 sha256sum; do
   command -v "$${command}" >/dev/null || fail "missing required bootstrap command: $${command}"
 done
 
-case "$(uname -m)" in
-  x86_64) uv_target=x86_64-unknown-linux-gnu ;;
-  aarch64) uv_target=aarch64-unknown-linux-gnu ;;
-  *) fail "unsupported architecture: $(uname -m)" ;;
-esac
-
-uv_archive="uv-$${uv_target}.tar.gz"
-uv_release_url="https://github.com/astral-sh/uv/releases/download/$${uv_version}"
-uv_archive_path="$${work_dir}/$${uv_archive}"
-uv_checksum_path="$${work_dir}/$${uv_archive}.sha256"
-
-verify_existing_uv_prefix_is_managed() {
-  current_registration="$${managed_toolchains_dir}/uv-v$${uv_version}"
-  [ -d "$${managed_toolchains_dir}" ] || fail 'unsafe existing uv prefix'
-  [ ! -L "$${managed_toolchains_dir}" ] || fail 'unsafe existing uv prefix'
-  [ "$(realpath -e "$${managed_toolchains_dir}")" = "$${managed_toolchains_dir}" ] || fail 'unsafe existing uv prefix'
-  [ "$(stat -c '%u:%g' "$${managed_toolchains_dir}")" = '0:0' ] || fail 'unsafe existing uv prefix'
-  [ -d "$${uv_prefix}" ] || fail 'unsafe existing uv prefix'
-  [ ! -L "$${uv_prefix}" ] || fail 'unsafe existing uv prefix'
-  [ "$(realpath -e "$${uv_prefix}")" = "$${uv_prefix}" ] || fail 'unsafe existing uv prefix'
-  [ "$(stat -c '%u:%g' "$${uv_prefix}")" = '0:0' ] || fail 'unsafe existing uv prefix'
-  [ -f "$${uv_prefix}/.las-dsh-managed" ] || fail 'unsafe existing uv prefix'
-  [ ! -L "$${uv_prefix}/.las-dsh-managed" ] || fail 'unsafe existing uv prefix'
-  [ "$(realpath -e "$${uv_prefix}/.las-dsh-managed")" = "$${uv_prefix}/.las-dsh-managed" ] || fail 'unsafe existing uv prefix'
-  [ "$(stat -c '%u:%g' "$${uv_prefix}/.las-dsh-managed")" = '0:0' ] || fail 'unsafe existing uv prefix'
-  [ "$(cat "$${uv_prefix}/.las-dsh-managed")" = "uv:$${uv_version}" ] || fail 'unsafe existing uv prefix'
-  [ -f "$${current_registration}" ] || fail 'unsafe existing uv prefix'
-  [ ! -L "$${current_registration}" ] || fail 'unsafe existing uv prefix'
-  [ "$(realpath -e "$${current_registration}")" = "$${current_registration}" ] || fail 'unsafe existing uv prefix'
-  [ "$(stat -c '%u:%g' "$${current_registration}")" = '0:0' ] || fail 'unsafe existing uv prefix'
-  [ "$(cat "$${current_registration}")" = "$${uv_prefix}" ] || fail 'unsafe existing uv prefix'
-}
-
-uv_is_current=false
-if [ -e "$${uv_prefix}" ] || [ -L "$${uv_prefix}" ]; then
-  verify_existing_uv_prefix_is_managed
-  if [ -x "$${uv_prefix}/uv" ] && [ -x "$${uv_prefix}/uvx" ]; then
-    "$${uv_prefix}/uv" --version | grep -Eq "^uv $${uv_version}( |$)" && uv_is_current=true
-  fi
-fi
-
-if [ "$${uv_is_current}" != true ]; then
-  curl --fail --location --retry 5 --retry-all-errors --output "$${uv_archive_path}" "$${uv_release_url}/$${uv_archive}"
-  curl --fail --location --retry 5 --retry-all-errors --output "$${uv_checksum_path}" "$${uv_release_url}/$${uv_archive}.sha256"
-  checksum_manifest="$${work_dir}/$${uv_archive}.exact"
-  if ! awk -v archive="$${uv_archive}" '
-    $2 == archive {
-      if (NF != 2 || $1 !~ /^[0-9A-Fa-f]{64}$/) {
-        invalid = 1
-        next
-      }
-      print $1 "  " $2
-      checksum_count++
-    }
-    END {
-      if (invalid || checksum_count != 1) exit 1
-    }
-  ' "$${uv_checksum_path}" >"$${checksum_manifest}"; then
-    fail 'uv checksum manifest is invalid'
-  fi
-  checksum_count="$(wc -l < "$${checksum_manifest}")"
-  if (( checksum_count != 1 )); then
-    fail 'uv checksum manifest is invalid'
-  fi
-  (
-    cd "$${work_dir}"
-    sha256sum -c "$${checksum_manifest}"
-  )
-
-  uv_candidate="$${work_dir}/uv-prefix"
-  mkdir -p "$${uv_candidate}"
-  tar -xzf "$${uv_archive_path}" -C "$${uv_candidate}" --strip-components=1
-  [ -x "$${uv_candidate}/uv" ] && [ -x "$${uv_candidate}/uvx" ] || fail 'uv archive is missing required executables'
-  "$${uv_candidate}/uv" --version | grep -Eq "^uv $${uv_version}( |$)" || fail 'downloaded uv version does not match requested version'
-
-  rm -rf -- "$${uv_prefix}.new"
-  mkdir -p "$${uv_prefix}.new"
-  install -m 0755 "$${uv_candidate}/uv" "$${uv_prefix}.new/uv"
-  install -m 0755 "$${uv_candidate}/uvx" "$${uv_prefix}.new/uvx"
-  printf 'uv:%s\n' "$${uv_version}" >"$${uv_prefix}.new/.las-dsh-managed"
-  chown -R root:root "$${uv_prefix}.new"
-  chmod 0755 "$${uv_prefix}.new"
-  rm -rf -- "$${uv_prefix}"
-  mv "$${uv_prefix}.new" "$${uv_prefix}"
-fi
-
-install -d -o root -g root -m 0755 "$${managed_toolchains_dir}"
-printf '%s\n' "$${uv_prefix}" >"$${managed_toolchains_dir}/uv-v$${uv_version}"
-chown root:root "$${managed_toolchains_dir}/uv-v$${uv_version}"
-chmod 0644 "$${managed_toolchains_dir}/uv-v$${uv_version}"
+install -d -o root -g root -m 0755 "$${uv_bin_dir}" "$${uv_link_dir}"
+export UV_VERSION="$${uv_version}"
+export UV_UNMANAGED_INSTALL="$${uv_bin_dir}"
+curl --fail --location --retry 5 --retry-all-errors https://astral.sh/uv/install.sh | sh
+"$${uv_bin_dir}/uv" --version | grep -Eq "^uv $${uv_version}( |$)" || fail 'installed uv version does not match requested version'
 for executable in uv uvx; do
-  link_candidate="$(mktemp "$${uv_link_dir}/.$${executable}.XXXXXX")"
-  rm -f -- "$${link_candidate}"
-  ln -s "$${uv_prefix}/$${executable}" "$${link_candidate}"
-  mv -Tf "$${link_candidate}" "$${uv_link_dir}/$${executable}"
+  [ -x "$${uv_bin_dir}/$${executable}" ] || fail "installed uv is missing $${executable}"
+  ln -sfn "$${uv_bin_dir}/$${executable}" "$${uv_link_dir}/$${executable}"
 done
-
-cleanup_superseded_uv() {
-  [ -d "$${managed_toolchains_dir}" ] || fail 'managed uv registry directory is missing'
-  [ ! -L "$${managed_toolchains_dir}" ] || fail 'unsafe managed uv registry directory'
-  [ "$(realpath -e "$${managed_toolchains_dir}")" = "$${managed_toolchains_dir}" ] || fail 'unsafe managed uv registry directory'
-  [ "$(stat -c '%u:%g' "$${managed_toolchains_dir}")" = '0:0' ] || fail 'unsafe managed uv registry directory'
-
-  current_registration="$${managed_toolchains_dir}/uv-v$${uv_version}"
-  find "$${managed_toolchains_dir}" -mindepth 1 -maxdepth 1 -name 'uv-v*' -print0 |
-    while IFS= read -r -d '' registration; do
-      [ "$${registration}" = "$${current_registration}" ] && continue
-      [ -f "$${registration}" ] || fail 'unsafe managed uv registration'
-      [ ! -L "$${registration}" ] || fail 'unsafe managed uv registration'
-      [ "$(stat -c '%u:%g' "$${registration}")" = '0:0' ] || fail 'unsafe managed uv registration'
-      [ "$(realpath -e "$${registration}")" = "$${registration}" ] || fail 'unsafe managed uv registration'
-
-      registered_version="$${registration##*/uv-v}"
-      case "$${registered_version}" in
-        ''|*[!0-9A-Za-z.+-]*) fail 'unsafe managed uv registration' ;;
-      esac
-      prefix="$(cat "$${registration}")"
-      expected_prefix="/opt/uv-v$${registered_version}"
-      [ "$${prefix}" = "$${expected_prefix}" ] || fail 'unsafe managed uv registration'
-      [ -d "$${prefix}" ] || fail 'unsafe managed uv registration'
-      [ ! -L "$${prefix}" ] || fail 'unsafe managed uv registration'
-      [ "$(realpath -e "$${prefix}")" = "$${expected_prefix}" ] || fail 'unsafe managed uv registration'
-      [ "$(stat -c '%u:%g' "$${prefix}")" = '0:0' ] || fail 'unsafe managed uv registration'
-
-      marker="$${prefix}/.las-dsh-managed"
-      [ -f "$${marker}" ] || fail 'unsafe managed uv registration'
-      [ ! -L "$${marker}" ] || fail 'unsafe managed uv registration'
-      [ "$(realpath -e "$${marker}")" = "$${marker}" ] || fail 'unsafe managed uv registration'
-      [ "$(stat -c '%u:%g' "$${marker}")" = '0:0' ] || fail 'unsafe managed uv registration'
-      [ "$(cat "$${marker}")" = "uv:$${registered_version}" ] || fail 'unsafe managed uv registration'
-
-      rm -rf -- "$${prefix}"
-      rm -f -- "$${registration}"
-    done
-}
 
 [ -f "$${runtime_manifest_path}" ] || fail 'Ansible runtime manifest is missing'
 [ ! -L "$${runtime_manifest_path}" ] || fail 'Ansible runtime manifest is unsafe'
@@ -219,10 +90,9 @@ export UV_PROJECT_ENVIRONMENT=/opt/las-dsh-installer/.venv
 export UV_CACHE_DIR=/var/cache/las-dsh-installer/uv
 # Ansible modules run as dsh in some roles, so its root-managed interpreter must be traversable.
 umask 022
-uv sync --locked
+"$${uv_bin_dir}/uv" sync --locked
 chmod 0755 "$${UV_PROJECT_ENVIRONMENT}" "$${UV_PROJECT_ENVIRONMENT}/bin"
 find "$${UV_PROJECT_ENVIRONMENT}" -type d -exec chmod 0755 {} +
 find "$${UV_PROJECT_ENVIRONMENT}" -type f -exec chmod 0644 {} +
 find "$${UV_PROJECT_ENVIRONMENT}/bin" -type f -exec chmod 0755 {} +
-uv run --locked ansible-playbook -i inventory/default playbooks/site.yml --extra-vars "@$${extra_vars_file}" --extra-vars "uv_version=$${uv_version}" --extra-vars "dsh_ansible_venv_dir=$${UV_PROJECT_ENVIRONMENT}"
-cleanup_superseded_uv
+"$${uv_bin_dir}/uv" run --locked ansible-playbook -i inventory/default playbooks/site.yml --extra-vars "@$${extra_vars_file}" --extra-vars "uv_version=$${uv_version}" --extra-vars "dsh_ansible_venv_dir=$${UV_PROJECT_ENVIRONMENT}"
