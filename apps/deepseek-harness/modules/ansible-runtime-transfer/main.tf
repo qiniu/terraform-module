@@ -11,22 +11,9 @@ resource "qiniu_compute_instance_exec" "prepare" {
   port        = "22"
   private_key = var.private_key
   shell       = "bash"
-  command     = <<-EOT
-    set -euo pipefail
-
-    ensure_root_directory() {
-      local directory="$1"
-      if [ -e "$${directory}" ] || [ -L "$${directory}" ]; then
-        [ -d "$${directory}" ] && [ ! -L "$${directory}" ] || exit 1
-        [ "$(realpath -e "$${directory}")" = "$${directory}" ] || exit 1
-        [ "$(stat -c '%u:%g' "$${directory}")" = '0:0' ] || exit 1
-      else
-        install -d -o root -g root -m 0755 "$${directory}"
-      fi
-    }
-
-${join("\n", [for directory in local.target_directories : "    ensure_root_directory '${directory}'"])}
-  EOT
+  command = templatefile("${path.module}/templates/prepare.sh.tftpl", {
+    target_directories = local.target_directories
+  })
 
   store_stdout = false
   store_stderr = false

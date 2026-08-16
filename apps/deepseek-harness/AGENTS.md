@@ -80,6 +80,7 @@ modules/ansible-installer/ansible/pyproject.toml # Ansible 依赖清单
 modules/ansible-installer/ansible/uv.lock # 生成的依赖锁，禁止手工编辑
 modules/ansible-installer/scripts/bootstrap.sh # Bootstrap 脚本
 modules/ansible-runtime-transfer/    # 安装文件传输编排
+modules/ansible-runtime-transfer/templates/prepare.sh.tftpl # 目标目录准备模板
 modules/instance-exec-file-transfer  # 共享传输模块软链接
 scripts/ssh.sh                       # 可选 SSH 调试入口
 **/.terraform/                       # 生成的 Provider 缓存，禁止编辑
