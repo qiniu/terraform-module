@@ -224,5 +224,5 @@ chmod 0755 "$${UV_PROJECT_ENVIRONMENT}" "$${UV_PROJECT_ENVIRONMENT}/bin"
 find "$${UV_PROJECT_ENVIRONMENT}" -type d -exec chmod 0755 {} +
 find "$${UV_PROJECT_ENVIRONMENT}" -type f -exec chmod 0644 {} +
 find "$${UV_PROJECT_ENVIRONMENT}/bin" -type f -exec chmod 0755 {} +
-uv run --locked ansible-playbook -i inventory/localhost.yml playbooks/site.yml --extra-vars "@$${extra_vars_file}"
+uv run --locked ansible-playbook -i inventory/default playbooks/site.yml --extra-vars "@$${extra_vars_file}"
 cleanup_superseded_uv

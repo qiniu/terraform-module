@@ -9,11 +9,11 @@ locals {
 
   ansible_runtime_files = {
     "ansible.cfg"                                                  = "${path.module}/ansible/ansible.cfg"
-    "inventory/localhost.yml"                                      = "${path.module}/ansible/inventory/localhost.yml"
+    "inventory/default/hosts.yml"                                  = "${path.module}/ansible/inventory/default/hosts.yml"
     "playbooks/site.yml"                                           = "${path.module}/ansible/playbooks/site.yml"
     "pyproject.toml"                                               = "${path.module}/ansible/pyproject.toml"
     "uv.lock"                                                      = "${path.module}/ansible/uv.lock"
-    "group_vars/all/main.yml"                                      = "${path.module}/ansible/group_vars/all/main.yml"
+    "inventory/default/group_vars/all/main.yml"                    = "${path.module}/ansible/inventory/default/group_vars/all/main.yml"
     "roles/base/defaults/main.yml"                                 = "${path.module}/ansible/roles/base/defaults/main.yml"
     "roles/base/tasks/main.yml"                                    = "${path.module}/ansible/roles/base/tasks/main.yml"
     "roles/code_server/defaults/main.yml"                          = "${path.module}/ansible/roles/code_server/defaults/main.yml"

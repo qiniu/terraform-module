@@ -24,6 +24,9 @@ reject_text() {
 }
 
 site="$runtime_dir/playbooks/site.yml"
+ansible_cfg="$runtime_dir/ansible.cfg"
+inventory="$runtime_dir/inventory/default/hosts.yml"
+group_vars="$runtime_dir/inventory/default/group_vars/all/main.yml"
 base_tasks="$runtime_dir/roles/base/tasks/main.yml"
 node_tasks="$runtime_dir/roles/nodejs/tasks/main.yml"
 node_cleanup="$runtime_dir/roles/nodejs/tasks/cleanup.yml"
@@ -39,6 +42,11 @@ for role in base nodejs code_server deepseek_harness nginx las_dsh_environment; 
   [[ -f "$runtime_dir/roles/$role/defaults/main.yml" ]] || exit 1
   require_text "$site" "^    - $role$"
 done
+
+[[ -f "$inventory" ]] || exit 1
+[[ -f "$group_vars" ]] || exit 1
+require_text "$ansible_cfg" '^inventory = ./inventory/default$'
+reject_text "$site" 'vars_files:'
 
 require_text "$runtime_dir/pyproject.toml" 'ansible-core==2\.20\.2'
 require_text "$nginx_defaults" '^nginx_proxy_port: 3081$'

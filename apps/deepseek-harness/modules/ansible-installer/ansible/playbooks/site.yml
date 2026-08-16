@@ -3,8 +3,6 @@
   hosts: deepseek_harness
   become: true
   gather_facts: true
-  vars_files:
-    - ../group_vars/all/main.yml
   pre_tasks:
     - name: Normalize Preview ports supplied through extra vars
       ansible.builtin.set_fact:
