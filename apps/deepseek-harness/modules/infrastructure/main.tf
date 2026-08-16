@@ -73,11 +73,12 @@ resource "qiniu_compute_instance" "deepseek_harness" {
 
 }
 
-resource "qiniu_compute_instance_public_access" "web" {
+resource "qiniu_compute_instance_public_access" "dsh_web" {
   instance_id   = qiniu_compute_instance.deepseek_harness.id
   internal_port = var.nginx_proxy_port
   type          = "HTTPProxy"
 }
+
 
 resource "qiniu_compute_instance_public_access" "preview" {
   count = var.preview_count

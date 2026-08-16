@@ -9,11 +9,11 @@ output "deployment_private_key" {
 
 output "dsh_public_authority" {
   description = "HTTPProxy 公网 authority（不含 scheme）。"
-  value       = qiniu_compute_instance_public_access.web.endpoint
+  value       = qiniu_compute_instance_public_access.dsh_web.endpoint
 }
 
 output "dsh_public_url" {
-  value = "https://${qiniu_compute_instance_public_access.web.endpoint}"
+  value = "https://${qiniu_compute_instance_public_access.dsh_web.endpoint}"
 }
 
 output "preview_public_url" {

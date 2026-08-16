@@ -112,9 +112,9 @@ run "plans_complete_instance_and_public_access" {
       qiniu_compute_instance.deepseek_harness.timeouts.create == "30m" &&
       qiniu_compute_instance.deepseek_harness.timeouts.update == "20m" &&
       qiniu_compute_instance.deepseek_harness.timeouts.delete == "10m" &&
-      qiniu_compute_instance_public_access.web.instance_id == qiniu_compute_instance.deepseek_harness.id &&
-      qiniu_compute_instance_public_access.web.internal_port == 3081 &&
-      qiniu_compute_instance_public_access.web.type == "HTTPProxy" &&
+      qiniu_compute_instance_public_access.dsh_web.instance_id == qiniu_compute_instance.deepseek_harness.id &&
+      qiniu_compute_instance_public_access.dsh_web.internal_port == 3081 &&
+      qiniu_compute_instance_public_access.dsh_web.type == "HTTPProxy" &&
       qiniu_compute_instance_public_access.preview[0].instance_id == qiniu_compute_instance.deepseek_harness.id &&
       qiniu_compute_instance_public_access.preview[0].internal_port == 30080 &&
       qiniu_compute_instance_public_access.preview[0].type == "HTTPProxy" &&
@@ -126,7 +126,7 @@ run "plans_complete_instance_and_public_access" {
       output.code_server_public_authority == qiniu_compute_instance_public_access.code_server.endpoint &&
       output.code_server_public_url == "https://${qiniu_compute_instance_public_access.code_server.endpoint}" &&
       length(distinct([
-        qiniu_compute_instance_public_access.web.internal_port,
+        qiniu_compute_instance_public_access.dsh_web.internal_port,
         qiniu_compute_instance_public_access.preview[0].internal_port,
         qiniu_compute_instance_public_access.code_server.internal_port,
       ])) == 3 &&
