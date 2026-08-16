@@ -1,16 +1,16 @@
 output "dsh_web_public_url" {
   description = "DeepSeek Harness Web HTTPS 地址。"
-  value       = module.infrastructure.dsh_web_public_url
+  value       = "https://${module.infrastructure.dsh_web_public_authority}"
 }
 
 output "preview_public_urls" {
   description = "Preview HTTPS 地址列表。"
-  value       = module.infrastructure.preview_public_urls
+  value       = [for authority in module.infrastructure.preview_public_authorities : "https://${authority}"]
 }
 
 output "code_server_public_url" {
   description = "code-server HTTPS 地址。"
-  value       = module.infrastructure.code_server_public_url
+  value       = "https://${module.infrastructure.code_server_public_authority}"
 }
 
 output "code_server_password" {
@@ -28,11 +28,6 @@ output "dsh_web_password" {
   description = "Web Basic Auth 随机密码。"
   value       = random_password.dsh_web.result
   sensitive   = true
-}
-
-output "instance_id" {
-  description = "DeepSeek Harness ECS 实例 ID。"
-  value       = module.infrastructure.instance_id
 }
 
 output "ssh_command" {

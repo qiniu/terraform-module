@@ -78,7 +78,7 @@ modules/ansible-installer/ansible/ansible.cfg # Ansible 执行配置
 modules/ansible-installer/ansible/playbooks/site.yml # 主安装 playbook
 modules/ansible-installer/ansible/pyproject.toml # Ansible 依赖清单
 modules/ansible-installer/ansible/uv.lock # 生成的依赖锁，禁止手工编辑
-modules/ansible-installer/templates/bootstrap.sh.tftpl # Bootstrap 模板
+modules/ansible-installer/scripts/bootstrap.sh # Bootstrap 脚本
 modules/ansible-runtime-transfer/    # 安装文件传输编排
 modules/instance-exec-file-transfer  # 共享传输模块软链接
 scripts/ssh.sh                       # 可选 SSH 调试入口
@@ -99,6 +99,7 @@ scripts/ssh.sh                       # 可选 SSH 调试入口
 - 命名必须带领域前缀：`dsh_web_*`、`code_server_*`、`preview_*`；禁止新增泛化的 `web_*`、含糊的 `port` 或未发布模块的兼容别名。
 - 不含 scheme 的端点使用 `*_public_authority`，HTTPS 地址使用 `*_public_url`。
 - output 只暴露根模块、脚本或用户确实消费的值；不得为了测试内部实现而新增 output。
+- 只使用一次且内联后仍清晰的 Terraform 派生值直接写入 output、resource 或 module 参数；复杂表达式、校验复用或多处引用才使用 local。
 - bootstrap 必须短小、幂等、root-owned 且不包含秘密；优先使用官方安装器，并复用版本匹配的预制镜像内容。
 - Ansible 文件逐个传输并校验 SHA-256；没有实际需求时不得恢复归档传输或聚合 runtime manifest。
 - 删除空文件、noop handler、旧 installer 和已由其他测试覆盖的开发期契约脚本。

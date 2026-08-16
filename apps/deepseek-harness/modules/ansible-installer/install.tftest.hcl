@@ -16,6 +16,9 @@ run "renders_sensitive_bootstrap_command" {
   assert {
     condition = (
       strcontains(nonsensitive(output.install_command), "exec '/opt/las-dsh-installer/bootstrap/bootstrap.sh' '") &&
+      base64decode(nonsensitive(output.file_contents[local.bootstrap_target_path])) == local.bootstrap_content &&
+      output.file_metadata[local.bootstrap_target_path].file_mode == "0700" &&
+      output.file_metadata[local.bootstrap_target_path].sha256 == sha256(local.bootstrap_content) &&
       !strcontains(nonsensitive(output.install_command), "runtime-sha256") &&
       !strcontains(nonsensitive(output.install_command), "ansible_archive") &&
       !strcontains(nonsensitive(output.install_command), "web-password-must-not-appear") &&
@@ -26,24 +29,12 @@ run "renders_sensitive_bootstrap_command" {
   }
 }
 
-run "renders_bootstrap_shell_escapes_before_transfer" {
-  command = plan
-
-  assert {
-    condition = (
-      strcontains(base64decode(output.bootstrap.content), format("project_dir=\"%s{installer_root}/project\"", "$")) &&
-      !strcontains(base64decode(output.bootstrap.content), format("%s%s{installer_root}", "$", "$"))
-    )
-    error_message = "传输前必须渲染 bootstrap 的 Terraform shell 转义。"
-  }
-}
-
 run "restores_executable_umask_before_ansible_sync" {
   command = plan
 
   assert {
     condition = strcontains(
-      base64decode(output.bootstrap.content),
+      local.bootstrap_content,
       "umask 022\nif [ ! -x \"$${UV_PROJECT_ENVIRONMENT}/bin/ansible-playbook\" ] ||",
     )
     error_message = "uv 虚拟环境必须在可执行的 umask 下创建，以支持 dsh 用户运行 Ansible 模块。"
@@ -55,10 +46,10 @@ run "installs_uv_with_official_installer" {
 
   assert {
     condition = (
-      strcontains(base64decode(output.bootstrap.content), "UV_VERSION=\"$${uv_version}\"") &&
-      strcontains(base64decode(output.bootstrap.content), "UV_UNMANAGED_INSTALL=\"$${uv_bin_dir}\"") &&
-      strcontains(base64decode(output.bootstrap.content), "https://astral.sh/uv/install.sh") &&
-      strcontains(base64decode(output.bootstrap.content), "\"$${uv_bin_dir}/uv\" --version")
+      strcontains(local.bootstrap_content, "UV_VERSION=\"$${uv_version}\"") &&
+      strcontains(local.bootstrap_content, "UV_UNMANAGED_INSTALL=\"$${uv_bin_dir}\"") &&
+      strcontains(local.bootstrap_content, "https://astral.sh/uv/install.sh") &&
+      strcontains(local.bootstrap_content, "\"$${uv_bin_dir}/uv\" --version")
     )
     error_message = "uv 必须通过官方安装脚本安装到固定目录，并校验安装结果。"
   }
@@ -69,9 +60,9 @@ run "reuses_matching_uv_and_ansible_venv" {
 
   assert {
     condition = (
-      strcontains(base64decode(output.bootstrap.content), "[ ! -x \"$${uv_bin_dir}/uvx\" ] ||") &&
-      strcontains(base64decode(output.bootstrap.content), "ansible_venv_marker=\"$${UV_PROJECT_ENVIRONMENT}/.las-dsh-requirements-sha256\"") &&
-      strcontains(base64decode(output.bootstrap.content), "\"$${uv_bin_dir}/uv\" sync --locked")
+      strcontains(local.bootstrap_content, "[ ! -x \"$${uv_bin_dir}/uvx\" ] ||") &&
+      strcontains(local.bootstrap_content, "ansible_venv_marker=\"$${UV_PROJECT_ENVIRONMENT}/.las-dsh-requirements-sha256\"") &&
+      strcontains(local.bootstrap_content, "\"$${uv_bin_dir}/uv\" sync --locked")
     )
     error_message = "预制镜像中的匹配 uv 与 Ansible venv 必须复用；不匹配时仍须重新安装或同步。"
   }
@@ -82,10 +73,10 @@ run "keeps_uv_globally_available_without_managed_registry" {
 
   assert {
     condition = (
-      strcontains(base64decode(output.bootstrap.content), "ln -sfn \"$${uv_bin_dir}/$${executable}\"") &&
-      !strcontains(base64decode(output.bootstrap.content), "managed_toolchains_dir") &&
-      !strcontains(base64decode(output.bootstrap.content), "cleanup_superseded_uv") &&
-      !strcontains(base64decode(output.bootstrap.content), "uv_release_url")
+      strcontains(local.bootstrap_content, "ln -sfn \"$${uv_bin_dir}/$${executable}\"") &&
+      !strcontains(local.bootstrap_content, "managed_toolchains_dir") &&
+      !strcontains(local.bootstrap_content, "cleanup_superseded_uv") &&
+      !strcontains(local.bootstrap_content, "uv_release_url")
     )
     error_message = "uv 必须通过 /usr/local/bin 全局可用，且不得保留旧的自管理逻辑。"
   }
@@ -96,7 +87,7 @@ run "repairs_existing_ansible_venv_traversal_permissions" {
 
   assert {
     condition = strcontains(
-      base64decode(output.bootstrap.content),
+      local.bootstrap_content,
       format(
         "chmod 0755 \"%s{UV_PROJECT_ENVIRONMENT}\" \"%s{UV_PROJECT_ENVIRONMENT}/bin\"",
         "$",
@@ -112,9 +103,9 @@ run "repairs_existing_ansible_venv_read_permissions" {
 
   assert {
     condition = (
-      strcontains(base64decode(output.bootstrap.content), format("find \"%s{UV_PROJECT_ENVIRONMENT}\" -type d -exec chmod 0755", "$")) &&
-      strcontains(base64decode(output.bootstrap.content), format("find \"%s{UV_PROJECT_ENVIRONMENT}\" -type f -exec chmod 0644", "$")) &&
-      strcontains(base64decode(output.bootstrap.content), format("find \"%s{UV_PROJECT_ENVIRONMENT}/bin\" -type f -exec chmod 0755", "$"))
+      strcontains(local.bootstrap_content, format("find \"%s{UV_PROJECT_ENVIRONMENT}\" -type d -exec chmod 0755", "$")) &&
+      strcontains(local.bootstrap_content, format("find \"%s{UV_PROJECT_ENVIRONMENT}\" -type f -exec chmod 0644", "$")) &&
+      strcontains(local.bootstrap_content, format("find \"%s{UV_PROJECT_ENVIRONMENT}/bin\" -type f -exec chmod 0755", "$"))
     )
     error_message = "既有 Ansible 虚拟环境的目录、文件和 bin 脚本必须恢复为 dsh 可读/执行权限。"
   }

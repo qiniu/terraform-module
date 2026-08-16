@@ -52,11 +52,10 @@ module "installer" {
 module "ansible_runtime_transfer" {
   source = "./modules/ansible-runtime-transfer"
 
-  instance_id           = module.infrastructure.instance_id
-  private_key           = module.infrastructure.deployment_private_key
-  runtime_file_contents = module.installer.runtime_file_contents
-  runtime_file_metadata = module.installer.runtime_file_metadata
-  bootstrap             = module.installer.bootstrap
+  instance_id   = module.infrastructure.instance_id
+  private_key   = module.infrastructure.deployment_private_key
+  file_contents = module.installer.file_contents
+  file_metadata = module.installer.file_metadata
 }
 
 resource "qiniu_compute_instance_exec" "install_dsh" {

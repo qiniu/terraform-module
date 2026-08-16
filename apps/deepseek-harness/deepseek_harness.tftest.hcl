@@ -16,13 +16,10 @@ override_module {
     instance_id                  = "test-instance"
     deployment_private_key       = "test-private-key"
     dsh_web_public_authority     = "dsh.example.test"
-    dsh_web_public_url           = "https://dsh.example.test"
     dsh_web_port                 = 3081
     preview_ports                = [30080]
     preview_public_authorities   = ["preview.example.test"]
-    preview_public_urls          = ["https://preview.example.test"]
     code_server_public_authority = "code.example.test"
-    code_server_public_url       = "https://code.example.test"
     code_server_web_port         = 3087
     ssh_endpoints                = []
   }
@@ -230,13 +227,10 @@ run "outputs_ssh_command_when_enabled" {
       instance_id                  = "test-instance"
       deployment_private_key       = "test-private-key"
       dsh_web_public_authority     = "dsh.example.test"
-      dsh_web_public_url           = "https://dsh.example.test"
       dsh_web_port                 = 3081
       preview_ports                = [30080]
       preview_public_authorities   = ["preview.example.test"]
-      preview_public_urls          = ["https://preview.example.test"]
       code_server_public_authority = "code.example.test"
-      code_server_public_url       = "https://code.example.test"
       code_server_web_port         = 3087
       ssh_endpoints                = ["203.0.113.10:2222"]
     }
@@ -281,10 +275,9 @@ run "outputs_public_contract" {
       output.dsh_web_username == "admin" &&
       output.dsh_web_password == sensitive(random_password.dsh_web.result) &&
       output.code_server_password == sensitive(random_password.code_server.result) &&
-      output.instance_id == "test-instance" &&
       output.ssh_command == null
     )
-    error_message = "根模块输出必须包含 Web 凭据、实例和可空 SSH 命令。"
+    error_message = "根模块输出必须包含 Web 凭据和可空 SSH 命令。"
   }
 }
 
@@ -299,13 +292,10 @@ run "supports_zero_preview_slots" {
       instance_id                  = "test-instance"
       deployment_private_key       = "test-private-key"
       dsh_web_public_authority     = "dsh.example.test"
-      dsh_web_public_url           = "https://dsh.example.test"
       dsh_web_port                 = 3081
       preview_ports                = []
       preview_public_authorities   = []
-      preview_public_urls          = []
       code_server_public_authority = "code.example.test"
-      code_server_public_url       = "https://code.example.test"
       code_server_web_port         = 3087
       ssh_endpoints                = []
     }

@@ -1,13 +1,17 @@
 locals {
-  runtime_directories = sort(distinct(concat(
-    [
-      "/opt/las-dsh-installer",
-      "/opt/las-dsh-installer/bootstrap",
-    ],
-    [for metadata in values(var.runtime_file_metadata) : dirname(metadata.target_path)],
+  target_directories = sort(distinct(concat(
+    ["/opt/las-dsh-installer"],
+    [for target_path in keys(var.file_metadata) : dirname(target_path)],
   )))
+}
 
-  prepare_command = <<-EOT
+resource "qiniu_compute_instance_exec" "prepare" {
+  instance_id = var.instance_id
+  user        = "root"
+  port        = "22"
+  private_key = var.private_key
+  shell       = "bash"
+  command     = <<-EOT
     set -euo pipefail
 
     ensure_root_directory() {
@@ -21,24 +25,15 @@ locals {
       fi
     }
 
-${join("\n", [for directory in local.runtime_directories : "    ensure_root_directory '${directory}'"])}
+${join("\n", [for directory in local.target_directories : "    ensure_root_directory '${directory}'"])}
   EOT
-}
-
-resource "qiniu_compute_instance_exec" "prepare" {
-  instance_id = var.instance_id
-  user        = "root"
-  port        = "22"
-  private_key = var.private_key
-  shell       = "bash"
-  command     = local.prepare_command
 
   store_stdout = false
   store_stderr = false
 }
 
-module "runtime_file" {
-  for_each = var.runtime_file_metadata
+module "file" {
+  for_each = var.file_metadata
   source   = "../instance-exec-file-transfer"
 
   depends_on = [qiniu_compute_instance_exec.prepare]
@@ -47,23 +42,8 @@ module "runtime_file" {
   user           = "root"
   port           = "22"
   private_key    = var.private_key
-  content        = var.runtime_file_contents[each.key]
+  content        = var.file_contents[each.key]
   content_sha256 = each.value.sha256
-  target_path    = each.value.target_path
+  target_path    = each.key
   file_mode      = each.value.file_mode
-}
-
-module "bootstrap" {
-  source = "../instance-exec-file-transfer"
-
-  depends_on = [qiniu_compute_instance_exec.prepare]
-
-  instance_id    = var.instance_id
-  user           = "root"
-  port           = "22"
-  private_key    = var.private_key
-  content        = var.bootstrap.content
-  content_sha256 = var.bootstrap.sha256
-  target_path    = var.bootstrap.target_path
-  file_mode      = var.bootstrap.file_mode
 }

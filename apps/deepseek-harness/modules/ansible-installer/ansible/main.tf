@@ -35,22 +35,21 @@ locals {
 }
 
 output "runtime_file_contents" {
-  description = "Ansible 运行时文件的无换行 base64 内容。"
+  description = "按目标绝对路径索引的 Ansible 运行时文件 base64 内容。"
   value = {
     for relative_path in local.runtime_paths :
-    relative_path => filebase64("${path.module}/${relative_path}")
+    "${var.target_dir}/${relative_path}" => filebase64("${path.module}/${relative_path}")
   }
   sensitive = true
 }
 
 output "runtime_file_metadata" {
-  description = "Ansible 运行时文件的目标路径、权限和 SHA-256。"
+  description = "按目标绝对路径索引的 Ansible 运行时文件权限和 SHA-256。"
   value = {
     for relative_path in local.runtime_paths :
-    relative_path => {
-      file_mode   = "0644"
-      sha256      = filesha256("${path.module}/${relative_path}")
-      target_path = "${var.target_dir}/${relative_path}"
+    "${var.target_dir}/${relative_path}" => {
+      file_mode = "0644"
+      sha256    = filesha256("${path.module}/${relative_path}")
     }
   }
 }

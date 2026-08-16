@@ -12,10 +12,6 @@ output "dsh_web_public_authority" {
   value       = qiniu_compute_instance_public_access.dsh_web.endpoint
 }
 
-output "dsh_web_public_url" {
-  value = "https://${qiniu_compute_instance_public_access.dsh_web.endpoint}"
-}
-
 output "dsh_web_port" {
   value = local.dsh_web_port
 }
@@ -29,18 +25,9 @@ output "preview_public_authorities" {
   value       = [for item in qiniu_compute_instance_public_access.preview : item.endpoint]
 }
 
-output "preview_public_urls" {
-  description = "Preview HTTPProxy 公网 URL 列表。"
-  value       = [for item in qiniu_compute_instance_public_access.preview : "https://${item.endpoint}"]
-}
-
 output "code_server_public_authority" {
   description = "code-server HTTPProxy 公网 authority（不含 scheme）。"
   value       = qiniu_compute_instance_public_access.code_server.endpoint
-}
-
-output "code_server_public_url" {
-  value = "https://${qiniu_compute_instance_public_access.code_server.endpoint}"
 }
 
 output "code_server_web_port" {

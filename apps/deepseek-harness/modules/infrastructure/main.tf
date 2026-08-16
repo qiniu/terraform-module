@@ -35,15 +35,6 @@ data "qiniu_compute_images" "ubuntu" {
   }
 }
 
-locals {
-  ubuntu_image_ids = var.image_id == null ? [
-    for image in data.qiniu_compute_images.ubuntu[0].items : image.id
-    if image.os_distribution == "Ubuntu" && image.os_version == "24.04 LTS"
-  ] : []
-
-  selected_image_id = var.image_id != null ? var.image_id : try(one(local.ubuntu_image_ids), "")
-}
-
 data "qiniu_compute_region" "current" {
   lifecycle {
     postcondition {
@@ -57,7 +48,10 @@ resource "qiniu_compute_instance" "deepseek_harness" {
   name          = local.instance_name
   description   = "DeepSeek Harness Instance - Managed by Terraform"
   instance_type = var.instance_type
-  image_id      = local.selected_image_id
+  image_id = var.image_id != null ? var.image_id : try(one([
+    for image in data.qiniu_compute_images.ubuntu[0].items : image.id
+    if image.os_distribution == "Ubuntu" && image.os_version == "24.04 LTS"
+  ]), "")
 
   system_disk_size = var.system_disk_size
   system_disk_type = data.qiniu_compute_region.current.region.features.ebs.supported ? "cloud.ssd" : "local.ssd"

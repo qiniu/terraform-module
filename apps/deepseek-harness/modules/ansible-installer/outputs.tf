@@ -10,18 +10,20 @@ output "install_command" {
 
 }
 
-output "runtime_file_contents" {
-  description = "显式 Ansible 运行时白名单中每个文件的无换行 base64 内容。"
-  value       = module.ansible_runtime.runtime_file_contents
-  sensitive   = true
+output "file_contents" {
+  description = "按目标绝对路径索引的安装文件 base64 内容。"
+  value = merge(module.ansible_runtime.runtime_file_contents, {
+    (local.bootstrap_target_path) = base64encode(local.bootstrap_content)
+  })
+  sensitive = true
 }
 
-output "runtime_file_metadata" {
-  description = "显式 Ansible 运行时白名单中每个文件的目标路径、权限和 SHA-256。"
-  value       = module.ansible_runtime.runtime_file_metadata
-}
-
-output "bootstrap" {
-  description = "无敏感安装 bootstrap 脚本的目标路径、权限、SHA-256 和 base64 内容。"
-  value       = local.bootstrap
+output "file_metadata" {
+  description = "按目标绝对路径索引的安装文件权限和 SHA-256。"
+  value = merge(module.ansible_runtime.runtime_file_metadata, {
+    (local.bootstrap_target_path) = {
+      file_mode = "0700"
+      sha256    = sha256(local.bootstrap_content)
+    }
+  })
 }
