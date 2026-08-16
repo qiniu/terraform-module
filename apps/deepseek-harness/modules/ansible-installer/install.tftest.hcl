@@ -166,6 +166,14 @@ run "uses_pnpm_for_dsh_prewarm_and_offline_service" {
       ) &&
       strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/main.yml"])),
+        "      - \"--allow-build=node-pty\"",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/main.yml"])),
+        "path: \"{{ dsh_pnpm_dlx_cache_dir }}\"",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/main.yml"])),
         "PNPM_CONFIG_STORE_DIR: \"{{ dsh_pnpm_store_dir }}\"",
       ) &&
       !strcontains(

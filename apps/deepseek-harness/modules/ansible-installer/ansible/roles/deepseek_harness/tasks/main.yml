@@ -8,11 +8,19 @@
   changed_when: false
   failed_when: false
 
+- name: Remove stale pnpm dlx cache
+  ansible.builtin.file:
+    path: "{{ dsh_pnpm_dlx_cache_dir }}"
+    state: absent
+  become_user: "{{ dsh_user }}"
+  when: dsh_cached_version.stdout | trim != dsh_cache_key
+
 - name: Prewarm the pinned DeepSeek Harness package
   ansible.builtin.command:
     argv:
       - /usr/local/bin/pnpm
       - dlx
+      - "--allow-build=node-pty"
       - "@deepseek-ai/dsh@{{ dsh_version }}"
       - --version
   args:
