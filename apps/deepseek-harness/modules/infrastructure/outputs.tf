@@ -16,6 +16,14 @@ output "dsh_public_url" {
   value = "https://${qiniu_compute_instance_public_access.dsh_web.endpoint}"
 }
 
+output "dsh_web_proxy_port" {
+  value = local.dsh_web_proxy_port
+}
+
+output "preview_ports" {
+  value = local.preview_ports
+}
+
 output "preview_public_url" {
   value = try("https://${qiniu_compute_instance_public_access.preview[0].endpoint}", null)
 }
@@ -37,6 +45,10 @@ output "code_server_public_authority" {
 
 output "code_server_public_url" {
   value = "https://${qiniu_compute_instance_public_access.code_server.endpoint}"
+}
+
+output "code_server_proxy_port" {
+  value = local.code_server_proxy_port
 }
 
 output "ssh_endpoints" {

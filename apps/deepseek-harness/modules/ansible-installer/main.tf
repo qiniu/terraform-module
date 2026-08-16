@@ -3,6 +3,8 @@ locals {
   node_version        = "24.19.0"
   uv_version          = "0.12.5"
   code_server_version = "4.132.0"
+  dsh_port            = 3080
+  code_server_port    = 3086
   project_dir         = "/opt/las-dsh-installer/project"
 
   ansible_runtime_files = {
@@ -40,14 +42,14 @@ locals {
     nodejs_version                 = local.node_version
     uv_version                     = local.uv_version
     dsh_version                    = local.dsh_version
-    dsh_port                       = var.dsh_port
-    nginx_proxy_port               = var.nginx_proxy_port
+    dsh_port                       = local.dsh_port
+    nginx_proxy_port               = var.dsh_web_proxy_port
     dsh_public_authority           = var.dsh_public_authority
     dsh_preview_count_raw          = tostring(var.preview_count)
     dsh_preview_public_authorities = var.preview_public_authorities
     dsh_preview_ports              = var.preview_ports
     code_server_version            = local.code_server_version
-    code_server_port               = var.code_server_port
+    code_server_port               = local.code_server_port
     code_server_proxy_port         = var.code_server_proxy_port
     code_server_public_authority   = var.code_server_public_authority
     dsh_web_username               = var.web_username

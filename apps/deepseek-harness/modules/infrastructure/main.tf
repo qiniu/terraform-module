@@ -6,8 +6,10 @@ resource "random_string" "suffix" {
 }
 
 locals {
-  instance_name = "deepseek-harness-${random_string.suffix.result}"
-  preview_ports = [30080, 30081, 30082, 30083]
+  instance_name          = "deepseek-harness-${random_string.suffix.result}"
+  dsh_web_proxy_port     = 3081
+  preview_ports          = [30080, 30081, 30082, 30083]
+  code_server_proxy_port = 3087
 }
 
 resource "qiniu_compute_key_pair" "deployment" {
@@ -22,7 +24,7 @@ data "qiniu_compute_images" "ubuntu" {
 
   lifecycle {
     postcondition {
-      condition = !var.image_validation_enabled || length([
+      condition = length([
         for image in self.items : image.id
         if image.os_distribution == "Ubuntu" && image.os_version == "24.04 LTS"
       ]) == 1
@@ -51,7 +53,7 @@ resource "qiniu_compute_instance" "deepseek_harness" {
   name          = local.instance_name
   description   = "DeepSeek Harness Instance - Managed by Terraform"
   instance_type = var.instance_type
-  image_id      = var.image_validation_enabled ? try(one(local.ubuntu_image_ids), "") : "ubuntu-2404"
+  image_id      = try(one(local.ubuntu_image_ids), "")
 
   system_disk_size = var.system_disk_size
   system_disk_type = data.qiniu_compute_region.current.region.features.ebs.supported ? "cloud.ssd" : "local.ssd"
@@ -75,7 +77,7 @@ resource "qiniu_compute_instance" "deepseek_harness" {
 
 resource "qiniu_compute_instance_public_access" "dsh_web" {
   instance_id   = qiniu_compute_instance.deepseek_harness.id
-  internal_port = var.nginx_proxy_port
+  internal_port = local.dsh_web_proxy_port
   type          = "HTTPProxy"
 }
 
@@ -90,16 +92,16 @@ resource "qiniu_compute_instance_public_access" "preview" {
 
 resource "qiniu_compute_instance_public_access" "code_server" {
   instance_id   = qiniu_compute_instance.deepseek_harness.id
-  internal_port = var.code_server_proxy_port
+  internal_port = local.code_server_proxy_port
   type          = "HTTPProxy"
 
   lifecycle {
     precondition {
       condition = (
-        var.code_server_proxy_port != var.nginx_proxy_port &&
-        !contains(local.preview_ports, var.code_server_proxy_port)
+        local.code_server_proxy_port != local.dsh_web_proxy_port &&
+        !contains(local.preview_ports, local.code_server_proxy_port)
       )
-      error_message = "code_server_proxy_port 不得与 nginx_proxy_port 或 Preview 端口重复。"
+      error_message = "code_server_proxy_port 不得与 dsh_web_proxy_port 或 Preview 端口重复。"
     }
   }
 }

@@ -1,10 +1,5 @@
 locals {
-  dsh_port               = 3080
-  nginx_proxy_port       = 3081
-  preview_ports          = [30080, 30081, 30082, 30083]
-  code_server_port       = 3086
-  code_server_proxy_port = 3087
-  web_username           = "admin"
+  web_username = "admin"
 }
 
 resource "random_password" "web" {
@@ -28,9 +23,7 @@ resource "random_password" "code_server" {
 module "infrastructure" {
   source = "./modules/infrastructure"
 
-  nginx_proxy_port        = local.nginx_proxy_port
   preview_count           = var.preview_count
-  code_server_proxy_port  = local.code_server_proxy_port
   instance_type           = var.instance_type
   system_disk_size        = var.system_disk_size
   internet_max_bandwidth  = var.internet_max_bandwidth
@@ -44,14 +37,12 @@ module "infrastructure" {
 module "installer" {
   source = "./modules/ansible-installer"
 
-  dsh_port                     = local.dsh_port
-  nginx_proxy_port             = local.nginx_proxy_port
+  dsh_web_proxy_port           = module.infrastructure.dsh_web_proxy_port
   dsh_public_authority         = module.infrastructure.dsh_public_authority
   preview_count                = var.preview_count
-  preview_ports                = local.preview_ports
+  preview_ports                = module.infrastructure.preview_ports
   preview_public_authorities   = module.infrastructure.preview_public_authorities
-  code_server_port             = local.code_server_port
-  code_server_proxy_port       = local.code_server_proxy_port
+  code_server_proxy_port       = module.infrastructure.code_server_proxy_port
   code_server_public_authority = module.infrastructure.code_server_public_authority
   web_username                 = local.web_username
   web_password                 = random_password.web.result

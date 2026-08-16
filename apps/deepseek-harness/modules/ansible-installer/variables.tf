@@ -1,20 +1,10 @@
-variable "dsh_port" {
-  description = "DeepSeek Harness 回环监听端口。"
+variable "dsh_web_proxy_port" {
+  description = "Nginx DeepSeek Harness Web 对外监听端口。"
   type        = number
 
   validation {
-    condition     = var.dsh_port >= 1 && var.dsh_port <= 65535 && floor(var.dsh_port) == var.dsh_port
-    error_message = "dsh_port 必须是 1 到 65535 之间的整数。"
-  }
-}
-
-variable "nginx_proxy_port" {
-  description = "Nginx 对外监听端口。"
-  type        = number
-
-  validation {
-    condition     = var.nginx_proxy_port >= 1 && var.nginx_proxy_port <= 65535 && floor(var.nginx_proxy_port) == var.nginx_proxy_port
-    error_message = "nginx_proxy_port 必须是 1 到 65535 之间的整数。"
+    condition     = var.dsh_web_proxy_port >= 1 && var.dsh_web_proxy_port <= 65535 && floor(var.dsh_web_proxy_port) == var.dsh_web_proxy_port
+    error_message = "dsh_web_proxy_port 必须是 1 到 65535 之间的整数。"
   }
 }
 
@@ -35,16 +25,6 @@ variable "preview_ports" {
   validation {
     condition     = length(var.preview_ports) == 4 && alltrue([for port in var.preview_ports : port >= 1 && port <= 65535 && floor(port) == port])
     error_message = "preview_ports 必须包含 4 个有效整数端口。"
-  }
-}
-
-variable "code_server_port" {
-  description = "code-server 回环监听端口。"
-  type        = number
-
-  validation {
-    condition     = var.code_server_port >= 1 && var.code_server_port <= 65535 && floor(var.code_server_port) == var.code_server_port
-    error_message = "code_server_port 必须是 1 到 65535 之间的整数。"
   }
 }
 
