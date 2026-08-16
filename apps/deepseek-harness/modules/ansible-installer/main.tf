@@ -43,14 +43,14 @@ locals {
     uv_version                     = local.uv_version
     dsh_version                    = local.dsh_version
     dsh_port                       = local.dsh_port
-    nginx_proxy_port               = var.dsh_web_proxy_port
+    nginx_proxy_port               = var.dsh_web_port
     dsh_public_authority           = var.dsh_web_public_authority
     dsh_preview_count_raw          = tostring(var.preview_count)
     dsh_preview_public_authorities = var.preview_public_authorities
     dsh_preview_ports              = var.preview_ports
     code_server_version            = local.code_server_version
     code_server_port               = local.code_server_port
-    code_server_proxy_port         = var.code_server_proxy_port
+    code_server_proxy_port         = var.code_server_web_port
     code_server_public_authority   = var.code_server_public_authority
     dsh_web_username               = var.web_username
     dsh_web_password               = var.web_password

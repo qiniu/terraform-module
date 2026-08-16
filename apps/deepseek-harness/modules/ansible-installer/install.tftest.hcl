@@ -1,10 +1,10 @@
 variables {
-  dsh_web_proxy_port           = 3081
+  dsh_web_port                 = 3081
   preview_count                = 1
   preview_ports                = [30080, 30081, 30082, 30083]
   dsh_web_public_authority     = "dsh.example.test"
   preview_public_authorities   = ["preview.example.test"]
-  code_server_proxy_port       = 3087
+  code_server_web_port         = 3087
   code_server_public_authority = "code.example.test"
   web_username                 = "admin"
   web_password                 = "web-password-must-not-appear"
@@ -84,7 +84,7 @@ run "rejects_port_collisions" {
   command = plan
 
   variables {
-    code_server_proxy_port = 3080
+    code_server_web_port = 3080
   }
 
   expect_failures = [output.install_command]
