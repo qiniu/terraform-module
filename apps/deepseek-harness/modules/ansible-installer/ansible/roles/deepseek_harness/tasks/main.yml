@@ -11,20 +11,17 @@
 - name: Prewarm the pinned DeepSeek Harness package
   ansible.builtin.command:
     argv:
-      - /usr/local/bin/npm
-      - exec
-      - --yes
-      - "--package=@deepseek-ai/dsh@{{ dsh_version }}"
-      - --
-      - dsh
+      - /usr/local/bin/pnpm
+      - dlx
+      - "@deepseek-ai/dsh@{{ dsh_version }}"
       - --version
   args:
     chdir: "{{ dsh_workspace_dir }}"
   environment:
     HOME: "{{ dsh_home }}"
-    npm_config_cache: "{{ dsh_npm_cache_dir }}"
+    PNPM_CONFIG_STORE_DIR: "{{ dsh_pnpm_store_dir }}"
   become_user: "{{ dsh_user }}"
-  when: dsh_cached_version.stdout | trim != dsh_version
+  when: dsh_cached_version.stdout | trim != dsh_cache_key
   register: dsh_prewarm
   retries: 5
   delay: 3
@@ -33,12 +30,12 @@
 
 - name: Record the cached DeepSeek Harness version
   ansible.builtin.copy:
-    content: "{{ dsh_version }}\n"
+    content: "{{ dsh_cache_key }}\n"
     dest: "{{ dsh_cache_version_file }}"
     owner: "{{ dsh_user }}"
     group: "{{ dsh_group }}"
     mode: '0600'
-  when: dsh_cached_version.stdout | trim != dsh_version
+  when: dsh_cached_version.stdout | trim != dsh_cache_key
 
 - name: Render the DeepSeek Harness service
   ansible.builtin.template:

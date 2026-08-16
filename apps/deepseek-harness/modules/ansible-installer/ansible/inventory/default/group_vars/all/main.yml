@@ -4,9 +4,10 @@ dsh_user: dsh
 dsh_group: dsh
 dsh_home: /home/dsh
 dsh_state_dir: "{{ dsh_home }}/.dsh"
-dsh_npm_cache_dir: "{{ dsh_home }}/.npm"
+dsh_pnpm_store_dir: "{{ dsh_home }}/.pnpm-store"
 dsh_workspace_dir: "{{ dsh_home }}/workspace"
 dsh_download_dir: /var/cache/deepseek-harness
 nodejs_version: 24.19.0
+pnpm_version: 11.22.0
 code_server_version: 4.132.0
 code_server_port: 3086

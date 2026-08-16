@@ -124,3 +124,67 @@ run "repairs_existing_ansible_venv_read_permissions" {
     error_message = "既有 Ansible 虚拟环境的目录、文件和 bin 脚本必须恢复为 dsh 可读/执行权限。"
   }
 }
+
+run "installs_pinned_pnpm_with_nodejs" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+        "pnpm_version: 11.22.0",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/nodejs/tasks/main.yml"])),
+        "pnpm@{{ pnpm_version }}",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/nodejs/tasks/main.yml"])),
+        "PATH: \"{{ nodejs_prefix }}/bin:{{ ansible_env.PATH }}\"",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/nodejs/tasks/main.yml"])),
+        "    - pnpm",
+      )
+    )
+    error_message = "Node.js role 必须安装并通过 /usr/local/bin 发布固定版本的 pnpm。"
+  }
+}
+
+run "uses_pnpm_for_dsh_prewarm_and_offline_service" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+        "dsh_pnpm_store_dir: \"{{ dsh_home }}/.pnpm-store\"",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/main.yml"])),
+        "      - /usr/local/bin/pnpm\n      - dlx",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/main.yml"])),
+        "PNPM_CONFIG_STORE_DIR: \"{{ dsh_pnpm_store_dir }}\"",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/main.yml"])),
+        "/usr/local/bin/npm",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/templates/deepseek-harness.service.j2"])),
+        "Environment=PNPM_CONFIG_OFFLINE=true",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/templates/deepseek-harness.service.j2"])),
+        "ExecStart=/usr/local/bin/pnpm dlx @deepseek-ai/dsh@{{ dsh_version }}",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/templates/deepseek-harness.service.j2"])),
+        "/usr/local/bin/npx",
+      )
+    )
+    error_message = "DeepSeek Harness 必须通过同一 pnpm store 预热，并使用 pnpm 强制离线启动。"
+  }
+}

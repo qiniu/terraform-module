@@ -1,3 +1,4 @@
 ---
 dsh_version: 0.1.0-rc.6
+dsh_cache_key: "{{ dsh_version }}:pnpm-{{ pnpm_version }}"
 dsh_cache_version_file: "{{ dsh_state_dir }}/CACHED_VERSION"
