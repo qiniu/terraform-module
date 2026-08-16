@@ -186,7 +186,7 @@ run "uses_pnpm_for_dsh_prewarm_and_offline_service" {
       ) &&
       strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/templates/deepseek-harness.service.j2"])),
-        "ExecStart=/usr/local/bin/pnpm dlx @deepseek-ai/dsh@{{ dsh_version }}",
+        "ExecStart=/usr/local/bin/pnpm dlx --allow-build=node-pty @deepseek-ai/dsh@{{ dsh_version }}",
       ) &&
       !strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/templates/deepseek-harness.service.j2"])),
