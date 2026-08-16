@@ -8,7 +8,6 @@ Type=simple
 User={{ dsh_user }}
 Group={{ dsh_group }}
 Environment=HOME={{ dsh_home }}
-Environment=DSH_HOME={{ dsh_state_dir }}
 Environment=PATH={{ code_server_prefix }}/bin:{{ nodejs_prefix }}/bin:/usr/local/bin:/usr/bin:/bin
 WorkingDirectory={{ dsh_workspace_dir }}
 ExecStart=/usr/local/bin/code-server --config {{ dsh_home }}/.config/code-server/config.yaml

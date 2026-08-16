@@ -38,6 +38,7 @@ nginx_defaults="$runtime_dir/roles/nginx/defaults/main.yml"
 nginx_template="$runtime_dir/roles/nginx/templates/deepseek-harness.conf.j2"
 code_server_defaults="$runtime_dir/roles/code_server/defaults/main.yml"
 code_server_tasks="$runtime_dir/roles/code_server/tasks/main.yml"
+code_server_service="$runtime_dir/roles/code_server/templates/code-server.service.j2"
 skill_defaults="$runtime_dir/roles/las_dsh_environment/defaults/main.yml"
 skill_tasks="$runtime_dir/roles/las_dsh_environment/tasks/main.yml"
 skill_template="$runtime_dir/roles/las_dsh_environment/templates/SKILL.md.j2"
@@ -79,6 +80,8 @@ reject_text "$nginx_defaults" '^(nginx_proxy_port|code_server_proxy_port|dsh_web
 require_text "$code_server_tasks" 'Validate required code-server inputs'
 require_text "$code_server_tasks" 'code_server_version \| default\('\''\'\''\) \| length > 0'
 require_text "$code_server_tasks" 'code_server_port is defined'
+require_text "$code_server_service" 'Environment=HOME=\{\{ dsh_home \}\}'
+reject_text "$code_server_service" 'Environment=DSH_HOME='
 reject_text "$nginx_defaults" 'dsh_proxy_port'
 require_text "$nginx_template" 'nginx_proxy_port'
 reject_text "$nginx_template" 'dsh_proxy_port'
