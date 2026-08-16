@@ -8,23 +8,13 @@ variable "dsh_web_port" {
   }
 }
 
-variable "preview_count" {
-  description = "启用的 Preview 槽位数量（0 到 4）。"
-  type        = number
-
-  validation {
-    condition     = var.preview_count >= 0 && var.preview_count <= 4 && floor(var.preview_count) == var.preview_count
-    error_message = "preview_count 必须是 0 到 4 之间的整数。"
-  }
-}
-
 variable "preview_ports" {
   description = "Preview 应用回环端口列表。"
   type        = list(number)
 
   validation {
-    condition     = length(var.preview_ports) == 4 && alltrue([for port in var.preview_ports : port >= 1 && port <= 65535 && floor(port) == port])
-    error_message = "preview_ports 必须包含 4 个有效整数端口。"
+    condition     = length(var.preview_ports) <= 4 && alltrue([for port in var.preview_ports : port >= 1 && port <= 65535 && floor(port) == port])
+    error_message = "preview_ports 必须包含最多 4 个有效整数端口。"
   }
 }
 
@@ -56,8 +46,8 @@ variable "preview_public_authorities" {
   type        = list(string)
 
   validation {
-    condition     = length(var.preview_public_authorities) == var.preview_count
-    error_message = "preview_public_authorities 的长度必须等于 preview_count。"
+    condition     = length(var.preview_public_authorities) == length(var.preview_ports)
+    error_message = "preview_public_authorities 的长度必须等于 preview_ports。"
   }
 }
 

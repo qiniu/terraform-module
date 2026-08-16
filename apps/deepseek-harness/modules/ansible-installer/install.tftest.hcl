@@ -1,7 +1,6 @@
 variables {
   dsh_web_port                 = 3081
-  preview_count                = 1
-  preview_ports                = [30080, 30081, 30082, 30083]
+  preview_ports                = [30080]
   dsh_web_public_authority     = "dsh.example.test"
   preview_public_authorities   = ["preview.example.test"]
   code_server_web_port         = 3087

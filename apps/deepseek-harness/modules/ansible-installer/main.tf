@@ -13,7 +13,6 @@ locals {
     "playbooks/site.yml"                                           = "${path.module}/ansible/playbooks/site.yml"
     "pyproject.toml"                                               = "${path.module}/ansible/pyproject.toml"
     "uv.lock"                                                      = "${path.module}/ansible/uv.lock"
-    "inventory/default/group_vars/all/main.yml"                    = "${path.module}/ansible/inventory/default/group_vars/all/main.yml"
     "roles/base/defaults/main.yml"                                 = "${path.module}/ansible/roles/base/defaults/main.yml"
     "roles/base/tasks/main.yml"                                    = "${path.module}/ansible/roles/base/tasks/main.yml"
     "roles/code_server/defaults/main.yml"                          = "${path.module}/ansible/roles/code_server/defaults/main.yml"
@@ -45,7 +44,6 @@ locals {
     dsh_port                       = local.dsh_port
     nginx_proxy_port               = var.dsh_web_port
     dsh_public_authority           = var.dsh_web_public_authority
-    dsh_preview_count_raw          = tostring(var.preview_count)
     dsh_preview_public_authorities = var.preview_public_authorities
     dsh_preview_ports              = var.preview_ports
     code_server_version            = local.code_server_version

@@ -26,7 +26,7 @@ reject_text() {
 site="$runtime_dir/playbooks/site.yml"
 ansible_cfg="$runtime_dir/ansible.cfg"
 inventory="$runtime_dir/inventory/default/hosts.yml"
-group_vars="$runtime_dir/inventory/default/group_vars/all/main.yml"
+variables_tf="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)/variables.tf"
 base_tasks="$runtime_dir/roles/base/tasks/main.yml"
 node_tasks="$runtime_dir/roles/nodejs/tasks/main.yml"
 node_cleanup="$runtime_dir/roles/nodejs/tasks/cleanup.yml"
@@ -44,9 +44,11 @@ for role in base nodejs code_server deepseek_harness nginx las_dsh_environment; 
 done
 
 [[ -f "$inventory" ]] || exit 1
-[[ -f "$group_vars" ]] || exit 1
+[[ ! -e "$runtime_dir/inventory/default/group_vars" ]] || exit 1
 require_text "$ansible_cfg" '^inventory = ./inventory/default$'
 reject_text "$site" 'vars_files:'
+reject_text "$site" 'dsh_preview_count'
+require_text "$site" 'dsh_preview_public_authorities \| length == dsh_preview_ports \| length'
 
 require_text "$runtime_dir/pyproject.toml" 'ansible-core==2\.20\.2'
 require_text "$nginx_defaults" '^nginx_proxy_port: 3081$'
@@ -75,5 +77,9 @@ require_text "$skill_defaults" 'uv_version: 0.12.5'
 require_text "$skill_template" '/opt/node-v\{\{ nodejs_version \}\}'
 require_text "$skill_template" '/opt/uv-v\{\{ uv_version \}\}'
 require_text "$skill_template" 'uv init'
+reject_text "$skill_template" 'dsh_preview_count'
+require_text "$skill_template" 'dsh_preview_ports \| length'
+reject_text "$variables_tf" '^variable "preview_count"'
+require_text "$variables_tf" 'length\(var\.preview_public_authorities\) == length\(var\.preview_ports\)'
 
 printf 'PASS bundled Ansible runtime contract\n'

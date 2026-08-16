@@ -27,12 +27,12 @@ disable-model-invocation: false
 - Harness 应用：`127.0.0.1:{{ dsh_port }}`，由本机 Nginx `{{ nginx_proxy_port }}` 代理到公网 Harness 地址
 - code-server：`127.0.0.1:{{ code_server_port }}`，由本机 Nginx `{{ code_server_proxy_port }}` 代理到独立 code-server 地址
 
-{% if dsh_preview_count | int == 0 %}
+{% if dsh_preview_ports | length == 0 %}
 - Preview：当前未启用 Preview 槽位
 {% else %}
-Preview 槽位共 {{ dsh_preview_count }} 个。每个槽位由 HTTPProxy 直接转发到用户应用，不经过本机 Nginx：
-{% for index in range(dsh_preview_count | int) %}
-- Preview {{ index + 1 }}：应用监听 `127.0.0.1:{{ dsh_preview_ports[index] }}`，公网地址为 `https://{{ dsh_preview_public_authorities[index] }}`
+Preview 槽位共 {{ dsh_preview_ports | length }} 个。每个槽位由 HTTPProxy 直接转发到用户应用，不经过本机 Nginx：
+{% for port in dsh_preview_ports %}
+- Preview {{ loop.index }}：应用监听 `127.0.0.1:{{ port }}`，公网地址为 `https://{{ dsh_preview_public_authorities[loop.index0] }}`
 {% endfor %}
 {% endif %}
 
