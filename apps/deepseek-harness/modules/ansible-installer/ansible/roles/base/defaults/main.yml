@@ -1,11 +1,4 @@
 ---
-dsh_user: dsh
-dsh_group: dsh
-dsh_home: /home/dsh
-dsh_state_dir: "{{ dsh_home }}/.dsh"
-dsh_npm_cache_dir: "{{ dsh_home }}/.npm"
-dsh_workspace_dir: "{{ dsh_home }}/workspace"
-dsh_download_dir: /var/cache/deepseek-harness
 dsh_base_packages:
   - ca-certificates
   - curl
