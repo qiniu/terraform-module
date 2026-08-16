@@ -1,11 +1,5 @@
 locals {
-  dsh_version         = "0.1.0-rc.6"
-  node_version        = "24.19.0"
-  uv_version          = "0.12.5"
-  code_server_version = "4.132.0"
-  dsh_port            = 3080
-  code_server_port    = 3086
-  project_dir         = "/opt/las-dsh-installer/project"
+  project_dir = "/opt/las-dsh-installer/project"
 
   ansible_runtime_files = {
     "ansible.cfg"                                                  = "${path.module}/ansible/ansible.cfg"
@@ -38,16 +32,10 @@ locals {
   }
 
   extra_vars_base64 = base64encode(jsonencode({
-    nodejs_version                 = local.node_version
-    uv_version                     = local.uv_version
-    dsh_version                    = local.dsh_version
-    dsh_port                       = local.dsh_port
     nginx_proxy_port               = var.dsh_web_port
     dsh_public_authority           = var.dsh_web_public_authority
     dsh_preview_public_authorities = var.preview_public_authorities
     dsh_preview_ports              = var.preview_ports
-    code_server_version            = local.code_server_version
-    code_server_port               = local.code_server_port
     code_server_proxy_port         = var.code_server_web_port
     code_server_public_authority   = var.code_server_public_authority
     dsh_web_username               = var.web_username
@@ -90,5 +78,5 @@ locals {
     target_path = "/opt/las-dsh-installer/bootstrap/install.sh"
   }
 
-  install_command = "exec '${local.bootstrap.target_path}' '${local.uv_version}' '${local.runtime_manifest.target_path}' '${local.runtime_manifest.sha256}' '${local.extra_vars_base64}'"
+  install_command = "exec '${local.bootstrap.target_path}' '${local.runtime_manifest.target_path}' '${local.runtime_manifest.sha256}' '${local.extra_vars_base64}'"
 }

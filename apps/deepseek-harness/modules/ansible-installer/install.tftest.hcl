@@ -15,7 +15,7 @@ run "renders_sensitive_manifest_bootstrap_command" {
 
   assert {
     condition = (
-      strcontains(nonsensitive(output.install_command), "/opt/las-dsh-installer/bootstrap/install.sh' '0.12.5'") &&
+      strcontains(nonsensitive(output.install_command), "/opt/las-dsh-installer/bootstrap/install.sh' '/opt/las-dsh-installer/project/.runtime-sha256'") &&
       strcontains(nonsensitive(output.install_command), "/opt/las-dsh-installer/project/.runtime-sha256") &&
       !strcontains(nonsensitive(output.install_command), "ansible_archive") &&
       !strcontains(nonsensitive(output.install_command), "web-password-must-not-appear") &&
@@ -77,14 +77,4 @@ run "repairs_existing_ansible_venv_read_permissions" {
     )
     error_message = "既有 Ansible 虚拟环境的目录、文件和 bin 脚本必须恢复为 dsh 可读/执行权限。"
   }
-}
-
-run "rejects_port_collisions" {
-  command = plan
-
-  variables {
-    code_server_web_port = 3080
-  }
-
-  expect_failures = [output.install_command]
 }

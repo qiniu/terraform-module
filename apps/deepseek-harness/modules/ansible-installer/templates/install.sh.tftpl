@@ -2,15 +2,15 @@
 set -euo pipefail
 umask 077
 
-[ "$#" -eq 4 ] || {
-  printf '%s\n' 'expected uv version, runtime manifest path, runtime manifest SHA-256 and extra vars' >&2
+[ "$#" -eq 3 ] || {
+  printf '%s\n' 'expected runtime manifest path, runtime manifest SHA-256 and extra vars' >&2
   exit 2
 }
 
-uv_version="$1"
-runtime_manifest_path="$2"
-runtime_manifest_sha256="$3"
-extra_vars_base64="$4"
+uv_version=0.12.5
+runtime_manifest_path="$1"
+runtime_manifest_sha256="$2"
+extra_vars_base64="$3"
 installer_root=/opt/las-dsh-installer
 project_dir="$${installer_root}/project"
 managed_toolchains_dir=/var/lib/las-dsh-installer/managed-toolchains

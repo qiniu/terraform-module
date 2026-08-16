@@ -8,21 +8,6 @@ output "install_command" {
     error_message = "install_command 必须为不超过 8192 个 ASCII 字符。"
   }
 
-  precondition {
-    condition = (
-      local.dsh_port != var.dsh_web_port &&
-      local.dsh_port != local.code_server_port &&
-      local.dsh_port != var.code_server_web_port &&
-      var.dsh_web_port != local.code_server_port &&
-      var.dsh_web_port != var.code_server_web_port &&
-      local.code_server_port != var.code_server_web_port &&
-      !contains(var.preview_ports, local.dsh_port) &&
-      !contains(var.preview_ports, var.dsh_web_port) &&
-      !contains(var.preview_ports, local.code_server_port) &&
-      !contains(var.preview_ports, var.code_server_web_port)
-    )
-    error_message = "Harness、Preview 和 code-server 的内部/代理端口必须互不重复。"
-  }
 }
 
 output "runtime_file_contents" {

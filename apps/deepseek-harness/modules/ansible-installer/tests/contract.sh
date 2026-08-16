@@ -52,9 +52,13 @@ require_text "$module_dir/outputs.tf" 'runtime_manifest'
 require_text "$module_dir/outputs.tf" 'bootstrap'
 require_text "$module_dir/outputs.tf" 'length\(local\.install_command\)[[:space:]]*<=[[:space:]]*8192'
 require_text "$module_dir/outputs.tf" 'sensitive[[:space:]]*=[[:space:]]*true'
-require_text "$main_tf" 'uv_version[[:space:]]*=[[:space:]]*"0\.12\.5"'
+for terraform_managed_value in dsh_version node_version uv_version code_server_version dsh_port code_server_port; do
+  reject_text "$main_tf" "${terraform_managed_value}"
+done
 
 require_text "$bootstrap" 'set -euo pipefail'
+require_text "$bootstrap" '^uv_version=0\.12\.5$'
+require_text "$bootstrap" '^\[ "\$#" -eq 3 \] \|\| \{$'
 require_text "$bootstrap" 'umask 077'
 require_text "$bootstrap" 'x86_64-unknown-linux-gnu'
 require_text "$bootstrap" 'aarch64-unknown-linux-gnu'
@@ -90,7 +94,6 @@ require_text "$bootstrap" 'mktemp'
 require_text "$bootstrap" 'chmod 600'
 require_text "$bootstrap" 'runtime_manifest_path='
 require_text "$bootstrap" 'runtime_manifest_sha256='
-require_text "$bootstrap" 'uv_version="\$1"'
 require_text "$bootstrap" 'runtime manifest SHA-256 mismatch'
 require_text "$bootstrap" 'sha256sum -c \.runtime-sha256'
 reject_text "$bootstrap" 'ansible_archive'
