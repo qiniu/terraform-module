@@ -273,13 +273,13 @@ run "outputs_public_contract" {
 
   assert {
     condition = (
-      output.web_url == "https://dsh.example.test" &&
-      output.preview_url == "https://preview.example.test" &&
-      output.code_server_url == "https://code.example.test" &&
-      !issensitive(output.preview_url) &&
-      !issensitive(output.code_server_url) &&
-      output.web_username == "admin" &&
-      output.web_password == sensitive(random_password.web.result) &&
+      output.dsh_web_public_url == "https://dsh.example.test" &&
+      output.preview_public_urls == ["https://preview.example.test"] &&
+      output.code_server_public_url == "https://code.example.test" &&
+      !issensitive(output.preview_public_urls) &&
+      !issensitive(output.code_server_public_url) &&
+      output.dsh_web_username == "admin" &&
+      output.dsh_web_password == sensitive(random_password.web.result) &&
       output.code_server_password == sensitive(random_password.code_server.result) &&
       output.instance_id == "test-instance" &&
       output.ssh_command == null &&
@@ -312,7 +312,7 @@ run "supports_zero_preview_slots" {
   }
 
   assert {
-    condition     = output.preview_url == null && output.preview_urls == []
-    error_message = "preview_count=0 时根模块必须保留空 Preview 列表和 null 单数兼容输出。"
+    condition     = output.preview_public_urls == []
+    error_message = "preview_count=0 时根模块必须返回空 Preview 列表。"
   }
 }

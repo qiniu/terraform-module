@@ -178,11 +178,11 @@ ignore_file="$repo_dir/.gitignore"
 readme_text="$(<"$readme_file")"
 infrastructure_outputs_text="$(<"$infrastructure_outputs_file")"
 ignore_text="$(<"$ignore_file")"
-preview_output="$(extract_simple_block "$outputs_file" output preview_url)"
+preview_output="$(extract_simple_block "$outputs_file" output preview_public_urls)"
 setup_guide_output="$(extract_simple_block "$outputs_file" output setup_guide)"
 
-require_text "$readme_text" 'terraform output -json preview_urls' 'README shows how to read preview_urls'
-require_text "$readme_text" 'terraform output -raw code_server_url' 'README shows how to read code-server URL'
+require_text "$readme_text" 'terraform output -json preview_public_urls' 'README shows how to read preview_public_urls'
+require_text "$readme_text" 'terraform output -raw code_server_public_url' 'README shows how to read code-server URL'
 require_text "$readme_text" 'code_server_password' 'README identifies code-server password output'
 require_text "$readme_text" 'code-server 自带密码' 'README explains code-server authentication'
 require_text "$readme_text" '逐个传输' 'README documents per-file Ansible runtime transfer'
@@ -195,7 +195,7 @@ require_text "$readme_text" '502' 'README explains the expected no-upstream resp
 require_text "$readme_text" '503' 'README explains alternate HTTPProxy no-upstream response'
 require_text "$readme_text" '正常状态' 'README identifies 502 as expected'
 require_text "$readme_text" '公开' 'README states that preview is public'
-require_text "$readme_text" '任何知道该地址的人都可以访问' 'README states that preview is publicly reachable'
+require_text "$readme_text" '任何知道其中地址的人都可以访问' 'README states that preview is publicly reachable'
 require_text "$readme_text" '不需要 Harness 的 Basic Auth' 'README states that preview does not require Harness Basic Auth'
 require_text "$readme_text" '/home/dsh/.agents/skills/las-dsh-environment/SKILL.md' 'README documents the user las-dsh-environment skill path'
 require_text "$readme_text" '项目级' 'README explains project skill precedence'
@@ -211,10 +211,10 @@ require_text "$infrastructure_outputs_text" 'try("https://${qiniu_compute_instan
 require_text "$ignore_text" '__pycache__/' 'DeepSeek Harness ignores Python bytecode directories'
 require_text "$ignore_text" '.playwright-cli/' 'DeepSeek Harness ignores Playwright run records'
 if grep -Eq '^[[:space:]]*sensitive[[:space:]]*=' <<<"$preview_output"; then
-  echo 'preview_url must not be marked sensitive' >&2
+  echo 'preview_public_urls must not be marked sensitive' >&2
   exit 1
 fi
-require_text "$setup_guide_output" 'preview_url' 'setup_guide identifies the preview output'
+require_text "$setup_guide_output" 'preview_public_urls' 'setup_guide identifies the preview output'
 require_text "$setup_guide_output" '公开' 'setup_guide states that preview is public'
 require_text "$setup_guide_output" '不适用 Harness Basic Auth' 'setup_guide states that preview does not require Harness Basic Auth'
 require_text "$setup_guide_output" '127.0.0.1:30080' 'setup_guide identifies the loopback preview listener'
