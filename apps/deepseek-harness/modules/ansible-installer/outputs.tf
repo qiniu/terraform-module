@@ -21,11 +21,6 @@ output "runtime_file_metadata" {
   value       = local.runtime_file_metadata
 }
 
-output "runtime_manifest" {
-  description = "用于 bootstrap 校验所有已传输 Ansible 文件的 SHA-256 清单。"
-  value       = local.runtime_manifest
-}
-
 output "bootstrap" {
   description = "无敏感安装 bootstrap 脚本的目标路径、权限、SHA-256 和 base64 内容。"
   value       = local.bootstrap

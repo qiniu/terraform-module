@@ -24,16 +24,6 @@ variable "runtime_file_metadata" {
   }))
 }
 
-variable "runtime_manifest" {
-  description = "Ansible 运行时文件 SHA-256 清单的发布元数据。"
-  type = object({
-    content     = string
-    file_mode   = string
-    sha256      = string
-    target_path = string
-  })
-}
-
 variable "bootstrap" {
   description = "Ansible 安装 bootstrap 的发布元数据。"
   type = object({

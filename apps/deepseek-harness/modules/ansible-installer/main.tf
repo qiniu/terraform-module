@@ -58,18 +58,6 @@ locals {
     }
   }
 
-  runtime_manifest_content = join("", [
-    for relative_path in sort(keys(local.runtime_file_metadata)) :
-    "${local.runtime_file_metadata[relative_path].sha256}  ${relative_path}\n"
-  ])
-
-  runtime_manifest = {
-    content     = base64encode(local.runtime_manifest_content)
-    file_mode   = "0644"
-    sha256      = sha256(local.runtime_manifest_content)
-    target_path = "${local.project_dir}/.runtime-sha256"
-  }
-
   bootstrap_content = templatefile("${path.module}/templates/install.sh.tftpl", {})
 
   bootstrap = {
@@ -79,5 +67,5 @@ locals {
     target_path = "/opt/las-dsh-installer/bootstrap/install.sh"
   }
 
-  install_command = "exec '${local.bootstrap.target_path}' '${local.runtime_manifest.target_path}' '${local.runtime_manifest.sha256}' '${local.extra_vars_base64}'"
+  install_command = "exec '${local.bootstrap.target_path}' '${local.extra_vars_base64}'"
 }

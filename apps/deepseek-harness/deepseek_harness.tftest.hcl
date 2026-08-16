@@ -66,8 +66,8 @@ run "uses_fixed_versions_and_installer_contract" {
 
   assert {
     condition = (
-      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "exec '/opt/las-dsh-installer/bootstrap/install.sh' '/opt/las-dsh-installer/project/.runtime-sha256'") &&
-      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "/opt/las-dsh-installer/project/.runtime-sha256") &&
+      strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "exec '/opt/las-dsh-installer/bootstrap/install.sh' '") &&
+      !strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "runtime-sha256") &&
       !strcontains(nonsensitive(qiniu_compute_instance_exec.install_dsh.command), "@deepseek-ai/dsh") &&
       length(nonsensitive(qiniu_compute_instance_exec.install_dsh.command)) <= 8192
     )
@@ -77,10 +77,9 @@ run "uses_fixed_versions_and_installer_contract" {
   assert {
     condition = (
       module.ansible_runtime_transfer.runtime_file_count == length(module.installer.runtime_file_metadata) &&
-      module.ansible_runtime_transfer.runtime_manifest_path == "/opt/las-dsh-installer/project/.runtime-sha256" &&
       module.ansible_runtime_transfer.bootstrap_path == "/opt/las-dsh-installer/bootstrap/install.sh"
     )
-    error_message = "Ansible 运行时传输模块必须发布显式文件清单、校验清单和 bootstrap 脚本。"
+    error_message = "Ansible 运行时传输模块必须发布显式文件清单和 bootstrap 脚本。"
   }
 
   assert {

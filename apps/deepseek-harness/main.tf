@@ -56,7 +56,6 @@ module "ansible_runtime_transfer" {
   private_key           = module.infrastructure.deployment_private_key
   runtime_file_contents = module.installer.runtime_file_contents
   runtime_file_metadata = module.installer.runtime_file_metadata
-  runtime_manifest      = module.installer.runtime_manifest
   bootstrap             = module.installer.bootstrap
 }
 

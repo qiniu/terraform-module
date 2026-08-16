@@ -10,19 +10,19 @@ variables {
   code_server_password         = "Code-server-safe-1234"
 }
 
-run "renders_sensitive_manifest_bootstrap_command" {
+run "renders_sensitive_bootstrap_command" {
   command = plan
 
   assert {
     condition = (
-      strcontains(nonsensitive(output.install_command), "/opt/las-dsh-installer/bootstrap/install.sh' '/opt/las-dsh-installer/project/.runtime-sha256'") &&
-      strcontains(nonsensitive(output.install_command), "/opt/las-dsh-installer/project/.runtime-sha256") &&
+      strcontains(nonsensitive(output.install_command), "exec '/opt/las-dsh-installer/bootstrap/install.sh' '") &&
+      !strcontains(nonsensitive(output.install_command), "runtime-sha256") &&
       !strcontains(nonsensitive(output.install_command), "ansible_archive") &&
       !strcontains(nonsensitive(output.install_command), "web-password-must-not-appear") &&
       !strcontains(nonsensitive(output.install_command), "Code-server-safe-1234") &&
       length(nonsensitive(output.install_command)) <= 8192
     )
-    error_message = "安装命令必须只携带运行时清单校验值和编码后的变量，并不得泄露密码明文。"
+    error_message = "安装命令必须只携带编码后的变量，并不得泄露密码明文。"
   }
 }
 

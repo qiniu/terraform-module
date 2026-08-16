@@ -53,21 +53,6 @@ module "runtime_file" {
   file_mode      = each.value.file_mode
 }
 
-module "runtime_manifest" {
-  source = "../instance-exec-file-transfer"
-
-  depends_on = [module.runtime_file]
-
-  instance_id    = var.instance_id
-  user           = "root"
-  port           = "22"
-  private_key    = var.private_key
-  content        = var.runtime_manifest.content
-  content_sha256 = var.runtime_manifest.sha256
-  target_path    = var.runtime_manifest.target_path
-  file_mode      = var.runtime_manifest.file_mode
-}
-
 module "bootstrap" {
   source = "../instance-exec-file-transfer"
 
