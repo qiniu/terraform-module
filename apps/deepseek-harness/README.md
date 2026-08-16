@@ -81,6 +81,7 @@ enable_ssh_port_forward = true
 
 ```bash
 ./scripts/ssh.sh
+./scripts/ssh.sh "cat /var/log/las-dsh-installer.log"
 ./scripts/ssh.sh "journalctl -u deepseek-harness --since '10 min ago' --no-pager"
 ```
 

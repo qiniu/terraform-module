@@ -29,13 +29,27 @@ run "renders_sensitive_bootstrap_command" {
   }
 }
 
+run "timestamps_persistent_bootstrap_log" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(local.bootstrap_content, "required_packages=(ca-certificates curl moreutils)") &&
+      strcontains(local.bootstrap_content, "log_file=/var/log/las-dsh-installer.log") &&
+      strcontains(local.bootstrap_content, "install -o root -g root -m 0600 /dev/null \"$${log_file}\"") &&
+      strcontains(local.bootstrap_content, "run_install 2>&1 | ts '[%Y-%m-%d %H:%M:%S]' | tee \"$${log_file}\"")
+    )
+    error_message = "Bootstrap 必须安装 moreutils，并将带时间戳的安装日志持久化为 root-only 文件。"
+  }
+}
+
 run "restores_executable_umask_before_ansible_sync" {
   command = plan
 
   assert {
     condition = strcontains(
       local.bootstrap_content,
-      "umask 022\nif [ ! -x \"$${UV_PROJECT_ENVIRONMENT}/bin/ansible-playbook\" ] ||",
+      "  umask 022\n  if [ ! -x \"$${UV_PROJECT_ENVIRONMENT}/bin/ansible-playbook\" ] ||",
     )
     error_message = "uv 虚拟环境必须在可执行的 umask 下创建，以支持 dsh 用户运行 Ansible 模块。"
   }
