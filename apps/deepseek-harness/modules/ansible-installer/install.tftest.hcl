@@ -2,7 +2,7 @@ variables {
   dsh_web_proxy_port           = 3081
   preview_count                = 1
   preview_ports                = [30080, 30081, 30082, 30083]
-  dsh_public_authority         = "dsh.example.test"
+  dsh_web_public_authority     = "dsh.example.test"
   preview_public_authorities   = ["preview.example.test"]
   code_server_proxy_port       = 3087
   code_server_public_authority = "code.example.test"

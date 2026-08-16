@@ -7,12 +7,12 @@ output "deployment_private_key" {
   sensitive = true
 }
 
-output "dsh_public_authority" {
+output "dsh_web_public_authority" {
   description = "HTTPProxy 公网 authority（不含 scheme）。"
   value       = qiniu_compute_instance_public_access.dsh_web.endpoint
 }
 
-output "dsh_public_url" {
+output "dsh_web_public_url" {
   value = "https://${qiniu_compute_instance_public_access.dsh_web.endpoint}"
 }
 

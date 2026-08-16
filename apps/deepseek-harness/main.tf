@@ -38,7 +38,7 @@ module "installer" {
   source = "./modules/ansible-installer"
 
   dsh_web_proxy_port           = module.infrastructure.dsh_web_proxy_port
-  dsh_public_authority         = module.infrastructure.dsh_public_authority
+  dsh_web_public_authority     = module.infrastructure.dsh_web_public_authority
   preview_count                = var.preview_count
   preview_ports                = module.infrastructure.preview_ports
   preview_public_authorities   = module.infrastructure.preview_public_authorities

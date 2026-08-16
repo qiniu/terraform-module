@@ -15,8 +15,8 @@ override_module {
   outputs = {
     instance_id                  = "test-instance"
     deployment_private_key       = "test-private-key"
-    dsh_public_authority         = "dsh.example.test"
-    dsh_public_url               = "https://dsh.example.test"
+    dsh_web_public_authority     = "dsh.example.test"
+    dsh_web_public_url           = "https://dsh.example.test"
     dsh_web_proxy_port           = 3081
     preview_ports                = [30080, 30081, 30082, 30083]
     preview_public_url           = "https://preview.example.test"
@@ -228,8 +228,8 @@ run "outputs_ssh_command_when_enabled" {
     outputs = {
       instance_id                  = "test-instance"
       deployment_private_key       = "test-private-key"
-      dsh_public_authority         = "dsh.example.test"
-      dsh_public_url               = "https://dsh.example.test"
+      dsh_web_public_authority     = "dsh.example.test"
+      dsh_web_public_url           = "https://dsh.example.test"
       dsh_web_proxy_port           = 3081
       preview_ports                = [30080, 30081, 30082, 30083]
       preview_public_url           = "https://preview.example.test"
@@ -299,8 +299,8 @@ run "supports_zero_preview_slots" {
     outputs = {
       instance_id                  = "test-instance"
       deployment_private_key       = "test-private-key"
-      dsh_public_authority         = "dsh.example.test"
-      dsh_public_url               = "https://dsh.example.test"
+      dsh_web_public_authority     = "dsh.example.test"
+      dsh_web_public_url           = "https://dsh.example.test"
       dsh_web_proxy_port           = 3081
       preview_ports                = [30080, 30081, 30082, 30083]
       preview_public_url           = null

@@ -38,16 +38,16 @@ variable "code_server_proxy_port" {
   }
 }
 
-variable "dsh_public_authority" {
+variable "dsh_web_public_authority" {
   description = "DeepSeek Harness 信任的外部 Host。"
   type        = string
 
   validation {
     condition = (
-      can(regex("^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*(:[0-9]{1,5})?$", var.dsh_public_authority)) &&
-      length(element(split(":", var.dsh_public_authority), 0)) <= 253
+      can(regex("^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*(:[0-9]{1,5})?$", var.dsh_web_public_authority)) &&
+      length(element(split(":", var.dsh_web_public_authority), 0)) <= 253
     )
-    error_message = "dsh_public_authority 必须是主机部分不超过 253 字节的有效 authority。"
+    error_message = "dsh_web_public_authority 必须是主机部分不超过 253 字节的有效 authority。"
   }
 }
 
