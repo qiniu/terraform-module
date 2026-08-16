@@ -8,7 +8,7 @@
 
 - Terraform `>= 1.6.0`；
 - Qiniu Provider `1.0.0`，按仓库根目录的[本地安装说明](../../README.md#基于本地-terraform-运行)安装；
-- 支持 `public_access_http_proxy`、且恰好存在一个 Ubuntu 24.04 LTS 官方镜像的七牛云区域；
+- 支持 `public_access_http_proxy` 的七牛云区域；未指定 `image_id` 时，该区域还须恰好存在一个 Ubuntu 24.04 LTS 官方镜像；
 - ECS 能访问 Ubuntu 软件源、nodejs.org 和 npm registry。
 
 设置七牛云凭证和区域（不要把真实值写入源码）：
@@ -29,6 +29,8 @@ terraform apply deepseek-harness.tfplan
 ```
 
 默认创建 `ecs.t1s.c2m4`、40 GiB 系统盘和 100 Mbps 峰值带宽，采用 `PostPaid` 按量计费。也可在本地 `terraform.tfvars` 中设置实例规格、磁盘、带宽及预付费参数；部署和保留资源都会产生费用。
+
+可选的 `image_id` 可指定同一区域的预制镜像。镜像中已存在固定版本的 uv、Ansible venv、Node.js、DeepSeek Harness 与 code-server 时，安装过程会复用它们；Ansible 仍会重新渲染服务、Nginx 和认证配置。制作镜像前必须清理 `/home/dsh/.dsh`、Nginx Basic Auth、code-server 配置、部署私钥、临时执行文件和日志中的敏感信息。
 
 部署成功后查看 Harness 地址、用户名和网页预览地址：
 

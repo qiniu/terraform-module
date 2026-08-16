@@ -44,7 +44,7 @@ run "restores_executable_umask_before_ansible_sync" {
   assert {
     condition = strcontains(
       base64decode(output.bootstrap.content),
-      "umask 022\n\"$${uv_bin_dir}/uv\" sync --locked",
+      "umask 022\nif [ ! -x \"$${UV_PROJECT_ENVIRONMENT}/bin/ansible-playbook\" ] ||",
     )
     error_message = "uv 虚拟环境必须在可执行的 umask 下创建，以支持 dsh 用户运行 Ansible 模块。"
   }
@@ -61,6 +61,19 @@ run "installs_uv_with_official_installer" {
       strcontains(base64decode(output.bootstrap.content), "\"$${uv_bin_dir}/uv\" --version")
     )
     error_message = "uv 必须通过官方安装脚本安装到固定目录，并校验安装结果。"
+  }
+}
+
+run "reuses_matching_uv_and_ansible_venv" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(base64decode(output.bootstrap.content), "[ ! -x \"$${uv_bin_dir}/uvx\" ] ||") &&
+      strcontains(base64decode(output.bootstrap.content), "ansible_venv_marker=\"$${UV_PROJECT_ENVIRONMENT}/.las-dsh-requirements-sha256\"") &&
+      strcontains(base64decode(output.bootstrap.content), "\"$${uv_bin_dir}/uv\" sync --locked")
+    )
+    error_message = "预制镜像中的匹配 uv 与 Ansible venv 必须复用；不匹配时仍须重新安装或同步。"
   }
 }
 

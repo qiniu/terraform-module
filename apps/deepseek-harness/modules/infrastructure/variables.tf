@@ -1,3 +1,13 @@
+variable "image_id" {
+  type    = string
+  default = null
+
+  validation {
+    condition     = var.image_id == null || trimspace(var.image_id) != ""
+    error_message = "image_id 不能是空字符串。"
+  }
+}
+
 variable "preview_count" {
   type = number
 

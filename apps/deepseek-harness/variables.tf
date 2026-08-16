@@ -9,6 +9,17 @@ variable "instance_type" {
   }
 }
 
+variable "image_id" {
+  type        = string
+  description = "可选的预制镜像 ID；未设置时使用当前区域的 Ubuntu 24.04 LTS 官方镜像。"
+  default     = null
+
+  validation {
+    condition     = var.image_id == null || trimspace(var.image_id) != ""
+    error_message = "image_id 不能是空字符串。"
+  }
+}
+
 variable "preview_count" {
   type        = number
   description = "启用的 Preview 槽位数量（0 到 4）。"

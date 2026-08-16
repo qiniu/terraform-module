@@ -39,6 +39,18 @@ variables {
   instance_password       = null
 }
 
+run "accepts_custom_image_id" {
+  command = plan
+  variables {
+    image_id = "golden-image-id"
+  }
+
+  assert {
+    condition     = var.image_id == "golden-image-id"
+    error_message = "根模块必须接受预制镜像 ID。"
+  }
+}
+
 run "uses_fixed_versions_and_installer_contract" {
   command = plan
 

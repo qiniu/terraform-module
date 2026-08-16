@@ -23,6 +23,7 @@ resource "random_password" "code_server" {
 module "infrastructure" {
   source = "./modules/infrastructure"
 
+  image_id                = var.image_id
   preview_count           = var.preview_count
   instance_type           = var.instance_type
   system_disk_size        = var.system_disk_size
