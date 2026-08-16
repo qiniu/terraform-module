@@ -33,20 +33,20 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.terraform.d/plugin-mirror
-          key: qiniu-provider-1.0.0-linux-amd64-sha256-7261f5bbeb77
+          key: qiniu-provider-1.0.0-linux-amd64-sha256-e2d367648b55
 
       - name: Install qiniu provider
         if: steps.cache-provider.outputs.cache-hit != 'true'
         run: |
           MIRROR_DIR="${HOME}/.terraform.d/plugin-mirror/registry.terraform.io/qiniu/qiniu/1.0.0/linux_amd64"
-          PROVIDER_SHA256="7261f5bbeb772f9256c0f0b0b1486b2ad959c6b511de459a2013a667f098857e"
+          PROVIDER_SHA256="e2d367648b559829632767ab372a1eb6693bbf2bef92af63c25722759b65c6eb"
           mkdir -p "${MIRROR_DIR}"
           PROVIDER_TMP="$(mktemp "${MIRROR_DIR}/.terraform-provider-qiniu.XXXXXX")"
           trap 'rm -f "${PROVIDER_TMP}"' EXIT
           curl -fsSL --retry 5 --retry-delay 10 --retry-max-time 300 \
             --retry-all-errors --connect-timeout 30 --max-time 600 \
             -o "${PROVIDER_TMP}" \
-            "https://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/qiniu/qiniu/1.0.0/linux_amd64/terraform-provider-qiniu"
+            "http://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/qiniu/qiniu/1.0.0/linux_amd64/terraform-provider-qiniu"
           printf '%s  %s\n' "${PROVIDER_SHA256}" "${PROVIDER_TMP}" | sha256sum -c -
           chmod +x "${PROVIDER_TMP}"
           mv "${PROVIDER_TMP}" "${MIRROR_DIR}/terraform-provider-qiniu"
