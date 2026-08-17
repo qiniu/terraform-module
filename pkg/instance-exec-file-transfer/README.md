@@ -2,8 +2,8 @@
 
 通过 `qiniu_compute_instance_exec`（InstanceConnect SSH）在目标实例内发布单个文件。
 
-解决 qiniu provider `command` 字段 8192 字节上限问题：按内容大小自动分流，
-所有远端执行命令均在 8192 字节内且为纯 ASCII。
+解决 qiniu provider `command` 字段长度上限问题：按内容大小自动分流，
+所有远端执行命令均在 90000 字节内且为纯 ASCII。
 
 ## 使用方式
 
@@ -36,7 +36,7 @@ resource "qiniu_compute_instance_exec" "next" {
 
 | 内容大小 | 路径 | 说明 |
 | --- | --- | --- |
-| base64 payload ≤ 6200 字节 | `modules/direct` | 单条短命令直传（staging/marker + SHA 校验 + 同目录原子 mv） |
+| base64 payload ≤ 86600 字节 | `modules/direct` | 单条命令直传（staging/marker + SHA 校验 + 同目录原子 mv） |
 | 更大内容 | `modules/chunked` | `prepare`（hash staging/marker + 安全校验）→ 并发 `chunk`（每片独立 part 文件）→ `finalize`（完整序号/SHA 校验 + 目标同目录原子 mv） |
 
 两个子模块均可独立使用（`./modules/direct`、`./modules/chunked`），
@@ -56,7 +56,7 @@ resource "qiniu_compute_instance_exec" "next" {
 | `content_sha256` | string | — | 解码后字节的 64 位小写十六进制 SHA-256 |
 | `target_path` | string | — | 目标绝对路径（拒绝相对路径/`..`/单引号） |
 | `file_mode` | string | `"0644"` | 4 位八进制权限 |
-| `chunk_size` | number | `2048` | 分片 payload 上限（字节，按 4 对齐） |
+| `chunk_size` | number | `89000` | 分片 payload 上限（字节，按 4 对齐） |
 | `staging_root` | string | `"/var/tmp/qiniu-instance-exec-file-transfer"` | 远端 staging 根目录 |
 | `destroy_cleanup` | bool | `true` | 销毁/替换时清理严格匹配的受管文件 |
 

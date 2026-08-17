@@ -4,7 +4,7 @@
 # 前置：source apps/ci-runner/single/env.sh 并 export
 #   TF_VAR_instance_password='<strong-password>'，再 terraform init && apply。
 # 流程：创建临时 Ubuntu 实例 → 发布小文件（hello.txt 直传）与大文件
-# （uv.lock 真实内容，分片）→ verify 校验 SHA-256/0644，不符则 apply 失败。
+# （uv.lock 真实内容，大载荷直传）→ verify 校验 SHA-256/0644，不符则 apply 失败。
 # destroy 会清理实例、key pair 与发布文件。
 # ============================================================================
 
@@ -40,7 +40,7 @@ locals {
   # 待发布内容
   hello_content = base64encode("hello from instance-exec-file-transfer\n")
 
-  # 大文件：真实 uv.lock 样例（约 59 KiB，base64 后 ~78 KiB，超过直传阈值将分片）
+  # 大文件：真实 uv.lock 样例（约 59 KiB，base64 后 ~78 KiB，位于 86.6 KiB 直传阈值内）
   big_content = base64encode(file("${path.module}/fixtures/uv.lock"))
 
   shared = {
@@ -136,7 +136,7 @@ module "small" {
 }
 
 # ---------------------------------------------------------------------------
-# 大文件分片（chunked 子模块）
+# 大文件直传（direct 子模块）
 # ---------------------------------------------------------------------------
 module "big" {
   source = "../../"

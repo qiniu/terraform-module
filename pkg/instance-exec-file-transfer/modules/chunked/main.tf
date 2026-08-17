@@ -3,7 +3,7 @@
 # ============================================================================
 # 流程：prepare（hash 命名 staging/marker + 安全边界）→ chunks（并发，每片
 # 独立 part 文件）→ finalize（序号/SHA 校验 + 目标同目录原子 mv）。
-# 所有渲染命令 <= 8192 字节且为纯 ASCII。
+# 所有渲染命令 <= 90000 字节且为纯 ASCII。
 # 远端脚本模板见 templates/{prepare,chunk,finalize,destroy}.sh.tftpl。
 # ============================================================================
 
@@ -16,7 +16,8 @@ locals {
 
   # ---- 分片计算 ----
   # 单片命令固定开销 = 空 payload 模板长度；payload 上限 =
-  # 8192 - 固定开销 - 余量，再按 4 对齐（base64 字符）。
+  # 实测 InstanceConnect 可执行 97280 字节 ASCII command、97536 字节失败。
+  # 90000 - 固定开销 - 余量，再按 4 对齐（base64 字符）。
   chunk_empty = templatefile("${path.module}/templates/chunk.sh.tftpl", {
     staging_dir = local.staging_dir
     index       = "00000"
@@ -24,7 +25,7 @@ locals {
   })
 
   chunk_fixed_overhead  = length(local.chunk_empty)
-  chunk_payload_max     = min(var.chunk_size, 8192 - local.chunk_fixed_overhead - 64)
+  chunk_payload_max     = min(var.chunk_size, 90000 - local.chunk_fixed_overhead - 64)
   chunk_payload_aligned = floor(local.chunk_payload_max / 4) * 4
   content_len           = nonsensitive(length(var.content))
   chunk_count           = max(1, ceil(local.content_len / local.chunk_payload_aligned))
@@ -71,6 +72,10 @@ resource "qiniu_compute_instance_exec" "prepare" {
   shell       = var.shell
 
   command = local.prepare_command
+
+  triggers = {
+    chunk_count = local.chunk_count
+  }
 
   store_stdout = false
   store_stderr = false
