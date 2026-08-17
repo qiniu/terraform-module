@@ -314,3 +314,25 @@ run "installs_configured_skills" {
     error_message = "skill_installer 必须根据 dsh_skills 清单以 dsh 用户通过 Skills CLI 幂等安装 skill。"
   }
 }
+
+run "keeps_code_server_releases_with_version" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+        "code_server_releases:",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/code_server/tasks/main.yml"])),
+        "code_server_releases",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/code_server/defaults/main.yml"])),
+        "sha256:",
+      )
+    )
+    error_message = "code-server release 清单必须与版本一同定义在 group_vars，role defaults 只保留私有派生值。"
+  }
+}
