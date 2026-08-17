@@ -30,7 +30,7 @@ if ! jq -e . >/dev/null 2>&1 <<<"$outputs_json"; then
 fi
 ssh_cmd="$(jq -r '.ssh_command.value // empty' <<<"$outputs_json")"
 if [[ -z "$ssh_cmd" ]]; then
-    echo "错误: SSH 未启用，请设置 enable_ssh_port_forward = true、提供 instance_password 并执行 terraform apply" >&2
+    echo "错误: SSH 未启用，请设置 enable_ssh_port_forward = true 并执行 terraform apply" >&2
     exit 1
 fi
 

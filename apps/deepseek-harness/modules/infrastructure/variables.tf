@@ -49,6 +49,6 @@ variable "cost_period_unit" {
 
 variable "instance_password" {
   type      = string
-  default   = null
+  nullable  = false
   sensitive = true
 }

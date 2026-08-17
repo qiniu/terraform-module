@@ -109,12 +109,12 @@ variable "cost_period_unit" {
 
 variable "instance_password" {
   type        = string
-  description = "可选的 ECS root 登录密码。"
-  default     = null
+  description = "ECS root 登录密码。"
+  nullable    = false
   sensitive   = true
 
   validation {
-    condition = var.instance_password == null || (
+    condition = (
       length(var.instance_password) >= 8 &&
       length(var.instance_password) <= 30 &&
       can(regex("[A-Za-z]", var.instance_password)) &&

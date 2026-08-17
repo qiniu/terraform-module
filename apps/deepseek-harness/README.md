@@ -70,10 +70,9 @@ Preview 数量通过 `preview_count` 配置，支持 `0..4` 个。用户网页�
 
 ## 网络与 SSH
 
-实例无需公网 IP；Web 服务只通过 HTTPS HTTPProxy 暴露。SSH 公网转发默认关闭。仅在调试时同时设置强密码并开启：
+实例无需公网 IP；Web 服务只通过 HTTPS HTTPProxy 暴露。SSH 公网转发默认关闭，仅在调试时开启：
 
 ```hcl
-instance_password        = "<strong-temporary-password>"
 enable_ssh_port_forward = true
 ```
 

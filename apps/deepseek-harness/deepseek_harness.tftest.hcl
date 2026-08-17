@@ -33,7 +33,7 @@ variables {
   cost_period             = null
   cost_period_unit        = "Month"
   enable_ssh_port_forward = false
-  instance_password       = null
+  instance_password       = "Safe-pass-123"
 }
 
 run "accepts_custom_image_id" {
@@ -112,19 +112,10 @@ run "uses_fixed_versions_and_installer_contract" {
   }
 }
 
-run "rejects_ssh_forward_without_password" {
+run "enables_ssh_port_forward" {
   command = plan
   variables {
     enable_ssh_port_forward = true
-  }
-  expect_failures = [qiniu_compute_instance_exec.install_dsh]
-}
-
-run "accepts_ssh_forward_with_password" {
-  command = plan
-  variables {
-    enable_ssh_port_forward = true
-    instance_password       = "Safe-pass-123"
   }
 }
 
@@ -219,11 +210,10 @@ run "accepts_three_year_period" {
   }
 }
 
-run "rejects_ssh_forward_with_blank_password" {
+run "rejects_blank_instance_password" {
   command = plan
   variables {
-    enable_ssh_port_forward = true
-    instance_password       = "   "
+    instance_password = "   "
   }
   expect_failures = [var.instance_password]
 }

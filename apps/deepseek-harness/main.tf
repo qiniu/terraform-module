@@ -88,13 +88,5 @@ resource "qiniu_compute_instance_exec" "install_dsh" {
 
   lifecycle {
     replace_triggered_by = [terraform_data.install_dsh_runtime]
-
-    precondition {
-      condition = nonsensitive(
-        !var.enable_ssh_port_forward ||
-        (var.instance_password != null && trimspace(var.instance_password) != "")
-      )
-      error_message = "启用 SSH PortForward 时必须设置 instance_password。"
-    }
   }
 }
