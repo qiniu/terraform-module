@@ -115,6 +115,15 @@ run "large_file_routes_to_chunked" {
   }
 }
 
+run "serializes_direct_to_chunked_migration" {
+  command = plan
+
+  assert {
+    condition     = strcontains(file("${path.module}/main.tf"), "depends_on = [module.direct]")
+    error_message = "切换到分片传输必须等待旧直传资源销毁，以便保留受管文件覆盖保护。"
+  }
+}
+
 
 run "outputs_reference_published_path" {
   command = apply

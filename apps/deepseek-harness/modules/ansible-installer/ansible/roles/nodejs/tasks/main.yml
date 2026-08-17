@@ -21,6 +21,18 @@
   register: nodejs_prefix_path
   tags: nodejs-version-check
 
+- name: Check the Node.js managed marker
+  ansible.builtin.stat:
+    path: "{{ nodejs_prefix }}/{{ nodejs_managed_marker }}"
+  register: nodejs_managed_marker_path
+  tags: nodejs-version-check
+
+- name: Check the Node.js managed registry entry
+  ansible.builtin.stat:
+    path: "{{ nodejs_managed_toolchains_dir }}/node-v{{ nodejs_version }}"
+  register: nodejs_managed_registry_path
+  tags: nodejs-version-check
+
 - name: Read the installed Node.js version
   ansible.builtin.command:
     argv:
@@ -31,6 +43,18 @@
   failed_when: false
   when: nodejs_binary.stat.exists
   tags: nodejs-version-check
+
+- name: Verify the existing Node.js installation is managed
+  ansible.builtin.assert:
+    that:
+      - >-
+        not (nodejs_prefix_path.stat.exists or nodejs_prefix_path.stat.islnk | default(false))
+        or (
+          not (nodejs_prefix_path.stat.islnk | default(false))
+          and nodejs_managed_marker_path.stat.exists
+          and nodejs_managed_registry_path.stat.exists
+        )
+    fail_msg: "Refusing to replace unmanaged Node.js prefix: {{ nodejs_prefix }}"
 
 - name: Determine whether Node.js installation is current
   ansible.builtin.set_fact:
@@ -43,6 +67,23 @@
       }}
   tags: nodejs-version-check
 
+- name: Create a Node.js staging directory
+  ansible.builtin.tempfile:
+    state: directory
+    path: /opt
+    prefix: ".node-v{{ nodejs_version }}-"
+    suffix: .tmp
+  register: nodejs_staging
+  when: nodejs_needs_install
+
+- name: Make the Node.js staging directory traversable
+  ansible.builtin.file:
+    path: "{{ nodejs_staging.path }}"
+    owner: root
+    group: root
+    mode: '0755'
+  when: nodejs_needs_install
+
 - name: Download the pinned Node.js archive
   ansible.builtin.get_url:
     url: "{{ nodejs_dist_url }}/{{ nodejs_archive }}"
@@ -51,32 +92,39 @@
     mode: '0600'
   when: nodejs_needs_install
 
-- name: Remove an incomplete Node.js installation
+- name: Remove the managed Node.js installation
   ansible.builtin.file:
     path: "{{ nodejs_prefix }}"
     state: absent
   when: nodejs_needs_install
 
-- name: Create the Node.js installation directory
+- name: Extract the pinned Node.js archive into staging
+  ansible.builtin.unarchive:
+    src: "{{ dsh_download_dir }}/{{ nodejs_archive }}"
+    dest: "{{ nodejs_staging.path }}"
+    remote_src: true
+    extra_opts:
+      - --strip-components=1
+  when: nodejs_needs_install
+
+- name: Publish the staged Node.js installation
+  ansible.builtin.command:
+    argv:
+      - mv
+      - "{{ nodejs_staging.path }}"
+      - "{{ nodejs_prefix }}"
+  when: nodejs_needs_install
+  notify:
+    - restart deepseek harness
+    - restart code server
+
+- name: Make the Node.js prefix traversable
   ansible.builtin.file:
     path: "{{ nodejs_prefix }}"
     state: directory
     owner: root
     group: root
     mode: '0755'
-  when: nodejs_needs_install
-
-- name: Extract the pinned Node.js archive
-  ansible.builtin.unarchive:
-    src: "{{ dsh_download_dir }}/{{ nodejs_archive }}"
-    dest: "{{ nodejs_prefix }}"
-    remote_src: true
-    extra_opts:
-      - --strip-components=1
-  when: nodejs_needs_install
-  notify:
-    - restart deepseek harness
-    - restart code server
 
 - name: Check for the pinned pnpm binary
   ansible.builtin.stat:

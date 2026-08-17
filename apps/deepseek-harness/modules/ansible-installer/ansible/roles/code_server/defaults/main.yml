@@ -1,5 +1,6 @@
 ---
 code_server_prefix: "/opt/code-server-{{ code_server_version }}"
+code_server_managed_marker: .las-dsh-managed
 code_server_releases:
   x86_64:
     archive: "code-server-{{ code_server_version }}-linux-amd64.tar.gz"

@@ -8,12 +8,41 @@
   changed_when: false
   failed_when: false
 
+- name: Verify the cached DeepSeek Harness package is usable offline
+  ansible.builtin.command:
+    argv:
+      - /usr/local/bin/pnpm
+      - dlx
+      - --offline
+      - "--allow-build=node-pty"
+      - "@deepseek-ai/dsh@{{ dsh_version }}"
+      - --version
+  args:
+    chdir: "{{ dsh_workspace_dir }}"
+  environment:
+    HOME: "{{ dsh_home }}"
+    PNPM_CONFIG_OFFLINE: "true"
+    PNPM_CONFIG_STORE_DIR: "{{ dsh_pnpm_store_dir }}"
+  become_user: "{{ dsh_user }}"
+  when: dsh_cached_version.stdout | trim == dsh_cache_key
+  register: dsh_cached_package
+  changed_when: false
+  failed_when: false
+
+- name: Determine whether DeepSeek Harness needs prewarming
+  ansible.builtin.set_fact:
+    dsh_needs_prewarm: >-
+      {{
+        dsh_cached_version.stdout | trim != dsh_cache_key
+        or dsh_cached_package.rc | default(1) != 0
+      }}
+
 - name: Remove stale pnpm dlx cache
   ansible.builtin.file:
     path: "{{ dsh_pnpm_dlx_cache_dir }}"
     state: absent
   become_user: "{{ dsh_user }}"
-  when: dsh_cached_version.stdout | trim != dsh_cache_key
+  when: dsh_needs_prewarm
 
 - name: Prewarm the pinned DeepSeek Harness package
   ansible.builtin.command:
@@ -29,7 +58,7 @@
     HOME: "{{ dsh_home }}"
     PNPM_CONFIG_STORE_DIR: "{{ dsh_pnpm_store_dir }}"
   become_user: "{{ dsh_user }}"
-  when: dsh_cached_version.stdout | trim != dsh_cache_key
+  when: dsh_needs_prewarm
   register: dsh_prewarm
   retries: 5
   delay: 3
@@ -43,7 +72,7 @@
     owner: "{{ dsh_user }}"
     group: "{{ dsh_group }}"
     mode: '0600'
-  when: dsh_cached_version.stdout | trim != dsh_cache_key
+  when: dsh_needs_prewarm
 
 - name: Render the DeepSeek Harness service
   ansible.builtin.template:

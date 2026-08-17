@@ -38,6 +38,9 @@ module "chunked" {
   count  = local.small_file ? 0 : 1
   source = "./modules/chunked"
 
+  # 直传变分片时，先清理旧的严格受管文件，再发布新内容。
+  depends_on = [module.direct]
+
   instance_id     = var.instance_id
   user            = var.user
   port            = var.port

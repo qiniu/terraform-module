@@ -170,6 +170,14 @@ run "uses_pnpm_for_dsh_prewarm_and_offline_service" {
       ) &&
       strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/main.yml"])),
+        "      - --offline",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/main.yml"])),
+        "dsh_needs_prewarm",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/main.yml"])),
         "path: \"{{ dsh_pnpm_dlx_cache_dir }}\"",
       ) &&
       strcontains(
@@ -194,5 +202,77 @@ run "uses_pnpm_for_dsh_prewarm_and_offline_service" {
       )
     )
     error_message = "DeepSeek Harness 必须通过同一 pnpm store 预热，并使用 pnpm 强制离线启动。"
+  }
+}
+
+run "publishes_complete_managed_toolchains" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/nodejs/tasks/main.yml"])),
+        "Verify the existing Node.js installation is managed",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/nodejs/tasks/main.yml"])),
+        "Create a Node.js staging directory",
+      ) &&
+      can(regex(
+        "(?s)Determine whether Node.js installation is current.*Create a Node.js staging directory",
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/nodejs/tasks/main.yml"])),
+      )) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/nodejs/tasks/main.yml"])),
+        "Make the Node.js staging directory traversable",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/nodejs/tasks/main.yml"])),
+        "Make the Node.js prefix traversable",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/code_server/defaults/main.yml"])),
+        "code_server_managed_marker: .las-dsh-managed",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/code_server/tasks/main.yml"])),
+        "Verify the existing code-server installation is managed",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/code_server/tasks/main.yml"])),
+        "Create a code-server staging directory",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/code_server/tasks/main.yml"])),
+        "Make the code-server staging directory traversable",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/code_server/tasks/main.yml"])),
+        "Make the code-server prefix traversable",
+      )
+    )
+    error_message = "Node.js 和 code-server 必须仅替换受管前缀，并经临时目录完整发布。"
+  }
+}
+
+run "documents_las_code_server_links" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
+        "七牛云 LAS 管理的云主机",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
+        "https://{{ code_server_public_authority }}/?folder={{ dsh_workspace_dir }}",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
+        "&path={{ dsh_workspace_dir }}/<相对文件路径>",
+      )
+    )
+    error_message = "部署环境 skill 必须说明七牛云 LAS 主机，并提供不含认证信息的 code-server 工作区和文件链接格式。"
   }
 }
