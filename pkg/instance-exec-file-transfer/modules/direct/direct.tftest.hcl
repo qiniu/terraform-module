@@ -1,7 +1,7 @@
 # ============================================================================
 # direct 子模块契约测试（issue #58 Task 1/2）
 # ============================================================================
-# 覆盖：单命令直传 ≤ 96000 且纯 ASCII、目标父目录安全边界、marker+SHA 覆盖
+# 覆盖：单命令直传 ≤ 90000 且纯 ASCII、目标父目录安全边界、marker+SHA 覆盖
 # 前置校验、同目录原子发布、destroy 清理命令约束。
 # ============================================================================
 
@@ -22,8 +22,8 @@ run "partial_payload_stays_within_limit" {
   command = apply
 
   assert {
-    condition     = length(qiniu_compute_instance_exec.publish.command) <= 96000
-    error_message = "直传命令必须 <= 96000 字节"
+    condition     = length(qiniu_compute_instance_exec.publish.command) <= 90000
+    error_message = "直传命令必须 <= 90000 字节"
   }
 
   assert {
@@ -95,8 +95,8 @@ run "destroy_command_constraints" {
   }
 
   assert {
-    condition     = length(qiniu_compute_instance_exec.publish.destroy_command) <= 96000
-    error_message = "直传 destroy 命令必须 <= 96000 字节"
+    condition     = length(qiniu_compute_instance_exec.publish.destroy_command) <= 90000
+    error_message = "直传 destroy 命令必须 <= 90000 字节"
   }
 
   assert {
@@ -120,20 +120,20 @@ run "outputs_reference_published_path" {
 }
 
 
-run "max_payload_stays_within_96000" {
+run "max_payload_stays_within_90000" {
   command = plan
 
   variables {
-    # 92600 字节 base64 payload（'0' 为合法 base64 字符）+ 最长路径，
+    # 86600 字节 base64 payload（'0' 为合法 base64 字符）+ 最长路径，
     # 模拟最坏直传场景（range 上限 1024，改用 format 宽度填充）
-    content      = format("%092600d", 0)
+    content      = format("%086600d", 0)
     target_path  = "/${format("%0511d", 0)}"
     staging_root = "/${format("%0511d", 1)}"
   }
 
   assert {
-    condition     = length(qiniu_compute_instance_exec.publish.command) <= 96000
-    error_message = "最大直传 payload + 长路径时命令必须仍 <= 96000 字节"
+    condition     = length(qiniu_compute_instance_exec.publish.command) <= 90000
+    error_message = "最大直传 payload + 长路径时命令必须仍 <= 90000 字节"
   }
 
   assert {

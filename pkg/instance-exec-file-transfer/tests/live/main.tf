@@ -40,7 +40,7 @@ locals {
   # 待发布内容
   hello_content = base64encode("hello from instance-exec-file-transfer\n")
 
-  # 大文件：真实 uv.lock 样例（约 59 KiB，base64 后 ~78 KiB，位于 93 KiB 直传阈值内）
+  # 大文件：真实 uv.lock 样例（约 59 KiB，base64 后 ~78 KiB，位于 86.6 KiB 直传阈值内）
   big_content = base64encode(file("${path.module}/fixtures/uv.lock"))
 
   shared = {

@@ -1,7 +1,7 @@
 # ============================================================================
 # chunked 子模块契约测试（issue #58 Task 1/2）
 # ============================================================================
-# 覆盖：prepare/chunk/finalize 命令 ≤ 96000 且纯 ASCII、hash 命名 staging 与
+# 覆盖：prepare/chunk/finalize 命令 ≤ 90000 且纯 ASCII、hash 命名 staging 与
 # marker、安全边界、完整分片序号/SHA 校验、目标同目录原子 mv、destroy 清理。
 # ============================================================================
 
@@ -69,9 +69,9 @@ run "chunk_commands_concurrent_and_limited" {
 
   assert {
     condition = alltrue([
-      for _, r in qiniu_compute_instance_exec.chunk : length(r.command) <= 96000
+      for _, r in qiniu_compute_instance_exec.chunk : length(r.command) <= 90000
     ])
-    error_message = "每个分片命令必须 <= 96000 字节"
+    error_message = "每个分片命令必须 <= 90000 字节"
   }
 
   assert {
@@ -94,14 +94,14 @@ run "large_chunk_payload_uses_expanded_command_budget" {
   command = plan
 
   variables {
-    chunk_size = 95000
+    chunk_size = 89000
   }
 
   assert {
     condition = alltrue([
-      for _, r in qiniu_compute_instance_exec.chunk : length(r.command) <= 96000
+      for _, r in qiniu_compute_instance_exec.chunk : length(r.command) <= 90000
     ])
-    error_message = "每个分片命令必须在 96000 字节预算内"
+    error_message = "每个分片命令必须在 90000 字节预算内"
   }
 
   assert {

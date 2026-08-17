@@ -95,7 +95,7 @@ variable "file_mode" {
 variable "chunk_size" {
   description = "大文件分片时每个分片的 base64 payload 字节上限（不含命令模板固定开销）。"
   type        = number
-  default     = 95000
+  default     = 89000
 
   validation {
     condition     = var.chunk_size >= 64

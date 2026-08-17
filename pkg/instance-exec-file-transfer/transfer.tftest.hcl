@@ -184,9 +184,9 @@ run "at_threshold_content_routes_to_direct" {
   command = apply
 
   variables {
-    # 92600 字节 base64 payload（69450 字节原始内容），恰好等于直传阈值。
-    content        = base64encode("${join("", [for i in range(92) : join("", [for j in range(750) : "a"])])}${join("", [for j in range(450) : "a"])}")
-    content_sha256 = sha256("${join("", [for i in range(92) : join("", [for j in range(750) : "a"])])}${join("", [for j in range(450) : "a"])}")
+    # 86600 字节 base64 payload（64950 字节原始内容），恰好等于直传阈值。
+    content        = base64encode("${join("", [for i in range(86) : join("", [for j in range(750) : "a"])])}${join("", [for j in range(450) : "a"])}")
+    content_sha256 = sha256("${join("", [for i in range(86) : join("", [for j in range(750) : "a"])])}${join("", [for j in range(450) : "a"])}")
   }
 
   assert {
@@ -205,9 +205,9 @@ run "over_threshold_content_routes_to_chunked" {
   command = apply
 
   variables {
-    # 92604 字节 base64 payload（69453 字节原始 'a' 内容），超过直传阈值 4 字节
-    content        = base64encode("${join("", [for i in range(92) : join("", [for j in range(750) : "a"])])}${join("", [for j in range(453) : "a"])}")
-    content_sha256 = sha256("${join("", [for i in range(92) : join("", [for j in range(750) : "a"])])}${join("", [for j in range(453) : "a"])}")
+    # 86604 字节 base64 payload（64953 字节原始 'a' 内容），超过直传阈值 4 字节
+    content        = base64encode("${join("", [for i in range(86) : join("", [for j in range(750) : "a"])])}${join("", [for j in range(453) : "a"])}")
+    content_sha256 = sha256("${join("", [for i in range(86) : join("", [for j in range(750) : "a"])])}${join("", [for j in range(453) : "a"])}")
     chunk_size     = 2048
   }
 

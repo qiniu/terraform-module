@@ -4,13 +4,13 @@
 # 通过 qiniu_compute_instance_exec 在目标实例内发布单个文件，按内容大小自动分流：
 #   - 小文件：module.direct 单条短命令直传；
 #   - 大文件：module.chunked 并发分片（prepare → chunk → finalize）。
-# 所有渲染命令均 <= 96000 字节且为纯 ASCII，规避远端 "Argument list too long"。
+# 所有渲染命令均 <= 90000 字节且为纯 ASCII，规避远端 "Argument list too long"。
 # ============================================================================
 
 locals {
   # publish.sh.tftpl 固定开销约 1477 字节（含安全守卫与路径）。路径输入
-  # 最多各 512 字节时，92.6 KiB payload 仍为命令预算保留约 100 字节余量。
-  direct_payload_cap = 92600
+  # 最多各 512 字节时，86.6 KiB payload 仍为命令预算保留约 100 字节余量。
+  direct_payload_cap = 86600
   # 长度可由公开输入推导（非敏感），仅内容本身敏感
   small_file = nonsensitive(length(var.content)) <= local.direct_payload_cap
 }
