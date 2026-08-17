@@ -284,11 +284,17 @@ run "documents_preview_network_binding" {
   command = plan
 
   assert {
-    condition = strcontains(
-      base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-      "应用监听 `0.0.0.0:{{ port }}`",
+    condition = (
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
+        "应用监听 `0.0.0.0:{{ port }}`",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
+        "ss -ltn '( sport = :<port> )'",
+      )
     )
-    error_message = "Preview 服务必须监听实例网卡，以便 HTTPProxy 访问对应实例内网端口。"
+    error_message = "Preview 服务必须先检查槽位端口空闲，再监听实例网卡，以便 HTTPProxy 访问对应实例内网端口。"
   }
 }
 
