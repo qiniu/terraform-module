@@ -34,7 +34,7 @@ disable-model-invocation: false
 
 ## 网络与端口
 
-公网入口由 HTTPProxy 提供。HTTPProxy 将公网请求转发至本机 Nginx 或 Preview 服务；应用服务应优先只监听 `127.0.0.1`，不需要绑定公网网卡。
+公网入口由 HTTPProxy 提供。HTTPProxy 将公网请求转发至本机 Nginx 或 Preview 服务；DeepSeek Harness 和 code-server 后端应监听 `127.0.0.1`，由本机 Nginx 代理；Preview 服务由 HTTPProxy 直接访问，必须监听 `0.0.0.0`。
 
 - DeepSeek Harness：HTTPProxy 将公网请求转发至本机 Nginx `{{ nginx_proxy_port }}`，Nginx 再代理至 `127.0.0.1:{{ dsh_port }}`
 - code-server：HTTPProxy 将公网请求转发至本机 Nginx `{{ code_server_proxy_port }}`，Nginx 再代理至 `127.0.0.1:{{ code_server_port }}`
@@ -44,11 +44,11 @@ disable-model-invocation: false
 {% else %}
 Preview 槽位共 {{ preview_ports | length }} 个。每个槽位由 HTTPProxy 直接转发到用户应用，不经过本机 Nginx：
 {% for port in preview_ports %}
-- Preview {{ loop.index }}：应用监听 `127.0.0.1:{{ port }}`，公网地址为 `https://{{ preview_public_authorities[loop.index0] }}`
+- Preview {{ loop.index }}：应用监听 `0.0.0.0:{{ port }}`，公网地址为 `https://{{ preview_public_authorities[loop.index0] }}`
 {% endfor %}
 {% endif %}
 
-不要占用其他 Preview 槽位的端口，也不要把开发服务绑定到 `0.0.0.0`。如果需要 WebSocket、HMR 或 SSE，直接在对应 Preview 槽位启动支持这些协议的开发服务器即可，HTTPProxy 会转发该连接。
+不要占用其他 Preview 槽位的端口；Preview 开发服务必须绑定到对应端口的 `0.0.0.0`。如果需要 WebSocket、HMR 或 SSE，直接在对应 Preview 槽位启动支持这些协议的开发服务器即可，HTTPProxy 会转发该连接。
 
 ## 可用能力
 
@@ -65,11 +65,11 @@ uv 固定版本为 `{{ uv_version }}`，安装位置为 `/opt/uv-v{{ uv_version 
 
 Python 项目应在 `{{ dsh_workspace_dir }}` 中使用自己的 `.venv`，例如 `uv init`、`uv sync` 和 `uv run`。不得改动 root 的 `/opt`、`/usr/local/bin` 或 `{{ dsh_ansible_venv_dir }}`。
 
-推荐流程是：在工作目录准备项目，选择一个 Preview 槽位，令开发服务器监听对应的 `127.0.0.1` 端口，确认本机访问正常后，再把对应公网 URL 告知用户。多个网页或独立服务可以分别使用不同槽位。
+推荐流程是：在工作目录准备项目，选择一个 Preview 槽位，令开发服务器监听对应的 `0.0.0.0` 端口，确认本机访问正常后，再把对应公网 URL 告知用户。多个网页或独立服务可以分别使用不同槽位。
 
 ## 检查与故障排查
 
-启动服务后，先用 `ss -ltnp` 确认服务监听的是预期的 loopback 端口，再用 `curl` 访问对应的 `127.0.0.1:<port>`。随后检查自己启动的应用输出或日志。DeepSeek Harness 和 code-server 是系统级托管服务，不要尝试重启、修改或通过 user-level systemd 管理它们。最后访问对应公网 Preview URL。应用尚未启动时，HTTPProxy 返回 5xx（通常为 `502`，也可能为 `503`）是正常现象。
+启动服务后，先用 `ss -ltnp` 确认 Preview 服务监听的是预期的 `0.0.0.0` 端口，再用 `curl` 访问对应的 `127.0.0.1:<port>`。随后检查自己启动的应用输出或日志。DeepSeek Harness 和 code-server 是系统级托管服务，不要尝试重启、修改或通过 user-level systemd 管理它们。最后访问对应公网 Preview URL。应用尚未启动时，HTTPProxy 返回 5xx（通常为 `502`，也可能为 `503`）是正常现象。
 
 ## 安全边界
 

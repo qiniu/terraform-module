@@ -280,6 +280,18 @@ run "documents_las_code_server_links" {
   }
 }
 
+run "documents_preview_network_binding" {
+  command = plan
+
+  assert {
+    condition = strcontains(
+      base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
+      "应用监听 `0.0.0.0:{{ port }}`",
+    )
+    error_message = "Preview 服务必须监听实例网卡，以便 HTTPProxy 访问对应实例内网端口。"
+  }
+}
+
 run "installs_configured_skills" {
   command = plan
 
