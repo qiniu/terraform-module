@@ -340,6 +340,18 @@ run "keeps_code_server_releases_with_version" {
   }
 }
 
+run "recognizes_code_server_version_with_build_metadata" {
+  command = plan
+
+  assert {
+    condition = strcontains(
+      base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/code_server/tasks/main.yml"])),
+      "(code_server_installed_version.stdout | default('')).split() | first | default('') != code_server_version",
+    )
+    error_message = "code-server 版本检查必须忽略 --version 输出中的构建元数据，避免重复安装。"
+  }
+}
+
 run "documents_installed_skills_and_safe_troubleshooting" {
   command = plan
 

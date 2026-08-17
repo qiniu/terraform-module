@@ -50,7 +50,7 @@
         not code_server_binary.stat.exists
         or not code_server_managed_marker_path.stat.exists
         or code_server_installed_version.rc | default(1) != 0
-        or code_server_installed_version.stdout | default('') | trim != code_server_version
+        or (code_server_installed_version.stdout | default('')).split() | first | default('') != code_server_version
       }}
 
 - name: Verify the existing code-server installation is managed
