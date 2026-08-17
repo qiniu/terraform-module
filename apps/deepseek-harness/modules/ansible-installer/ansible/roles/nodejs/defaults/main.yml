@@ -1,0 +1,9 @@
+---
+nodejs_platforms:
+  x86_64: linux-x64
+  aarch64: linux-arm64
+nodejs_prefix: "/opt/node-v{{ nodejs_version }}"
+nodejs_dist_url: "https://nodejs.org/dist/v{{ nodejs_version }}"
+nodejs_archive: "node-v{{ nodejs_version }}-{{ nodejs_platform }}.tar.xz"
+nodejs_managed_toolchains_dir: /var/lib/las-dsh-installer/managed-toolchains
+nodejs_managed_marker: .las-dsh-managed

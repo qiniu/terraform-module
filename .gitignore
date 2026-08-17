@@ -1,8 +1,8 @@
 .terraform/
 *.tfstate
-*.tfstate.lock.info
-*.tfstate.backup
+*.tfstate.*
 crash.log
+crash.*.log
 custom-plugins/
 *.lock.hcl
 *.auto.*
@@ -13,4 +13,10 @@ env.sh
 .playwright-cli
 docs/superpowers/
 *.pyc
+__pycache__/
+*.env
+.env.*
+!.env.example
+!env.example
+!*.tfvars.example
 .tools

@@ -1,0 +1,10 @@
+---
+code_server_prefix: "/opt/code-server-{{ code_server_version }}"
+code_server_managed_marker: .las-dsh-managed
+code_server_releases:
+  x86_64:
+    archive: "code-server-{{ code_server_version }}-linux-amd64.tar.gz"
+    sha256: a38d26f4cb81f768feddff79e2937fd3f39c83d3da8be3da7225e1087e62e4ed
+  aarch64:
+    archive: "code-server-{{ code_server_version }}-linux-arm64.tar.gz"
+    sha256: ade569a677d1c04ee66ef153382b7e15bf261f955407663c7ddc6b87f9ee29fc

@@ -1,0 +1,116 @@
+---
+- name: Verify supported operating system
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['distribution'] == 'Ubuntu'
+      - ansible_facts['distribution_major_version'] | int >= 24
+    fail_msg: This installer supports Ubuntu 24.04 or newer only.
+
+- name: Install base dependencies
+  ansible.builtin.apt:
+    name: "{{ dsh_base_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  retries: 5
+  delay: 3
+
+- name: Read the system group ID limit
+  ansible.builtin.command:
+    argv:
+      - awk
+      - '$1 == "SYS_GID_MAX" { value = $2 } END { print value }'
+      - /etc/login.defs
+  register: dsh_sys_gid_max_result
+  changed_when: false
+
+- name: Read the system user ID limit
+  ansible.builtin.command:
+    argv:
+      - awk
+      - '$1 == "SYS_UID_MAX" { value = $2 } END { print value }'
+      - /etc/login.defs
+  register: dsh_sys_uid_max_result
+  changed_when: false
+
+- name: Set safe system ID limits
+  ansible.builtin.set_fact:
+    dsh_sys_gid_max: "{{ dsh_sys_gid_max_result.stdout | trim if dsh_sys_gid_max_result.stdout | trim is match('^[0-9]+$') else '999' }}"
+    dsh_sys_uid_max: "{{ dsh_sys_uid_max_result.stdout | trim if dsh_sys_uid_max_result.stdout | trim is match('^[0-9]+$') else '999' }}"
+
+- name: Inspect the existing DeepSeek Harness group
+  ansible.builtin.command:
+    argv:
+      - getent
+      - group
+      - "{{ dsh_group }}"
+  register: dsh_existing_group
+  changed_when: false
+  failed_when: false
+
+- name: Inspect the existing DeepSeek Harness user
+  ansible.builtin.command:
+    argv:
+      - getent
+      - passwd
+      - "{{ dsh_user }}"
+  register: dsh_existing_user
+  changed_when: false
+  failed_when: false
+
+- name: Inspect the existing DeepSeek Harness user groups
+  ansible.builtin.command:
+    argv:
+      - id
+      - -nG
+      - "{{ dsh_user }}"
+  register: dsh_existing_user_groups
+  changed_when: false
+  failed_when: false
+  when: dsh_existing_user.rc == 0
+
+- name: Reject an unsafe existing DeepSeek Harness group
+  ansible.builtin.assert:
+    that:
+      - dsh_existing_group.rc != 0 or (dsh_existing_group.stdout.split(':')[2] is match('^[0-9]+$') and dsh_existing_group.stdout.split(':')[2] | int > 0 and dsh_existing_group.stdout.split(':')[2] | int <= dsh_sys_gid_max | int)
+    fail_msg: Unsafe existing dsh group; it must use a non-root system GID.
+
+- name: Reject an existing DeepSeek Harness user without its group
+  ansible.builtin.assert:
+    that: dsh_existing_user.rc != 0 or dsh_existing_group.rc == 0
+    fail_msg: Unsafe existing dsh user; its required primary group is missing.
+
+- name: Reject an unsafe existing DeepSeek Harness user
+  ansible.builtin.assert:
+    that:
+      - dsh_existing_user.rc != 0 or (dsh_existing_user.stdout.split(':')[2] is match('^[0-9]+$') and dsh_existing_user.stdout.split(':')[2] | int > 0 and dsh_existing_user.stdout.split(':')[2] | int <= dsh_sys_uid_max | int and dsh_existing_user.stdout.split(':')[5] == dsh_home and dsh_existing_user.stdout.split(':')[6] == '/bin/bash' and dsh_existing_user_groups.stdout | default('') is not search('(^|\\s)(sudo|admin|wheel)(\\s|$)'))
+      - dsh_existing_user.rc != 0 or dsh_existing_user.stdout.split(':')[3] | int == dsh_existing_group.stdout.split(':')[2] | int
+    fail_msg: Unsafe existing dsh user; it must be a non-root system user with the expected group, home, shell, and no privileged groups.
+
+- name: Create the DeepSeek Harness group
+  ansible.builtin.group:
+    name: "{{ dsh_group }}"
+    system: true
+
+- name: Create the DeepSeek Harness user
+  ansible.builtin.user:
+    name: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    system: true
+    home: "{{ dsh_home }}"
+    create_home: true
+    shell: /bin/bash
+    password_lock: true
+
+- name: Create DeepSeek Harness directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ dsh_state_dir }}", mode: '0700' }
+    - { path: "{{ dsh_pnpm_store_dir }}", mode: '0700' }
+    - { path: "{{ dsh_workspace_dir }}", mode: '0750' }
+    - { path: "{{ dsh_download_dir }}", mode: '0700' }

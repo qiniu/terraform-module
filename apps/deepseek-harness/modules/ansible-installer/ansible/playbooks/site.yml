@@ -1,0 +1,82 @@
+---
+- name: Deploy DeepSeek Harness
+  hosts: deepseek_harness
+  become: true
+  gather_facts: true
+  pre_tasks:
+    - name: Verify the Preview port collection
+      ansible.builtin.assert:
+        that:
+          - preview_ports is sequence
+          - preview_ports is not string
+          - preview_ports is not mapping
+          - preview_ports | length <= 4
+        fail_msg: Provide valid endpoint authorities, passwords, and distinct service ports through inventory or extra vars.
+
+    - name: Collect service and Preview ports
+      ansible.builtin.set_fact:
+        dsh_all_ports: "{{ [dsh_port, nginx_proxy_port, code_server_port, code_server_proxy_port] + preview_ports }}"
+
+    - name: Verify required deployment variables
+      ansible.builtin.assert:
+        that:
+          - dsh_web_public_authority | default('') | length > 0
+          - code_server_public_authority | default('') | length > 0
+          - preview_public_authorities is sequence
+          - preview_public_authorities is not string
+          - preview_public_authorities is not mapping
+          - preview_public_authorities | length == preview_ports | length
+          - preview_public_authorities | select('string') | list | length == preview_ports | length
+          - preview_public_authorities | map('trim') | reject('equalto', '') | list | length == preview_ports | length
+          - dsh_web_password | default('') | length > 0
+          - code_server_password | default('') | length > 0
+          - dsh_all_ports | map('string') | select('match', '^[1-9][0-9]{0,4}$') | list | length == dsh_all_ports | length
+          - dsh_all_ports | map('int') | select('>=', 1) | list | length == dsh_all_ports | length
+          - dsh_all_ports | map('int') | select('<=', 65535) | list | length == dsh_all_ports | length
+          - dsh_all_ports | map('int') | unique | list | length == dsh_all_ports | length
+        fail_msg: Provide valid endpoint authorities, passwords, and distinct service ports through inventory or extra vars.
+  roles:
+    - base
+    - nodejs
+    - code_server
+    - deepseek_harness
+    - nginx
+    - las_dsh_environment
+  post_tasks:
+    - name: Apply pending service handlers before health checks
+      ansible.builtin.meta: flush_handlers
+
+    - name: Wait for the DeepSeek Harness loopback service
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ dsh_port }}/"
+        status_code: [200, 201, 202, 204]
+      register: dsh_health
+      retries: 60
+      delay: 1
+      until: dsh_health.status in [200, 201, 202, 204]
+
+    - name: Verify the Harness Nginx authentication boundary
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ nginx_proxy_port }}/"
+        status_code: 401
+
+    - name: Verify the code-server loopback authentication boundary
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ code_server_port }}/"
+        status_code: [302, 401]
+        follow_redirects: none
+      register: code_server_health
+      retries: 60
+      delay: 1
+      until: code_server_health.status in [302, 401]
+
+    - name: Verify the code-server Nginx authentication boundary
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ code_server_proxy_port }}/"
+        status_code: [302, 401]
+        follow_redirects: none
+
+    - name: Remove superseded managed Node.js toolchains after health checks
+      ansible.builtin.include_role:
+        name: nodejs
+        tasks_from: cleanup

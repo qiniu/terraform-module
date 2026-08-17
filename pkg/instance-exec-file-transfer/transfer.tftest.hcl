@@ -53,6 +53,26 @@ run "rejects_relative_target_path" {
   expect_failures = [var.target_path]
 }
 
+run "rejects_target_path_longer_than_512_bytes" {
+  command = plan
+
+  variables {
+    target_path = "/${format("%0512d", 0)}"
+  }
+
+  expect_failures = [var.target_path]
+}
+
+run "rejects_staging_root_longer_than_512_bytes" {
+  command = plan
+
+  variables {
+    staging_root = "/${format("%0512d", 0)}"
+  }
+
+  expect_failures = [var.staging_root]
+}
+
 
 run "rejects_invalid_file_mode" {
   command = plan
@@ -84,14 +104,34 @@ run "small_file_routes_to_direct" {
   }
 }
 
+run "expanded_direct_payload_routes_to_direct" {
+  command = apply
+
+  variables {
+    content        = base64encode(join("", [for i in range(78) : join("", [for j in range(750) : "a"])]))
+    content_sha256 = sha256(join("", [for i in range(78) : join("", [for j in range(750) : "a"])]))
+  }
+
+  assert {
+    condition     = length(module.direct) == 1
+    error_message = "78 KiB base64 payload 应直接发布"
+  }
+
+  assert {
+    condition     = length(module.chunked) == 0
+    error_message = "78 KiB base64 payload 不应进入分片路径"
+  }
+}
+
 
 run "large_file_routes_to_chunked" {
   command = apply
 
   variables {
-    # 32 字符 × 256 = 8192 字节内容 → base64 约 10.9 KiB，超过直传阈值必然分片
-    content        = base64encode(join("", [for i in range(256) : "0123456789abcdefghijklmnopqrstuvwxyz"]))
-    content_sha256 = sha256(join("", [for i in range(256) : "0123456789abcdefghijklmnopqrstuvwxyz"]))
+    # 94 × 750 = 70500 字节内容 → 94000 字节 base64，超过直传阈值必然分片。
+    content        = base64encode(join("", [for i in range(94) : join("", [for j in range(750) : "a"])]))
+    content_sha256 = sha256(join("", [for i in range(94) : join("", [for j in range(750) : "a"])]))
+    chunk_size     = 2048
   }
 
   assert {
@@ -115,6 +155,15 @@ run "large_file_routes_to_chunked" {
   }
 }
 
+run "serializes_direct_to_chunked_migration" {
+  command = plan
+
+  assert {
+    condition     = strcontains(file("${path.module}/main.tf"), "resource \"terraform_data\" \"transport\"")
+    error_message = "传输方式切换必须通过替换屏障先销毁旧发布资源。"
+  }
+}
+
 
 run "outputs_reference_published_path" {
   command = apply
@@ -135,10 +184,9 @@ run "at_threshold_content_routes_to_direct" {
   command = apply
 
   variables {
-    # 6200 字节 base64 payload（ceil(6200/4)*3=4650 字节原始内容），恰好等于直传阈值。
-    # 原始内容用 'a' 重复（'a' 解码为合法 UTF-8），range 上限 1024 内分 5 段拼接。
-    content        = base64encode(join("", [for i in range(5) : join("", [for j in range(930) : "a"])]))
-    content_sha256 = sha256(join("", [for i in range(5) : join("", [for j in range(930) : "a"])]))
+    # 92600 字节 base64 payload（69450 字节原始内容），恰好等于直传阈值。
+    content        = base64encode("${join("", [for i in range(92) : join("", [for j in range(750) : "a"])])}${join("", [for j in range(450) : "a"])}")
+    content_sha256 = sha256("${join("", [for i in range(92) : join("", [for j in range(750) : "a"])])}${join("", [for j in range(450) : "a"])}")
   }
 
   assert {
@@ -157,9 +205,10 @@ run "over_threshold_content_routes_to_chunked" {
   command = apply
 
   variables {
-    # 6204 字节 base64 payload（4653 字节原始 'a' 内容），超过直传阈值 4 字节
-    content        = base64encode(join("", [for i in range(9) : join("", [for j in range(517) : "a"])]))
-    content_sha256 = sha256(join("", [for i in range(9) : join("", [for j in range(517) : "a"])]))
+    # 92604 字节 base64 payload（69453 字节原始 'a' 内容），超过直传阈值 4 字节
+    content        = base64encode("${join("", [for i in range(92) : join("", [for j in range(750) : "a"])])}${join("", [for j in range(453) : "a"])}")
+    content_sha256 = sha256("${join("", [for i in range(92) : join("", [for j in range(750) : "a"])])}${join("", [for j in range(453) : "a"])}")
+    chunk_size     = 2048
   }
 
   assert {

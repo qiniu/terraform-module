@@ -1,0 +1,33 @@
+---
+- name: Validate required deployment environment inputs
+  ansible.builtin.assert:
+    that:
+      - dsh_web_public_authority | default('') | length > 0
+      - preview_ports is defined
+      - preview_ports | default([]) is sequence
+      - preview_ports | default([]) is not string
+      - preview_ports | default([]) is not mapping
+      - preview_public_authorities is defined
+      - preview_public_authorities | default([]) is sequence
+      - preview_public_authorities | default([]) is not string
+      - preview_public_authorities | default([]) is not mapping
+      - preview_public_authorities | default([]) | length == preview_ports | default([]) | length
+      - uv_version | default('') | length > 0
+      - dsh_ansible_venv_dir | default('') | length > 0
+    fail_msg: las_dsh_environment requires deployment endpoints, Preview arrays, uv_version, and dsh_ansible_venv_dir.
+
+- name: Create the managed deployment skill directory
+  ansible.builtin.file:
+    path: "{{ dsh_home }}/.agents/skills/{{ dsh_environment_skill_name }}"
+    state: directory
+    owner: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    mode: '0700'
+
+- name: Render the deployment environment skill
+  ansible.builtin.template:
+    src: SKILL.md.j2
+    dest: "{{ dsh_home }}/.agents/skills/{{ dsh_environment_skill_name }}/SKILL.md"
+    owner: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    mode: '0600'

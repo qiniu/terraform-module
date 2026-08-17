@@ -18,7 +18,7 @@ output "big_published_path" {
 }
 
 output "big_chunk_count" {
-  description = "大文件实际分片数量（应 > 1，验证分片路径）。"
+  description = "大文件实际分片数量（应为 1，验证直传路径）。"
   value       = module.big.chunk_count
 }
 

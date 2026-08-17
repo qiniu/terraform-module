@@ -1,0 +1,21 @@
+[Unit]
+Description=DeepSeek Harness web service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{ dsh_user }}
+Group={{ dsh_group }}
+Environment=HOME={{ dsh_home }}
+Environment=DSH_HOME={{ dsh_state_dir }}
+Environment=PATH={{ nodejs_prefix }}/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PNPM_CONFIG_STORE_DIR={{ dsh_pnpm_store_dir }}
+Environment=PNPM_CONFIG_OFFLINE=true
+WorkingDirectory={{ dsh_workspace_dir }}
+ExecStart=/usr/local/bin/pnpm dlx --allow-build=node-pty @deepseek-ai/dsh@{{ dsh_version }} web --port {{ dsh_port }} --trusted-host {{ dsh_web_public_authority }}
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

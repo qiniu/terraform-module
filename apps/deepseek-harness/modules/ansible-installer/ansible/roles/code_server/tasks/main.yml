@@ -1,0 +1,171 @@
+---
+- name: Validate required code-server inputs
+  ansible.builtin.assert:
+    that:
+      - code_server_version | default('') | length > 0
+      - code_server_port is defined
+      - code_server_port | string is match('^[1-9][0-9]{0,4}$')
+      - code_server_port | int <= 65535
+    fail_msg: code_server requires a version and a valid loopback port.
+
+- name: Select the code-server release for this architecture
+  ansible.builtin.set_fact:
+    code_server_release: "{{ code_server_releases[ansible_facts['architecture']] | default({}) }}"
+
+- name: Verify supported code-server architecture
+  ansible.builtin.assert:
+    that: code_server_release | length > 0
+    fail_msg: "Unsupported architecture for code-server: {{ ansible_facts['architecture'] }}"
+
+- name: Check the pinned code-server prefix
+  ansible.builtin.stat:
+    path: "{{ code_server_prefix }}"
+    follow: false
+  register: code_server_prefix_path
+
+- name: Check the code-server managed marker
+  ansible.builtin.stat:
+    path: "{{ code_server_prefix }}/{{ code_server_managed_marker }}"
+  register: code_server_managed_marker_path
+
+- name: Check for the pinned code-server binary
+  ansible.builtin.stat:
+    path: "{{ code_server_prefix }}/bin/code-server"
+  register: code_server_binary
+
+- name: Read the installed code-server version
+  ansible.builtin.command:
+    argv:
+      - "{{ code_server_prefix }}/bin/code-server"
+      - --version
+  register: code_server_installed_version
+  changed_when: false
+  failed_when: false
+  when: code_server_binary.stat.exists
+
+- name: Determine whether code-server installation is current
+  ansible.builtin.set_fact:
+    code_server_needs_install: >-
+      {{
+        not code_server_binary.stat.exists
+        or not code_server_managed_marker_path.stat.exists
+        or code_server_installed_version.rc | default(1) != 0
+        or code_server_installed_version.stdout | default('') | trim != code_server_version
+      }}
+
+- name: Verify the existing code-server installation is managed
+  ansible.builtin.assert:
+    that:
+      - >-
+        not (code_server_prefix_path.stat.exists or code_server_prefix_path.stat.islnk | default(false))
+        or (
+          not (code_server_prefix_path.stat.islnk | default(false))
+          and code_server_managed_marker_path.stat.exists
+        )
+    fail_msg: "Refusing to replace unmanaged code-server prefix: {{ code_server_prefix }}"
+
+- name: Create a code-server staging directory
+  ansible.builtin.tempfile:
+    state: directory
+    path: /opt
+    prefix: ".code-server-{{ code_server_version }}-"
+    suffix: .tmp
+  register: code_server_staging
+  when: code_server_needs_install
+
+- name: Make the code-server staging directory traversable
+  ansible.builtin.file:
+    path: "{{ code_server_staging.path }}"
+    owner: root
+    group: root
+    mode: '0755'
+  when: code_server_needs_install
+
+- name: Download the pinned code-server archive
+  ansible.builtin.get_url:
+    url: "https://github.com/coder/code-server/releases/download/v{{ code_server_version }}/{{ code_server_release.archive }}"
+    dest: "{{ dsh_download_dir }}/{{ code_server_release.archive }}"
+    checksum: "sha256:{{ code_server_release.sha256 }}"
+    mode: '0600'
+  when: code_server_needs_install
+
+- name: Remove the managed code-server installation
+  ansible.builtin.file:
+    path: "{{ code_server_prefix }}"
+    state: absent
+  when: code_server_needs_install
+
+- name: Extract the pinned code-server archive into staging
+  ansible.builtin.unarchive:
+    src: "{{ dsh_download_dir }}/{{ code_server_release.archive }}"
+    dest: "{{ code_server_staging.path }}"
+    remote_src: true
+    extra_opts:
+      - --strip-components=1
+  when: code_server_needs_install
+
+- name: Publish the staged code-server installation
+  ansible.builtin.command:
+    argv:
+      - mv
+      - "{{ code_server_staging.path }}"
+      - "{{ code_server_prefix }}"
+  when: code_server_needs_install
+  notify: restart code server
+
+- name: Make the code-server prefix traversable
+  ansible.builtin.file:
+    path: "{{ code_server_prefix }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Mark the managed code-server installation
+  ansible.builtin.copy:
+    content: "code-server:{{ code_server_version }}\n"
+    dest: "{{ code_server_prefix }}/{{ code_server_managed_marker }}"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Publish the code-server executable
+  ansible.builtin.file:
+    src: "{{ code_server_prefix }}/bin/code-server"
+    dest: /usr/local/bin/code-server
+    state: link
+    force: true
+  notify: restart code server
+
+- name: Create the code-server configuration directory
+  ansible.builtin.file:
+    path: "{{ dsh_home }}/.config/code-server"
+    state: directory
+    owner: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    mode: '0700'
+
+- name: Render the code-server configuration
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: "{{ dsh_home }}/.config/code-server/config.yaml"
+    owner: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    mode: '0600'
+  no_log: true
+  notify: restart code server
+
+- name: Render the code-server service
+  ansible.builtin.template:
+    src: code-server.service.j2
+    dest: /etc/systemd/system/code-server.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart code server
+
+- name: Enable and start code-server
+  ansible.builtin.systemd_service:
+    name: code-server.service
+    enabled: true
+    state: started
