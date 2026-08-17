@@ -304,6 +304,14 @@ run "documents_preview_network_binding" {
       strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
         "## 用户 Preview 端口",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
+        "NAT 回环",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
+        "### 注意事项",
       )
     )
     error_message = "Preview 服务必须先检查槽位端口空闲，再监听实例网卡，以便 HTTPProxy 访问对应实例内网端口。"
