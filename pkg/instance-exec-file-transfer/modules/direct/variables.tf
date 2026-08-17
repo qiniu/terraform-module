@@ -57,7 +57,7 @@ variable "content_sha256" {
 }
 
 variable "target_path" {
-  description = "目标机上的绝对目标路径，文件将被发布到该路径。"
+  description = "目标机上的绝对目标路径（最多 512 字节），文件将被发布到该路径。"
   type        = string
 
   validation {
@@ -74,6 +74,11 @@ variable "target_path" {
     condition     = !strcontains(var.target_path, "'")
     error_message = "target_path 不得包含单引号，避免破坏渲染脚本。"
   }
+
+  validation {
+    condition     = length(var.target_path) <= 512
+    error_message = "target_path 不得超过 512 字节，以保证直传命令长度预算。"
+  }
 }
 
 variable "file_mode" {
@@ -88,13 +93,18 @@ variable "file_mode" {
 }
 
 variable "staging_root" {
-  description = "远端 staging 根目录，staging 与 marker 会放在其下的 <sha256> 子目录中。"
+  description = "远端 staging 根目录（最多 512 字节），staging 与 marker 会放在其下的 <sha256> 子目录中。"
   type        = string
   default     = "/var/tmp/qiniu-instance-exec-file-transfer"
 
   validation {
     condition     = startswith(var.staging_root, "/")
     error_message = "staging_root 必须是绝对路径。"
+  }
+
+  validation {
+    condition     = length(var.staging_root) <= 512
+    error_message = "staging_root 不得超过 512 字节，以保证直传命令长度预算。"
   }
 }
 

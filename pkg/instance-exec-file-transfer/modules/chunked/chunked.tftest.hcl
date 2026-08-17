@@ -1,7 +1,7 @@
 # ============================================================================
 # chunked 子模块契约测试（issue #58 Task 1/2）
 # ============================================================================
-# 覆盖：prepare/chunk/finalize 命令 ≤ 8192 且纯 ASCII、hash 命名 staging 与
+# 覆盖：prepare/chunk/finalize 命令 ≤ 90000 且纯 ASCII、hash 命名 staging 与
 # marker、安全边界、完整分片序号/SHA 校验、目标同目录原子 mv、destroy 清理。
 # ============================================================================
 
@@ -16,6 +16,7 @@ variables {
   content_sha256 = sha256(join("", [for i in range(256) : "0123456789abcdefghijklmnopqrstuvwxyz"]))
   target_path    = "/opt/test/hello.txt"
   file_mode      = "0644"
+  chunk_size     = 2048
 }
 
 run "chunked_publishes_multi_chunk" {
@@ -68,9 +69,9 @@ run "chunk_commands_concurrent_and_limited" {
 
   assert {
     condition = alltrue([
-      for _, r in qiniu_compute_instance_exec.chunk : length(r.command) <= 8192
+      for _, r in qiniu_compute_instance_exec.chunk : length(r.command) <= 90000
     ])
-    error_message = "每个分片命令必须 <= 8192 字节"
+    error_message = "每个分片命令必须 <= 90000 字节"
   }
 
   assert {
@@ -86,6 +87,37 @@ run "chunk_commands_concurrent_and_limited" {
       strcontains(r.command, "part.${k}")
     ])
     error_message = "每个 chunk 必须写入自己的独立 part 文件（可并发、不互相追加）"
+  }
+}
+
+run "large_chunk_payload_uses_expanded_command_budget" {
+  command = plan
+
+  variables {
+    chunk_size = 89000
+  }
+
+  assert {
+    condition = alltrue([
+      for _, r in qiniu_compute_instance_exec.chunk : length(r.command) <= 90000
+    ])
+    error_message = "每个分片命令必须在 90000 字节预算内"
+  }
+
+  assert {
+    condition = alltrue([
+      for _, r in qiniu_compute_instance_exec.chunk : length(r.command) > 8192
+    ])
+    error_message = "大 payload 分片必须突破旧的 8192 字节预算"
+  }
+}
+
+run "reprepares_staging_when_chunk_count_changes" {
+  command = plan
+
+  assert {
+    condition     = strcontains(file("${path.module}/main.tf"), "chunk_count = local.chunk_count")
+    error_message = "分片数量变化时 prepare 必须替换并重建 staging 目录"
   }
 }
 
