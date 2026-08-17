@@ -18,6 +18,17 @@ variables {
   file_mode      = "0644"
 }
 
+run "rejects_non_ascii_paths" {
+  command = plan
+
+  variables {
+    target_path  = "/😀"
+    staging_root = "/😀"
+  }
+
+  expect_failures = [var.target_path, var.staging_root]
+}
+
 run "partial_payload_stays_within_limit" {
   command = apply
 

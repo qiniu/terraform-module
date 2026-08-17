@@ -63,11 +63,31 @@ run "rejects_target_path_longer_than_512_bytes" {
   expect_failures = [var.target_path]
 }
 
+run "rejects_non_ascii_target_path" {
+  command = plan
+
+  variables {
+    target_path = "/😀"
+  }
+
+  expect_failures = [var.target_path]
+}
+
 run "rejects_staging_root_longer_than_512_bytes" {
   command = plan
 
   variables {
     staging_root = "/${format("%0512d", 0)}"
+  }
+
+  expect_failures = [var.staging_root]
+}
+
+run "rejects_non_ascii_staging_root" {
+  command = plan
+
+  variables {
+    staging_root = "/😀"
   }
 
   expect_failures = [var.staging_root]

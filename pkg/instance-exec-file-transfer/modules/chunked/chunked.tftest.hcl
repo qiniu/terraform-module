@@ -19,6 +19,17 @@ variables {
   chunk_size     = 2048
 }
 
+run "rejects_non_ascii_paths" {
+  command = plan
+
+  variables {
+    target_path  = "/😀"
+    staging_root = "/😀"
+  }
+
+  expect_failures = [var.target_path, var.staging_root]
+}
+
 run "chunked_publishes_multi_chunk" {
   command = apply
 

@@ -57,12 +57,17 @@ variable "content_sha256" {
 }
 
 variable "target_path" {
-  description = "目标机上的绝对目标路径（最多 512 字节），文件将被发布到该路径。"
+  description = "目标机上的绝对 ASCII 路径（最多 512 字节），文件将被发布到该路径。"
   type        = string
 
   validation {
     condition     = startswith(var.target_path, "/")
     error_message = "target_path 必须是绝对路径，拒绝相对路径。"
+  }
+
+  validation {
+    condition     = can(regex("^[\\x20-\\x7E]+$", var.target_path))
+    error_message = "target_path 必须仅包含可打印 ASCII 字符，以保证命令字节长度预算。"
   }
 
   validation {
@@ -104,13 +109,18 @@ variable "chunk_size" {
 }
 
 variable "staging_root" {
-  description = "远端 staging 根目录（最多 512 字节），staging 与 marker 会放在其下的 <sha256> 子目录中。"
+  description = "远端 staging 根目录（仅可打印 ASCII，最多 512 字节），staging 与 marker 会放在其下的 <sha256> 子目录中。"
   type        = string
   default     = "/var/tmp/qiniu-instance-exec-file-transfer"
 
   validation {
     condition     = startswith(var.staging_root, "/")
     error_message = "staging_root 必须是绝对路径。"
+  }
+
+  validation {
+    condition     = can(regex("^[\\x20-\\x7E]+$", var.staging_root))
+    error_message = "staging_root 必须仅包含可打印 ASCII 字符，以保证命令字节长度预算。"
   }
 
   validation {
