@@ -96,3 +96,4 @@ jobs:
         working-directory: apps/deepseek-harness/modules/ansible-installer/ansible
         run: |
           uv run --locked ansible-playbook --syntax-check -i inventory/default playbooks/site.yml
+          uv run --locked ansible-playbook -i localhost, tests/render_las_dsh_environment.yml

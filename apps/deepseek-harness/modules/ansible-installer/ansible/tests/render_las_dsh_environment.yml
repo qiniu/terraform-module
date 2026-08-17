@@ -1,0 +1,151 @@
+---
+- name: Verify the rendered LAS deployment environment skill
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    code_server_port: 3086
+    code_server_proxy_port: 3087
+    code_server_public_authority: code.example.test
+    dsh_ansible_venv_dir: /opt/las-dsh-installer/venv
+    dsh_environment_skill_name: las-dsh-environment
+    dsh_home: /home/dsh
+    dsh_instance_id: test-instance
+    dsh_port: 3080
+    dsh_region_id: ap-southeast-1
+    dsh_region_name: Singapore
+    dsh_skills: []
+    dsh_state_dir: /home/dsh/.dsh
+    dsh_user: dsh
+    dsh_web_public_authority: dsh.example.test
+    nginx_proxy_port: 3081
+    nodejs_version: 24.19.0
+    skill_template_path: "{{ playbook_dir }}/../roles/las_dsh_environment/templates/SKILL.md.j2"
+    uv_version: 0.12.5
+    code_server_test_files:
+      - "dir-it's #?&中文.js"
+      - literal%2Fname.js
+      - report:12
+      - "x'; touch INJECTED; #.js"
+  tasks:
+    - name: Create a temporary workspace for link generation
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: las-dsh-skill-test-
+      register: code_server_test_workspace
+
+    - name: Verify the rendered skill
+      block:
+        - name: Render the skill with one Preview slot
+          ansible.builtin.set_fact:
+            skill_with_preview: "{{ lookup('ansible.builtin.template', skill_template_path) }}"
+          vars:
+            dsh_workspace_dir: "{{ code_server_test_workspace.path }}"
+            preview_ports: [30080]
+            preview_public_authorities: [preview.example.test]
+
+        - name: Verify the enabled Preview guidance
+          ansible.builtin.assert:
+            that:
+              - "'应用监听 `0.0.0.0:30080`' in skill_with_preview"
+              - "\"ss -H -ltnp '( sport = :<port> )'\" in skill_with_preview"
+              - "'确认监听进程是否属于当前项目' in skill_with_preview"
+              - "'当前项目的服务可以复用' in skill_with_preview"
+              - "'readlink -f /proc/<pid>/cwd' in skill_with_preview"
+              - "'监听地址必须是 `0.0.0.0:<port>`' in skill_with_preview"
+              - "'url.searchParams.set(\"payload\"' in skill_with_preview"
+              - "'openFile' in skill_with_preview"
+              - "'gotoLineMode' not in skill_with_preview"
+              - "'<相对文件路径>' not in skill_with_preview"
+              - "'&path=' not in skill_with_preview"
+
+        - name: Extract the code-server link generator
+          ansible.builtin.set_fact:
+            code_server_link_command: >-
+              {{ skill_with_preview | regex_findall('(?m)^node -e .+$') | first }}
+
+        - name: Create files with shell and URL metacharacters
+          ansible.builtin.copy:
+            content: test
+            dest: "{{ code_server_test_workspace.path }}/{{ item }}"
+            mode: "0600"
+          loop: "{{ code_server_test_files }}"
+
+        - name: Run the rendered code-server link generator
+          ansible.builtin.shell: "{{ code_server_link_command }}"
+          args:
+            chdir: "{{ code_server_test_workspace.path }}"
+          changed_when: false
+          register: code_server_link_result
+
+        - name: Verify generated code-server links
+          ansible.builtin.command:
+            argv:
+              - node
+              - -e
+              - |
+                const path = require("node:path");
+                const [authority, workspace, expectedJson] = process.argv.slice(1);
+                const expected = JSON.parse(expectedJson).sort();
+                const records = require("node:fs").readFileSync(0, "utf8")
+                  .trim().split("\n").map(JSON.parse);
+                if (JSON.stringify(records.map(({ path }) => path).sort()) !== JSON.stringify(expected)) {
+                  throw new Error("generated paths do not match test files");
+                }
+                for (const record of records) {
+                  const absolutePath = path.join(workspace, record.path);
+                  const url = new URL(record.url);
+                  const payload = JSON.parse(url.searchParams.get("payload"));
+                  const fileUrl = new URL(payload[0][1]);
+                  if (url.origin !== `https://${authority}` || url.searchParams.get("folder") !== workspace) {
+                    throw new Error(`invalid code-server URL for ${record.path}`);
+                  }
+                  if (payload.length !== 1 || payload[0][0] !== "openFile") {
+                    throw new Error(`invalid code-server payload for ${record.path}`);
+                  }
+                  if (fileUrl.protocol !== "vscode-remote:" || fileUrl.host !== authority || decodeURIComponent(fileUrl.pathname) !== absolutePath) {
+                    throw new Error(`invalid openFile URI for ${record.path}`);
+                  }
+                }
+              - code.example.test
+              - "{{ code_server_test_workspace.path }}"
+              - "{{ code_server_test_files | to_json }}"
+            stdin: "{{ code_server_link_result.stdout }}"
+          changed_when: false
+
+        - name: Check that filenames were not executed by the shell
+          ansible.builtin.stat:
+            path: "{{ code_server_test_workspace.path }}/INJECTED"
+          register: code_server_injected_marker
+
+        - name: Verify no injected command ran
+          ansible.builtin.assert:
+            that:
+              - not code_server_injected_marker.stat.exists
+
+        - name: Verify the post-start Preview ownership check
+          ansible.builtin.assert:
+            that:
+              - "'重新确认监听地址、PID 和工作目录' in skill_with_preview"
+
+        - name: Render the skill without Preview slots
+          ansible.builtin.set_fact:
+            skill_without_preview: "{{ lookup('ansible.builtin.template', skill_template_path) }}"
+          vars:
+            dsh_workspace_dir: "{{ code_server_test_workspace.path }}"
+            preview_ports: []
+            preview_public_authorities: []
+
+        - name: Verify the disabled Preview guidance
+          ansible.builtin.assert:
+            that:
+              - "'当前未启用 Preview 槽位' in skill_without_preview"
+              - "\"ss -H -ltnp '( sport = :<port> )'\" not in skill_without_preview"
+              - "'应用监听 `0.0.0.0' not in skill_without_preview"
+              - "'推荐流程是' not in skill_without_preview"
+              - "'NAT 回环' not in skill_without_preview"
+      always:
+        - name: Remove the temporary link-generation workspace
+          ansible.builtin.file:
+            path: "{{ code_server_test_workspace.path }}"
+            state: absent

@@ -281,7 +281,27 @@ run "documents_las_code_server_links" {
       ) &&
       strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-        "&path={{ dsh_workspace_dir }}/<相对文件路径>",
+        "url.searchParams.set(\"payload\", payload)",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
+        "fs.readdirSync(cwd, { withFileTypes: true })",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
+        "JSON.stringify([[\"openFile\", fileUri]])",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
+        "map(encodeURIComponent)",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
+        "&path=",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
+        "gotoLineMode",
       )
     )
     error_message = "部署环境 skill 必须说明七牛云 LAS 主机，并提供不含认证信息的 code-server 工作区和文件链接格式。"
@@ -299,7 +319,15 @@ run "documents_preview_network_binding" {
       ) &&
       strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-        "ss -ltn '( sport = :<port> )'",
+        "ss -H -ltnp '( sport = :<port> )'",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
+        "重新确认监听地址、PID 和工作目录",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
+        "监听地址必须是 `0.0.0.0:<port>`",
       ) &&
       strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),

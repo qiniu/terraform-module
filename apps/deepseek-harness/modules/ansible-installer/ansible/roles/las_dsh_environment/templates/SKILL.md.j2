@@ -34,7 +34,7 @@ disable-model-invocation: false
 
 ## 网络与端口
 
-公网入口由 HTTPProxy 提供。HTTPProxy 将公网请求转发至本机 Nginx 或 Preview 服务；DeepSeek Harness 和 code-server 后端应监听 `127.0.0.1`，由本机 Nginx 代理；Preview 服务由 HTTPProxy 直接访问，必须监听 `0.0.0.0`。
+公网入口由 HTTPProxy 提供。DeepSeek Harness 和 code-server 后端监听 `127.0.0.1`，由本机 Nginx 代理；Preview 槽位由 HTTPProxy 直接访问实例内网端口。
 
 - DeepSeek Harness：HTTPProxy 将公网请求转发至本机 Nginx `{{ nginx_proxy_port }}`，Nginx 再代理至 `127.0.0.1:{{ dsh_port }}`
 - code-server：HTTPProxy 将公网请求转发至本机 Nginx `{{ code_server_proxy_port }}`，Nginx 再代理至 `127.0.0.1:{{ code_server_port }}`
@@ -48,17 +48,22 @@ Preview 槽位共 {{ preview_ports | length }} 个。每个槽位由 HTTPProxy �
 {% for port in preview_ports %}
 - Preview {{ loop.index }}：应用监听 `0.0.0.0:{{ port }}`，公网地址为 `https://{{ preview_public_authorities[loop.index0] }}`
 {% endfor %}
-{% endif %}
 
 不要占用其他 Preview 槽位的端口；Preview 开发服务必须绑定到对应端口的 `0.0.0.0`。如果需要 WebSocket、HMR 或 SSE，直接在对应 Preview 槽位启动支持这些协议的开发服务器即可，HTTPProxy 会转发该连接。
 
-推荐流程是：在工作目录准备项目后，逐个使用 `ss -ltn '( sport = :<port> )'` 检查 Preview 槽位，仅选择没有监听项的端口；端口已被占用时改用其他空闲槽位，全部槽位均被占用时告知用户，不要停止或覆盖已有服务。令开发服务器监听所选槽位对应的 `0.0.0.0` 端口，确认本机访问正常后，再把对应公网 URL 告知用户。多个网页或独立服务可以分别使用不同槽位。
+推荐流程是：
 
-启动服务后，先用 `ss -ltnp` 确认 Preview 服务监听的是预期的 `0.0.0.0` 端口，再用 `curl` 访问对应的 `127.0.0.1:<port>`。随后检查自己启动的应用输出或日志。DeepSeek Harness 和 code-server 是系统级托管服务，不要尝试重启、修改或通过 user-level systemd 管理它们。应用尚未启动时，HTTPProxy 返回 5xx（通常为 `502`，也可能为 `503`）是正常现象。
+1. 在工作目录准备项目后，逐个使用 `ss -H -ltnp '( sport = :<port> )'` 检查 Preview 槽位；没有输出表示端口当前空闲。
+2. 如果端口已有监听，结合 `ss` 输出中的进程信息、`ps -fp <pid>` 和 `readlink -f /proc/<pid>/cwd` 确认监听进程是否属于当前项目。当前项目的服务可以复用，或按需更新、重启；其他项目或归属不明的服务不得停止或覆盖，应改用其他空闲槽位。全部槽位均不可用时告知用户。
+3. 令开发服务器监听所选槽位对应的 `0.0.0.0` 端口。若启动时报端口已占用，重新执行上一步检查，不要覆盖新出现的监听进程。
+4. 启动后再次用 `ss -H -ltnp '( sport = :<port> )'`，并结合 `ps -fp <pid>` 和 `readlink -f /proc/<pid>/cwd` 重新确认监听地址、PID 和工作目录。监听地址必须是 `0.0.0.0:<port>`，监听进程必须属于当前项目；不匹配时停止交付并排查，不要操作归属不明的进程。然后用 `curl` 访问对应的 `127.0.0.1:<port>`，检查应用输出或日志并确认本机访问正常后，再把对应公网 URL 告知用户。
+
+多个网页或独立服务可以分别使用不同槽位。DeepSeek Harness 和 code-server 是系统级托管服务，不要尝试重启、修改或通过 user-level systemd 管理它们。应用尚未启动时，HTTPProxy 返回 5xx（通常为 `502`，也可能为 `503`）是正常现象。
 
 ### 注意事项
 
 从 VM 内访问自身的公网 Preview URL 不通时，可能是云平台的 NAT 回环限制。这通常是无害的网络特性，不代表外部用户无法访问；应以本机 `curl` 验证应用，公网链路通过外部网络验证。
+{% endif %}
 
 ## 可用能力
 
@@ -67,7 +72,11 @@ Preview 槽位共 {{ preview_ports | length }} 个。每个槽位由 HTTPProxy �
 当用户要求查看代码，或输出可点击的已完成代码产物时，必须提供不含认证信息的 code-server Markdown 链接：
 
 - 工作区：[打开工作区](https://{{ code_server_public_authority }}/?folder={{ dsh_workspace_dir }})
-- 文件：[打开文件](https://{{ code_server_public_authority }}/?folder={{ dsh_workspace_dir }}&path={{ dsh_workspace_dir }}/<相对文件路径>)，将 `<相对文件路径>` 替换为工作区内的实际路径。
+- 文件：通过 Bash 工具的工作目录参数在目标文件的父目录运行以下固定命令。命令为当前目录中的每个普通文件输出一行 JSON；从目标文件对应记录的 `url` 字段取值，再作为 `[打开文件](<url>)` 提供。不要把目录或文件名拼接进 shell 命令：
+
+```bash
+node -e 'const fs = require("node:fs"), path = require("node:path"); const [authority, workspace] = process.argv.slice(1), root = path.resolve(workspace), cwd = path.resolve("."), relativeDir = path.relative(root, cwd); if (relativeDir === ".." || relativeDir.startsWith(`..${path.sep}`) || path.isAbsolute(relativeDir)) throw new Error("current directory must be inside the workspace"); for (const entry of fs.readdirSync(cwd, { withFileTypes: true })) { if (!entry.isFile()) continue; const absolutePath = path.join(cwd, entry.name), relativePath = path.relative(root, absolutePath), encodedPath = absolutePath.split(path.sep).map(encodeURIComponent).join("/"), fileUri = `vscode-remote://${authority}${encodedPath}`, url = new URL(`https://${authority}/`), payload = JSON.stringify([["openFile", fileUri]]); url.searchParams.set("folder", root); url.searchParams.set("payload", payload); process.stdout.write(`${JSON.stringify({ path: relativePath, url: url.toString() })}\n`); }' '{{ code_server_public_authority }}' '{{ dsh_workspace_dir }}'
+```
 
 Node.js 固定安装在 `/opt/node-v{{ nodejs_version }}`，并通过 `/usr/local/bin/node`、`/usr/local/bin/npm`、`/usr/local/bin/npx` 和 `/usr/local/bin/pnpm` 发布。建议先运行 `node --version` 和 `pnpm --version` 确认版本。
 
