@@ -39,6 +39,8 @@ disable-model-invocation: false
 - DeepSeek Harness：HTTPProxy 将公网请求转发至本机 Nginx `{{ nginx_proxy_port }}`，Nginx 再代理至 `127.0.0.1:{{ dsh_port }}`
 - code-server：HTTPProxy 将公网请求转发至本机 Nginx `{{ code_server_proxy_port }}`，Nginx 再代理至 `127.0.0.1:{{ code_server_port }}`
 
+## 用户 Preview 端口
+
 {% if preview_ports | length == 0 %}
 - Preview：当前未启用 Preview 槽位
 {% else %}
@@ -49,6 +51,10 @@ Preview 槽位共 {{ preview_ports | length }} 个。每个槽位由 HTTPProxy �
 {% endif %}
 
 不要占用其他 Preview 槽位的端口；Preview 开发服务必须绑定到对应端口的 `0.0.0.0`。如果需要 WebSocket、HMR 或 SSE，直接在对应 Preview 槽位启动支持这些协议的开发服务器即可，HTTPProxy 会转发该连接。
+
+推荐流程是：在工作目录准备项目后，逐个使用 `ss -ltn '( sport = :<port> )'` 检查 Preview 槽位，仅选择没有监听项的端口；端口已被占用时改用其他空闲槽位，全部槽位均被占用时告知用户，不要停止或覆盖已有服务。令开发服务器监听所选槽位对应的 `0.0.0.0` 端口，确认本机访问正常后，再把对应公网 URL 告知用户。多个网页或独立服务可以分别使用不同槽位。
+
+启动服务后，先用 `ss -ltnp` 确认 Preview 服务监听的是预期的 `0.0.0.0` 端口，再用 `curl` 访问对应的 `127.0.0.1:<port>`。随后检查自己启动的应用输出或日志。DeepSeek Harness 和 code-server 是系统级托管服务，不要尝试重启、修改或通过 user-level systemd 管理它们。最后访问对应公网 Preview URL。应用尚未启动时，HTTPProxy 返回 5xx（通常为 `502`，也可能为 `503`）是正常现象。
 
 ## 可用能力
 
@@ -64,12 +70,6 @@ Node.js 固定安装在 `/opt/node-v{{ nodejs_version }}`，并通过 `/usr/loca
 uv 固定版本为 `{{ uv_version }}`，安装位置为 `/opt/uv-v{{ uv_version }}`，并通过 `/usr/local/bin/uv` 和 `/usr/local/bin/uvx` 发布。建议先运行 `uv --version` 和 `uvx --version` 确认版本。
 
 Python 项目应在 `{{ dsh_workspace_dir }}` 中使用自己的 `.venv`，例如 `uv init`、`uv sync` 和 `uv run`。不得改动 root 的 `/opt`、`/usr/local/bin` 或 `{{ dsh_ansible_venv_dir }}`。
-
-推荐流程是：在工作目录准备项目后，逐个使用 `ss -ltn '( sport = :<port> )'` 检查 Preview 槽位，仅选择没有监听项的端口；端口已被占用时改用其他空闲槽位，全部槽位均被占用时告知用户，不要停止或覆盖已有服务。令开发服务器监听所选槽位对应的 `0.0.0.0` 端口，确认本机访问正常后，再把对应公网 URL 告知用户。多个网页或独立服务可以分别使用不同槽位。
-
-## 检查与故障排查
-
-启动服务后，先用 `ss -ltnp` 确认 Preview 服务监听的是预期的 `0.0.0.0` 端口，再用 `curl` 访问对应的 `127.0.0.1:<port>`。随后检查自己启动的应用输出或日志。DeepSeek Harness 和 code-server 是系统级托管服务，不要尝试重启、修改或通过 user-level systemd 管理它们。最后访问对应公网 Preview URL。应用尚未启动时，HTTPProxy 返回 5xx（通常为 `502`，也可能为 `503`）是正常现象。
 
 ## 安全边界
 
