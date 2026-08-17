@@ -1,0 +1,25 @@
+---
+- name: Install configured skills
+  ansible.builtin.command:
+    argv:
+      - /usr/local/bin/npx
+      - --yes
+      - skills
+      - add
+      - "{{ item.source }}"
+      - --skill
+      - "{{ item.name }}"
+      - --agent
+      - universal
+      - --global
+      - --yes
+      - --copy
+  args:
+    creates: "{{ dsh_home }}/.agents/skills/{{ item.name }}/SKILL.md"
+  environment:
+    HOME: "{{ dsh_home }}"
+    npm_config_cache: "{{ dsh_state_dir }}/npm"
+  become_user: "{{ dsh_user }}"
+  loop: "{{ dsh_skills }}"
+  loop_control:
+    label: "{{ item.name }}"

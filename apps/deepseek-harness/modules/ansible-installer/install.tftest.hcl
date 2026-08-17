@@ -276,3 +276,41 @@ run "documents_las_code_server_links" {
     error_message = "部署环境 skill 必须说明七牛云 LAS 主机，并提供不含认证信息的 code-server 工作区和文件链接格式。"
   }
 }
+
+run "installs_configured_skills" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+        "dsh_skills:",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+        "https://github.com/vercel-labs/skills",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+        "name: find-skills",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/skill_installer/tasks/main.yml"])),
+        "/usr/local/bin/npx",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/skill_installer/tasks/main.yml"])),
+        "loop: \"{{ dsh_skills }}\"",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/skill_installer/tasks/main.yml"])),
+        "{{ item.source }}",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/skill_installer/tasks/main.yml"])),
+        "{{ item.name }}/SKILL.md",
+      )
+    )
+    error_message = "skill_installer 必须根据 dsh_skills 清单以 dsh 用户通过 Skills CLI 幂等安装 skill。"
+  }
+}

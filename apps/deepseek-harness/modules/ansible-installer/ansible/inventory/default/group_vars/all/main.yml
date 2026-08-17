@@ -11,3 +11,6 @@ nodejs_version: 24.19.0
 pnpm_version: 11.22.0
 code_server_version: 4.132.0
 code_server_port: 3086
+dsh_skills:
+  - name: find-skills
+    source: https://github.com/vercel-labs/skills

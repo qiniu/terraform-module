@@ -31,6 +31,7 @@ locals {
     "roles/nodejs/defaults/main.yml",
     "roles/nodejs/tasks/cleanup.yml",
     "roles/nodejs/tasks/main.yml",
+    "roles/skill_installer/tasks/main.yml",
   ]
 }
 

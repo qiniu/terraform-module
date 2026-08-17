@@ -38,6 +38,7 @@
   roles:
     - base
     - nodejs
+    - skill_installer
     - code_server
     - deepseek_harness
     - nginx
