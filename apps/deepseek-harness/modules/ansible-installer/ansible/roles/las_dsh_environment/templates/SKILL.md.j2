@@ -4,7 +4,7 @@ description: 在七牛云 LAS 的 DeepSeek Harness 主机中获取当前环境�
 disable-model-invocation: false
 ---
 
-# Deployment environment
+# 部署环境
 
 ## 当前运行环境
 
@@ -12,11 +12,12 @@ disable-model-invocation: false
 
 - 用户主目录：`{{ dsh_home }}`
 - `HOME`：`{{ dsh_home }}`
-- Harness 数据目录：`DSH_HOME={{ dsh_state_dir }}`
+- DeepSeek Harness 数据目录：`DSH_HOME={{ dsh_state_dir }}`
 - 默认工作目录：`{{ dsh_workspace_dir }}`
 - 用户级 skill 目录：`{{ dsh_home }}/.agents/skills`
 - 当前 skill 文件：`{{ dsh_home }}/.agents/skills/{{ dsh_environment_skill_name }}/SKILL.md`
-- DeepSeek Harness：`https://{{ dsh_web_public_authority }}`
+- DeepSeek Harness 公网地址：`https://{{ dsh_web_public_authority }}`
+- code-server 公网地址：`https://{{ code_server_public_authority }}`
 - LAS 实例 ID：`{{ dsh_instance_id }}`
 - LAS 区域：`{{ dsh_region_name }}`（`{{ dsh_region_id }}`）
 - LAS 控制台：[打开实例详情](https://portal.qiniu.com/las/vm/instances/detail/{{ dsh_instance_id }})
@@ -33,10 +34,10 @@ disable-model-invocation: false
 
 ## 网络与端口
 
-公网入口由 HTTPProxy 提供。除 HTTPProxy 目标端口外，应用不需要绑定公网网卡；应用服务应优先只监听 `127.0.0.1`。
+公网入口由 HTTPProxy 提供。HTTPProxy 将公网请求转发至本机 Nginx 或 Preview 服务；应用服务应优先只监听 `127.0.0.1`，不需要绑定公网网卡。
 
-- Harness 应用：`127.0.0.1:{{ dsh_port }}`，由本机 Nginx `{{ nginx_proxy_port }}` 代理到公网 Harness 地址
-- code-server：`127.0.0.1:{{ code_server_port }}`，由本机 Nginx `{{ code_server_proxy_port }}` 代理到独立 code-server 地址
+- DeepSeek Harness：HTTPProxy 将公网请求转发至本机 Nginx `{{ nginx_proxy_port }}`，Nginx 再代理至 `127.0.0.1:{{ dsh_port }}`
+- code-server：HTTPProxy 将公网请求转发至本机 Nginx `{{ code_server_proxy_port }}`，Nginx 再代理至 `127.0.0.1:{{ code_server_port }}`
 
 {% if preview_ports | length == 0 %}
 - Preview：当前未启用 Preview 槽位
@@ -68,10 +69,10 @@ Python 项目应在 `{{ dsh_workspace_dir }}` 中使用自己的 `.venv`，例�
 
 ## 检查与故障排查
 
-启动服务后，先用 `ss -ltnp` 确认服务监听的是预期的 loopback 端口，再用 `curl` 访问对应的 `127.0.0.1:<port>`。随后检查自己启动的应用输出或日志。Harness 和 code-server 是系统级托管服务，不要尝试重启、修改或通过 user-level systemd 管理它们。最后访问对应公网 Preview URL。应用尚未启动时，HTTPProxy 返回 5xx（通常为 `502`，也可能为 `503`）是正常现象。
+启动服务后，先用 `ss -ltnp` 确认服务监听的是预期的 loopback 端口，再用 `curl` 访问对应的 `127.0.0.1:<port>`。随后检查自己启动的应用输出或日志。DeepSeek Harness 和 code-server 是系统级托管服务，不要尝试重启、修改或通过 user-level systemd 管理它们。最后访问对应公网 Preview URL。应用尚未启动时，HTTPProxy 返回 5xx（通常为 `502`，也可能为 `503`）是正常现象。
 
 ## 安全边界
 
-Preview 地址是公开地址，任何知道 URL 的人都可以访问，不适用 Harness Basic Auth。不要在网页、终端输出、日志、提交内容或公开 Preview 中放入密码、令牌、私钥、云凭据或其他敏感信息。
+Preview 地址是公开地址，任何知道 URL 的人都可以访问，不适用 DeepSeek Harness Basic Auth。不要在网页、终端输出、日志、提交内容或公开 Preview 中放入密码、令牌、私钥、云凭据或其他敏感信息。
 
-不要尝试绕过 code-server 密码认证，不要修改 Harness 或 Nginx 的现有认证配置，也不要自行新增公网监听端口。需要向用户展示内容时，只分享 Preview URL、非敏感的运行结果和必要的错误信息。
+不要尝试绕过 code-server 密码认证，不要修改 DeepSeek Harness 或 Nginx 的现有认证配置，也不要自行新增公网监听端口。需要向用户展示内容时，只分享 Preview URL、非敏感的运行结果和必要的错误信息。
