@@ -28,6 +28,36 @@ variable "code_server_web_port" {
   }
 }
 
+variable "dsh_instance_id" {
+  description = "部署 DeepSeek Harness 的 LAS 实例 ID。"
+  type        = string
+
+  validation {
+    condition     = trimspace(var.dsh_instance_id) != ""
+    error_message = "dsh_instance_id 不能为空。"
+  }
+}
+
+variable "dsh_region_id" {
+  description = "LAS 实例所在区域 ID。"
+  type        = string
+
+  validation {
+    condition     = trimspace(var.dsh_region_id) != ""
+    error_message = "dsh_region_id 不能为空。"
+  }
+}
+
+variable "dsh_region_name" {
+  description = "LAS 实例所在区域名称。"
+  type        = string
+
+  validation {
+    condition     = trimspace(var.dsh_region_name) != ""
+    error_message = "dsh_region_name 不能为空。"
+  }
+}
+
 variable "dsh_web_public_authority" {
   description = "DeepSeek Harness 信任的外部 Host。"
   type        = string

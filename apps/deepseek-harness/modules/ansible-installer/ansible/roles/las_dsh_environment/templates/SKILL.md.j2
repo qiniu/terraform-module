@@ -17,6 +17,17 @@ disable-model-invocation: false
 - 用户级 skill 目录：`{{ dsh_home }}/.agents/skills`
 - 当前 skill 文件：`{{ dsh_home }}/.agents/skills/{{ dsh_environment_skill_name }}/SKILL.md`
 - DeepSeek Harness：`https://{{ dsh_web_public_authority }}`
+- LAS 实例 ID：`{{ dsh_instance_id }}`
+- LAS 区域：`{{ dsh_region_name }}`（`{{ dsh_region_id }}`）
+- LAS 控制台：[打开实例详情](https://portal.qiniu.com/las/vm/instances/detail/{{ dsh_instance_id }})
+{% if dsh_skills | length == 0 %}
+- 已预装用户级 skill：无
+{% else %}
+- 已预装用户级 skill：
+{% for skill in dsh_skills %}
+  - `{{ skill.name }}`（来源：`{{ skill.source }}`）
+{% endfor %}
+{% endif %}
 
 网页项目、配置文件和临时调试文件都应放在 `{{ dsh_workspace_dir }}` 或其子目录中。不要把项目文件写入 `/etc`、`/usr` 或其他系统目录；需要安装系统服务时，应通过已有的项目安装流程处理。
 
@@ -57,7 +68,7 @@ Python 项目应在 `{{ dsh_workspace_dir }}` 中使用自己的 `.venv`，例�
 
 ## 检查与故障排查
 
-启动服务后，先用 `ss -ltnp` 确认服务监听的是预期的 loopback 端口，再用 `curl` 访问对应的 `127.0.0.1:<port>`。随后检查应用输出或日志；用户级 systemd 服务可使用 `systemctl --user status` 和 `journalctl --user`。最后访问对应公网 Preview URL。应用尚未启动时，HTTPProxy 返回 5xx（通常为 `502`，也可能为 `503`）是正常现象。
+启动服务后，先用 `ss -ltnp` 确认服务监听的是预期的 loopback 端口，再用 `curl` 访问对应的 `127.0.0.1:<port>`。随后检查自己启动的应用输出或日志。Harness 和 code-server 是系统级托管服务，不要尝试重启、修改或通过 user-level systemd 管理它们。最后访问对应公网 Preview URL。应用尚未启动时，HTTPProxy 返回 5xx（通常为 `502`，也可能为 `503`）是正常现象。
 
 ## 安全边界
 

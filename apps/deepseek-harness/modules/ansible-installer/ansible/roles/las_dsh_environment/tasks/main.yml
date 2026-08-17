@@ -3,6 +3,9 @@
   ansible.builtin.assert:
     that:
       - dsh_web_public_authority | default('') | length > 0
+      - dsh_instance_id | default('') | length > 0
+      - dsh_region_id | default('') | length > 0
+      - dsh_region_name | default('') | length > 0
       - preview_ports is defined
       - preview_ports | default([]) is sequence
       - preview_ports | default([]) is not string
@@ -12,6 +15,10 @@
       - preview_public_authorities | default([]) is not string
       - preview_public_authorities | default([]) is not mapping
       - preview_public_authorities | default([]) | length == preview_ports | default([]) | length
+      - dsh_skills is defined
+      - dsh_skills | default([]) is sequence
+      - dsh_skills | default([]) is not string
+      - dsh_skills | default([]) is not mapping
       - uv_version | default('') | length > 0
       - dsh_ansible_venv_dir | default('') | length > 0
     fail_msg: las_dsh_environment requires deployment endpoints, Preview arrays, uv_version, and dsh_ansible_venv_dir.

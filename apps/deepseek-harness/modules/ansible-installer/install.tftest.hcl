@@ -2,6 +2,9 @@ variables {
   dsh_web_port                 = 3081
   preview_ports                = [30080]
   dsh_web_public_authority     = "dsh.example.test"
+  dsh_instance_id              = "i-69832576086fed2869d55cd4"
+  dsh_region_id                = "ap-southeast-1"
+  dsh_region_name              = "新加坡"
   preview_public_authorities   = ["preview.example.test"]
   code_server_web_port         = 3087
   code_server_public_authority = "code.example.test"
@@ -334,5 +337,49 @@ run "keeps_code_server_releases_with_version" {
       )
     )
     error_message = "code-server release 清单必须与版本一同定义在 group_vars，role defaults 只保留私有派生值。"
+  }
+}
+
+run "documents_installed_skills_and_safe_troubleshooting" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
+        "{% for skill in dsh_skills %}",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
+        "systemctl --user",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
+        "journalctl --user",
+      )
+    )
+    error_message = "部署环境 skill 必须列出已安装 skill，且不得建议 dsh 用户管理不存在的 user-level systemd 服务。"
+  }
+}
+
+run "documents_las_instance_context" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
+        "{{ dsh_instance_id }}",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
+        "{{ dsh_region_id }}",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
+        "https://portal.qiniu.com/las/vm/instances/detail/{{ dsh_instance_id }}",
+      )
+    )
+    error_message = "部署环境 skill 必须提供 LAS 实例 ID、区域和控制台详情链接。"
   }
 }

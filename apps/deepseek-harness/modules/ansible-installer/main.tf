@@ -8,6 +8,9 @@ locals {
     base64encode(jsonencode({
       nginx_proxy_port             = var.dsh_web_port
       dsh_web_public_authority     = var.dsh_web_public_authority
+      dsh_instance_id              = var.dsh_instance_id
+      dsh_region_id                = var.dsh_region_id
+      dsh_region_name              = var.dsh_region_name
       preview_public_authorities   = var.preview_public_authorities
       preview_ports                = var.preview_ports
       code_server_proxy_port       = var.code_server_web_port

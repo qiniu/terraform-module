@@ -2,6 +2,14 @@ output "instance_id" {
   value = qiniu_compute_instance.deepseek_harness.id
 }
 
+output "instance_region_id" {
+  value = data.qiniu_compute_region.current.region.id
+}
+
+output "instance_region_name" {
+  value = data.qiniu_compute_region.current.region.name
+}
+
 output "deployment_private_key" {
   value     = qiniu_compute_key_pair.deployment.private_key
   sensitive = true

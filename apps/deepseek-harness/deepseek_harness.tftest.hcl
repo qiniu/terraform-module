@@ -14,6 +14,8 @@ override_module {
   override_during = plan
   outputs = {
     instance_id                  = "test-instance"
+    instance_region_id           = "ap-southeast-1"
+    instance_region_name         = "新加坡"
     deployment_private_key       = "test-private-key"
     dsh_web_public_authority     = "dsh.example.test"
     dsh_web_port                 = 3081
@@ -229,6 +231,8 @@ run "outputs_ssh_command_when_enabled" {
     override_during = plan
     outputs = {
       instance_id                  = "test-instance"
+      instance_region_id           = "ap-southeast-1"
+      instance_region_name         = "新加坡"
       deployment_private_key       = "test-private-key"
       dsh_web_public_authority     = "dsh.example.test"
       dsh_web_port                 = 3081
@@ -333,6 +337,8 @@ run "supports_zero_preview_slots" {
     override_during = plan
     outputs = {
       instance_id                  = "test-instance"
+      instance_region_id           = "ap-southeast-1"
+      instance_region_name         = "新加坡"
       deployment_private_key       = "test-private-key"
       dsh_web_public_authority     = "dsh.example.test"
       dsh_web_port                 = 3081
