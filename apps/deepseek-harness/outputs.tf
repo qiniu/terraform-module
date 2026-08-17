@@ -14,8 +14,8 @@ output "code_server_public_url" {
 }
 
 output "code_server_password" {
-  description = "code-server 自带登录密码。"
-  value       = random_password.code_server.result
+  description = "code-server 实际生效的登录密码。"
+  value       = local.code_server_password
   sensitive   = true
 }
 
@@ -25,8 +25,8 @@ output "dsh_web_username" {
 }
 
 output "dsh_web_password" {
-  description = "Web Basic Auth 随机密码。"
-  value       = random_password.dsh_web.result
+  description = "Web Basic Auth 实际生效的密码。"
+  value       = local.dsh_web_password
   sensitive   = true
 }
 

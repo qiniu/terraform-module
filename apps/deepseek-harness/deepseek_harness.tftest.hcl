@@ -4,7 +4,7 @@ mock_provider "random" {
   mock_resource "random_password" {
     override_during = plan
     defaults = {
-      result = "mock-safe-password"
+      result = "Mock-safe-password-123"
     }
   }
 }
@@ -95,12 +95,18 @@ run "uses_fixed_versions_and_installer_contract" {
 
   assert {
     condition = (
-      random_password.dsh_web.length == 24 &&
-      random_password.dsh_web.upper &&
-      random_password.dsh_web.lower &&
-      random_password.dsh_web.numeric &&
-      random_password.dsh_web.special &&
-      random_password.dsh_web.override_special == "-._~"
+      random_password.dsh_web[0].length == 24 &&
+      random_password.dsh_web[0].upper &&
+      random_password.dsh_web[0].lower &&
+      random_password.dsh_web[0].numeric &&
+      random_password.dsh_web[0].special &&
+      random_password.dsh_web[0].override_special == "-._~" &&
+      random_password.code_server[0].length == 30 &&
+      random_password.code_server[0].upper &&
+      random_password.code_server[0].lower &&
+      random_password.code_server[0].numeric &&
+      random_password.code_server[0].special &&
+      random_password.code_server[0].override_special == "-._~"
     )
     error_message = "Web 密码必须为 24 位并包含所有字符类别，特殊字符须对 URL、Basic Auth 与 shell 安全。"
   }
@@ -281,12 +287,51 @@ run "outputs_public_contract" {
       !issensitive(output.preview_public_urls) &&
       !issensitive(output.code_server_public_url) &&
       output.dsh_web_username == "admin" &&
-      output.dsh_web_password == sensitive(random_password.dsh_web.result) &&
-      output.code_server_password == sensitive(random_password.code_server.result) &&
+      output.dsh_web_password == sensitive(random_password.dsh_web[0].result) &&
+      output.code_server_password == sensitive(random_password.code_server[0].result) &&
       output.ssh_command == null
     )
     error_message = "根模块输出必须包含 Web 凭据和可空 SSH 命令。"
   }
+}
+
+run "uses_user_supplied_web_passwords" {
+  command = plan
+
+  variables {
+    dsh_web_password     = "Custom-dsh-pass-123"
+    code_server_password = "Custom-code-server!123"
+  }
+
+  assert {
+    condition = (
+      try(length(random_password.dsh_web), -1) == 0 &&
+      try(length(random_password.code_server), -1) == 0 &&
+      output.dsh_web_password == sensitive(var.dsh_web_password) &&
+      output.code_server_password == sensitive(var.code_server_password)
+    )
+    error_message = "非空 Web 密码必须直接生效，且不得创建未使用的随机密码。"
+  }
+}
+
+run "rejects_invalid_user_supplied_code_server_password" {
+  command = plan
+
+  variables {
+    code_server_password = "too-short"
+  }
+
+  expect_failures = [var.code_server_password]
+}
+
+run "rejects_invalid_user_supplied_dsh_web_password" {
+  command = plan
+
+  variables {
+    dsh_web_password = "too-short"
+  }
+
+  expect_failures = [var.dsh_web_password]
 }
 
 run "supports_zero_preview_slots" {

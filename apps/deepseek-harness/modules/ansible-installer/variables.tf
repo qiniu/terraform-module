@@ -86,7 +86,13 @@ variable "code_server_password" {
   sensitive   = true
 
   validation {
-    condition     = can(regex("^[A-Za-z0-9._~-]{16,128}$", var.code_server_password))
-    error_message = "code_server_password 必须为 16 到 128 位字母、数字或 -._~。"
+    condition = (
+      length(var.code_server_password) >= 8 &&
+      length(var.code_server_password) <= 30 &&
+      can(regex("[A-Za-z]", var.code_server_password)) &&
+      can(regex("[0-9]", var.code_server_password)) &&
+      can(regex("[^A-Za-z0-9]", var.code_server_password))
+    )
+    error_message = "code_server_password 必须为 8 到 30 位且同时包含字母、数字和特殊符号的密码。"
   }
 }

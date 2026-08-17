@@ -124,3 +124,41 @@ variable "instance_password" {
     error_message = "密码必须为 8 到 30 位，且同时包含字母、数字和特殊符号。"
   }
 }
+
+variable "dsh_web_password" {
+  type        = string
+  description = "DeepSeek Harness Web Basic Auth 密码；空字符串时自动生成。"
+  default     = ""
+  nullable    = false
+  sensitive   = true
+
+  validation {
+    condition = var.dsh_web_password == "" || (
+      length(var.dsh_web_password) >= 8 &&
+      length(var.dsh_web_password) <= 30 &&
+      can(regex("[A-Za-z]", var.dsh_web_password)) &&
+      can(regex("[0-9]", var.dsh_web_password)) &&
+      can(regex("[^A-Za-z0-9]", var.dsh_web_password))
+    )
+    error_message = "dsh_web_password 必须为空字符串，或为 8 到 30 位且同时包含字母、数字和特殊符号的密码。"
+  }
+}
+
+variable "code_server_password" {
+  type        = string
+  description = "code-server 登录密码；空字符串时自动生成。"
+  default     = ""
+  nullable    = false
+  sensitive   = true
+
+  validation {
+    condition = var.code_server_password == "" || (
+      length(var.code_server_password) >= 8 &&
+      length(var.code_server_password) <= 30 &&
+      can(regex("[A-Za-z]", var.code_server_password)) &&
+      can(regex("[0-9]", var.code_server_password)) &&
+      can(regex("[^A-Za-z0-9]", var.code_server_password))
+    )
+    error_message = "code_server_password 必须为空字符串，或为 8 到 30 位且同时包含字母、数字和特殊符号的密码。"
+  }
+}
