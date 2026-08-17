@@ -171,7 +171,7 @@ run "uses_pnpm_for_dsh_prewarm_and_offline_service" {
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/main.yml"])),
         "      - \"--allow-build=node-pty\"",
       ) &&
-      strcontains(
+      !strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/main.yml"])),
         "      - --offline",
       ) &&
@@ -187,13 +187,21 @@ run "uses_pnpm_for_dsh_prewarm_and_offline_service" {
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/main.yml"])),
         "PNPM_CONFIG_STORE_DIR: \"{{ dsh_pnpm_store_dir }}\"",
       ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/main.yml"])),
+        "PNPM_OFFLINE: \"true\"",
+      ) &&
       !strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/main.yml"])),
         "/usr/local/bin/npm",
       ) &&
       strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/templates/deepseek-harness.service.j2"])),
-        "Environment=PNPM_CONFIG_OFFLINE=true",
+        "Environment=PNPM_OFFLINE=true",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/templates/deepseek-harness.service.j2"])),
+        "PNPM_CONFIG_OFFLINE",
       ) &&
       strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/templates/deepseek-harness.service.j2"])),

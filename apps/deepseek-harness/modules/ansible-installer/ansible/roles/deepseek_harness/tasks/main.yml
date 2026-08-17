@@ -13,7 +13,6 @@
     argv:
       - /usr/local/bin/pnpm
       - dlx
-      - --offline
       - "--allow-build=node-pty"
       - "@deepseek-ai/dsh@{{ dsh_version }}"
       - --version
@@ -21,7 +20,7 @@
     chdir: "{{ dsh_workspace_dir }}"
   environment:
     HOME: "{{ dsh_home }}"
-    PNPM_CONFIG_OFFLINE: "true"
+    PNPM_OFFLINE: "true"
     PNPM_CONFIG_STORE_DIR: "{{ dsh_pnpm_store_dir }}"
   become_user: "{{ dsh_user }}"
   when: dsh_cached_version.stdout | trim == dsh_cache_key
