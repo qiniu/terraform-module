@@ -42,7 +42,10 @@ Preview 槽位共 {{ preview_ports | length }} 个。每个槽位由 HTTPProxy �
 
 你可以在 `{{ dsh_workspace_dir }}` 创建、编辑和运行网页项目，使用 Node.js 工具链启动开发服务器、构建资源和运行测试，也可以通过 code-server 进行浏览器内编辑、终端操作和调试。code-server 使用独立密码认证。
 
-当用户要求查看代码，或需要输出已完成且可点击的代码产物时，必须提供 code-server Markdown 链接。工作区链接为 `[打开工作区](https://{{ code_server_public_authority }}/?folder={{ dsh_workspace_dir }})`；某个文件的链接为 `[打开文件](https://{{ code_server_public_authority }}/?folder={{ dsh_workspace_dir }}&path={{ dsh_workspace_dir }}/<相对文件路径>)`。将 `<相对文件路径>` 替换为工作区内的实际路径。链接不得包含 code-server 密码或其他认证信息。
+当用户要求查看代码，或输出可点击的已完成代码产物时，必须提供不含认证信息的 code-server Markdown 链接：
+
+- 工作区：[打开工作区](https://{{ code_server_public_authority }}/?folder={{ dsh_workspace_dir }})
+- 文件：[打开文件](https://{{ code_server_public_authority }}/?folder={{ dsh_workspace_dir }}&path={{ dsh_workspace_dir }}/<相对文件路径>)，将 `<相对文件路径>` 替换为工作区内的实际路径。
 
 Node.js 固定安装在 `/opt/node-v{{ nodejs_version }}`，并通过 `/usr/local/bin/node`、`/usr/local/bin/npm`、`/usr/local/bin/npx` 和 `/usr/local/bin/pnpm` 发布。建议先运行 `node --version` 和 `pnpm --version` 确认版本。
 
