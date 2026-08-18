@@ -1,0 +1,57 @@
+name: Setup Qiniu Terraform provider
+description: Configure Terraform and install the pinned Qiniu provider in a local mirror
+
+runs:
+  using: composite
+  steps:
+    - name: Cache qiniu provider
+      id: cache-provider
+      uses: actions/cache@v4
+      with:
+        path: ~/.terraform.d/plugin-mirror
+        key: qiniu-provider-1.0.0-linux-amd64-sha256-e2d367648b55
+
+    - name: Install qiniu provider
+      if: steps.cache-provider.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        mirror_dir="${HOME}/.terraform.d/plugin-mirror/registry.terraform.io/qiniu/qiniu/1.0.0/linux_amd64"
+        provider_sha256="e2d367648b559829632767ab372a1eb6693bbf2bef92af63c25722759b65c6eb"
+        provider_url="http://srz5669lx.hn-bkt.clouddn.com/terraformprovider/registry.terraform.io/qiniu/qiniu/1.0.0/linux_amd64/terraform-provider-qiniu"
+        mkdir -p "${mirror_dir}"
+        provider_tmp="$(mktemp "${mirror_dir}/.terraform-provider-qiniu.XXXXXX")"
+        trap 'rm -f "${provider_tmp}"' EXIT
+        curl -fsSL \
+          --retry 5 \
+          --retry-delay 10 \
+          --retry-max-time 300 \
+          --retry-all-errors \
+          --connect-timeout 30 \
+          --max-time 600 \
+          -o "${provider_tmp}" \
+          "${provider_url}"
+        printf '%s  %s\n' "${provider_sha256}" "${provider_tmp}" | sha256sum -c -
+        chmod +x "${provider_tmp}"
+        mv "${provider_tmp}" "${mirror_dir}/terraform-provider-qiniu"
+
+    - name: Configure Terraform provider mirror
+      shell: bash
+      run: |
+        set -euo pipefail
+        terraformrc="${RUNNER_TEMP}/terraform.rc"
+        mkdir -p "${HOME}/.terraform.d/plugin-cache"
+        cat > "${terraformrc}" <<EOF
+        plugin_cache_dir = "${HOME}/.terraform.d/plugin-cache"
+
+        provider_installation {
+          filesystem_mirror {
+            path    = "${HOME}/.terraform.d/plugin-mirror"
+            include = ["registry.terraform.io/qiniu/qiniu"]
+          }
+          direct {
+            exclude = ["registry.terraform.io/qiniu/qiniu"]
+          }
+        }
+        EOF
+        echo "TF_CLI_CONFIG_FILE=${terraformrc}" >> "${GITHUB_ENV}"

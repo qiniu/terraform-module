@@ -1,0 +1,57 @@
+name: Terraform Module Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/*.tf'
+      - '**/*.tftest.hcl'
+      - 'pkg/instance-exec-file-transfer/**'
+      - '.github/actions/setup-qiniu-terraform/**'
+      - '.github/workflows/common-terraform-test.yml'
+  pull_request:
+    paths:
+      - '**/*.tf'
+      - '**/*.tftest.hcl'
+      - 'pkg/instance-exec-file-transfer/**'
+      - '.github/actions/setup-qiniu-terraform/**'
+      - '.github/workflows/common-terraform-test.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: 'Test ${{ matrix.module }}'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - openclaw
+          - apps/ci-runner/single
+          - pkg/instance-exec-file-transfer
+          - pkg/instance-exec-file-transfer/modules/direct
+          - pkg/instance-exec-file-transfer/modules/chunked
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.14'
+
+      - uses: ./.github/actions/setup-qiniu-terraform
+
+      - name: Run terraform test
+        working-directory: ${{ matrix.module }}
+        run: |
+          if ls *.tftest.hcl 1>/dev/null 2>&1; then
+            terraform init
+            terraform validate
+            terraform test -no-color
+          else
+            echo "::notice::No test files in ${{ matrix.module }}, skipping"
+          fi
+
+      - name: Test instance exec file transfer contract
+        if: matrix.module == 'pkg/instance-exec-file-transfer'
+        run: bash pkg/instance-exec-file-transfer/tests/contract.sh
