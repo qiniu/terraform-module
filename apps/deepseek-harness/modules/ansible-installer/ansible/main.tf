@@ -22,7 +22,6 @@ locals {
     "roles/deepseek_harness/handlers/main.yml",
     "roles/deepseek_harness/tasks/main.yml",
     "roles/deepseek_harness/templates/deepseek-harness.service.j2",
-    "roles/managed_skills/defaults/main.yml",
     "roles/managed_skills/tasks/main.yml",
     "roles/managed_skills/templates/las_dsh_environment/SKILL.md.j2",
     "roles/managed_skills/templates/las_static_preview/SKILL.md.j2",

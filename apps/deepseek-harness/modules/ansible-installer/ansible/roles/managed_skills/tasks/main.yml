@@ -7,14 +7,14 @@
     group: "{{ dsh_group }}"
     mode: '0700'
   loop:
-    - "{{ las_dsh_environment_skill_name }}"
-    - "{{ las_static_preview_skill_name }}"
-    - "{{ las_preview_ports_skill_name }}"
+    - las_dsh_environment
+    - las_static_preview
+    - las_preview_ports
 
 - name: Render the LAS deployment environment Skill
   ansible.builtin.template:
     src: las_dsh_environment/SKILL.md.j2
-    dest: "{{ dsh_home }}/.agents/skills/{{ las_dsh_environment_skill_name }}/SKILL.md"
+    dest: "{{ dsh_home }}/.agents/skills/las_dsh_environment/SKILL.md"
     owner: "{{ dsh_user }}"
     group: "{{ dsh_group }}"
     mode: '0600'
@@ -22,7 +22,7 @@
 - name: Render the LAS Static Preview Skill
   ansible.builtin.template:
     src: las_static_preview/SKILL.md.j2
-    dest: "{{ dsh_home }}/.agents/skills/{{ las_static_preview_skill_name }}/SKILL.md"
+    dest: "{{ dsh_home }}/.agents/skills/las_static_preview/SKILL.md"
     owner: "{{ dsh_user }}"
     group: "{{ dsh_group }}"
     mode: '0600'
@@ -30,7 +30,7 @@
 - name: Render the LAS Static Preview publish script
   ansible.builtin.template:
     src: las_static_preview/publish.sh.j2
-    dest: "{{ dsh_home }}/.agents/skills/{{ las_static_preview_skill_name }}/scripts/publish.sh"
+    dest: "{{ dsh_home }}/.agents/skills/las_static_preview/scripts/publish.sh"
     owner: "{{ dsh_user }}"
     group: "{{ dsh_group }}"
     mode: '0700'
@@ -38,7 +38,7 @@
 - name: Render the LAS Preview ports Skill
   ansible.builtin.template:
     src: las_preview_ports/SKILL.md.j2
-    dest: "{{ dsh_home }}/.agents/skills/{{ las_preview_ports_skill_name }}/SKILL.md"
+    dest: "{{ dsh_home }}/.agents/skills/las_preview_ports/SKILL.md"
     owner: "{{ dsh_user }}"
     group: "{{ dsh_group }}"
     mode: '0600'
@@ -46,7 +46,7 @@
 - name: Render the LAS Preview port management script
   ansible.builtin.template:
     src: las_preview_ports/manage-preview-port.sh.j2
-    dest: "{{ dsh_home }}/.agents/skills/{{ las_preview_ports_skill_name }}/scripts/manage-preview-port.sh"
+    dest: "{{ dsh_home }}/.agents/skills/las_preview_ports/scripts/manage-preview-port.sh"
     owner: "{{ dsh_user }}"
     group: "{{ dsh_group }}"
     mode: '0700'
