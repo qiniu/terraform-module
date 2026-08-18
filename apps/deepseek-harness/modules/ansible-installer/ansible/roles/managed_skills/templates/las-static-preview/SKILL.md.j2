@@ -1,0 +1,36 @@
+---
+name: las-static-preview
+description: 构建和发布纯静态网页供用户公开访问时使用；适用于不需要 HMR、WebSocket、SSE、后端接口或常驻开发服务的网页交付。
+disable-model-invocation: false
+---
+
+# LAS Static Preview
+
+使用 Static Preview 发布纯静态网页，不占用用户 Preview 端口，也不启动常驻进程。
+
+- 公开根地址：`https://{{ static_preview_public_authority }}/`
+- 站点 URL：`https://{{ static_preview_public_authority }}/<slug>/`
+- 发布目录：`{{ static_preview_dir }}/<slug>/`
+- 元数据：`{{ static_preview_dir }}/<slug>/.las-static-preview.json`，仅供主机内审计，公网访问返回 404
+
+先完成构建和本地检查，确认源目录位于 `{{ dsh_workspace_dir }}` 内且包含 `index.html`，再在本 Skill 目录执行：
+
+```bash
+scripts/publish.sh <slug> <source-dir> [session-id]
+```
+
+`slug` 只能包含小写字母、数字和中间连字符。可选 `session-id` 仅在当前会话明确提供时填写，不得猜测或编造。脚本会拒绝符号链接，替换同名站点，并记录来源目录、发布时间和会话标识。
+
+同名站点已存在或用户要求说明其归属时，先读取该站点的 `.las-static-preview.json`。其中 `agent_session_id` 非空时，运行 `{{ dsh_home }}/.agents/skills/las-dsh-environment/scripts/inspect-session.sh <session-id>` 查询摘要，再向用户说明关联的会话任务；不得默认读取完整会话历史。没有会话标识时应说明无法关联。
+
+## 下线站点
+
+当用户明确要求删除某个 Static Preview 部署时，在本 Skill 目录执行：
+
+```bash
+scripts/unpublish.sh <slug>
+```
+
+脚本只会删除该 slug 对应、且元数据匹配的已发布目录；不会删除其他站点或工作区文件。下线后，该站点 URL 将不可访问。
+
+Static Preview 是公开入口。不得发布密码、令牌、私钥、云凭据或其他敏感信息。需要 HMR、WebSocket、SSE、后端接口或其他常驻进程时，改用 `las-preview-ports` Skill。

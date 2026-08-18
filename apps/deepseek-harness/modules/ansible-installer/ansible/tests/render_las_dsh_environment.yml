@@ -1,0 +1,257 @@
+---
+- name: Verify the rendered LAS deployment environment skill
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    code_server_port: 3083
+    code_server_proxy_port: 3084
+    code_server_public_authority: code.example.test
+    dsh_ansible_venv_dir: /opt/las-dsh-installer/venv
+    dsh_home: /home/dsh
+    las_instance_id: test-instance
+    dsh_port: 3080
+    las_region_id: ap-southeast-1
+    las_region_name: Singapore
+    dsh_skills:
+      - name: find-skills
+        source: https://github.com/vercel-labs/skills
+    dsh_state_dir: /home/dsh/.dsh
+    static_preview_dir: /home/dsh/.las-static-preview
+    static_preview_public_authority: static-preview.example.test
+    dsh_user: dsh
+    dsh_web_public_authority: dsh.example.test
+    dsh_web_proxy_port: 3081
+    nodejs_version: 24.19.0
+    skill_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las-dsh-environment/SKILL.md.j2"
+    session_summary_script_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las-dsh-environment/inspect-session.sh.j2"
+    uv_version: 0.12.5
+    code_server_test_files:
+      - "dir-it's #?&中文.js"
+      - literal%2Fname.js
+      - report:12
+      - "x'; touch INJECTED; #.js"
+  tasks:
+    - name: Create a temporary workspace for link generation
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: las-dsh-skill-test-
+      register: code_server_test_workspace
+
+    - name: Verify the rendered skill
+      block:
+        - name: Render the skill with one Preview slot
+          ansible.builtin.set_fact:
+            skill_with_preview: "{{ lookup('ansible.builtin.template', skill_template_path) }}"
+          vars:
+            dsh_workspace_dir: "{{ code_server_test_workspace.path }}"
+            preview_ports: [30080]
+            preview_public_authorities: [preview.example.test]
+
+        - name: Verify the enabled Preview guidance
+          ansible.builtin.assert:
+            that:
+              - "'七牛云 LAS 管理的云主机' in skill_with_preview"
+              - "'find-skills' in skill_with_preview"
+              - "'https://github.com/vercel-labs/skills' in skill_with_preview"
+              - "'test-instance' in skill_with_preview"
+              - "'ap-southeast-1' in skill_with_preview"
+              - "'https://portal.qiniu.com/las/vm/instances/detail/test-instance' in skill_with_preview"
+              - "'las-static-preview' in skill_with_preview"
+              - "'las-preview-ports' in skill_with_preview"
+              - "'scripts/inspect-session.sh <session-id>' in skill_with_preview"
+              - "'systemctl --user' not in skill_with_preview"
+              - "'journalctl --user' not in skill_with_preview"
+              - "'gotoLineMode' not in skill_with_preview"
+              - "'&path=' not in skill_with_preview"
+
+        - name: Extract the code-server workspace link
+          ansible.builtin.set_fact:
+            code_server_workspace_link: >-
+              {{ 'https://code.example.test/?folder=' ~ skill_with_preview.split('](https://code.example.test/?folder=')[1].split(')')[0] }}
+
+        - name: Verify the code-server workspace link contract
+          ansible.builtin.command:
+            argv:
+              - node
+              - -e
+              - |
+                const [link, workspace] = process.argv.slice(1);
+                const url = new URL(link);
+                if (url.origin !== "https://code.example.test" ||
+                    url.searchParams.get("folder") !== workspace ||
+                    url.searchParams.has("path")) {
+                  throw new Error("invalid code-server workspace link");
+                }
+              - "{{ code_server_workspace_link }}"
+              - "{{ code_server_test_workspace.path }}"
+          changed_when: false
+
+        - name: Extract the code-server link generator
+          ansible.builtin.set_fact:
+            code_server_link_command: >-
+              {{ skill_with_preview | regex_findall('(?m)^node -e .+$') | first }}
+
+        - name: Create files with shell and URL metacharacters
+          ansible.builtin.copy:
+            content: test
+            dest: "{{ code_server_test_workspace.path }}/{{ item }}"
+            mode: "0600"
+          loop: "{{ code_server_test_files }}"
+
+        - name: Run the rendered code-server link generator
+          ansible.builtin.shell: "{{ code_server_link_command }}"
+          args:
+            chdir: "{{ code_server_test_workspace.path }}"
+          changed_when: false
+          register: code_server_link_result
+
+        - name: Verify generated code-server links
+          ansible.builtin.command:
+            argv:
+              - node
+              - -e
+              - |
+                const path = require("node:path");
+                const [authority, workspace, expectedJson] = process.argv.slice(1);
+                const expected = JSON.parse(expectedJson).sort();
+                const records = require("node:fs").readFileSync(0, "utf8")
+                  .trim().split("\n").map(JSON.parse);
+                if (JSON.stringify(records.map(({ path }) => path).sort()) !== JSON.stringify(expected)) {
+                  throw new Error("generated paths do not match test files");
+                }
+                for (const record of records) {
+                  const absolutePath = path.join(workspace, record.path);
+                  const url = new URL(record.url);
+                  const payload = JSON.parse(url.searchParams.get("payload"));
+                  const fileUrl = new URL(payload[0][1]);
+                  if (url.origin !== `https://${authority}` || url.searchParams.get("folder") !== workspace) {
+                    throw new Error(`invalid code-server URL for ${record.path}`);
+                  }
+                  if (payload.length !== 1 || payload[0][0] !== "openFile") {
+                    throw new Error(`invalid code-server payload for ${record.path}`);
+                  }
+                  if (fileUrl.protocol !== "vscode-remote:" || fileUrl.host !== authority || decodeURIComponent(fileUrl.pathname) !== absolutePath) {
+                    throw new Error(`invalid openFile URI for ${record.path}`);
+                  }
+                }
+              - code.example.test
+              - "{{ code_server_test_workspace.path }}"
+              - "{{ code_server_test_files | to_json }}"
+            stdin: "{{ code_server_link_result.stdout }}"
+          changed_when: false
+
+        - name: Check that filenames were not executed by the shell
+          ansible.builtin.stat:
+            path: "{{ code_server_test_workspace.path }}/INJECTED"
+          register: code_server_injected_marker
+
+        - name: Verify no injected command ran
+          ansible.builtin.assert:
+            that:
+              - not code_server_injected_marker.stat.exists
+
+        - name: Create a session log for summary inspection
+          ansible.builtin.command:
+            argv:
+              - node
+              - -e
+              - |
+                const fs = require("node:fs");
+                const path = require("node:path");
+                const [root, cwd, sessionId] = process.argv.slice(1);
+                const directory = path.join(root, "sessions", "project", sessionId);
+                const records = [
+                  { type: "session", version: 1, id: sessionId, cwd, createdAt: 1, delegationDepth: 0 },
+                  { type: "user/message", seq: 0, time: 2, data: { content: [{ type: "text", text: "Build the first demo" }], source: { kind: "user" } } },
+                  { type: "session/title", seq: 1, time: 3, data: { title: "Demo deployment", messageSeqs: [0], source: { kind: "fallback" } } },
+                  { type: "user/message", seq: 2, time: 4, data: { content: [{ type: "text", text: "Check the published Preview" }], source: { kind: "user" } } },
+                ];
+                fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
+                fs.writeFileSync(path.join(directory, "session.jsonl"), `${records.map(JSON.stringify).join(String.fromCharCode(10))}${String.fromCharCode(10)}`, { mode: 0o600 });
+              - "{{ code_server_test_workspace.path }}/state"
+              - "{{ code_server_test_workspace.path }}"
+              - session-11111111-1111-4111-8111-111111111111
+          changed_when: false
+
+        - name: Compress the session log
+          ansible.builtin.command:
+            argv:
+              - zstd
+              - --quiet
+              - --force
+              - -o
+              - "{{ code_server_test_workspace.path }}/state/sessions/project/session-11111111-1111-4111-8111-111111111111/session.jsonl.zstd"
+              - "{{ code_server_test_workspace.path }}/state/sessions/project/session-11111111-1111-4111-8111-111111111111/session.jsonl"
+          changed_when: false
+
+        - name: Verify the compressed session log header
+          ansible.builtin.command:
+            argv:
+              - node
+              - -e
+              - |
+                const { spawnSync } = require("node:child_process");
+                const result = spawnSync("zstd", ["-d", "-q", "-c", process.argv[1]], { encoding: "utf8" });
+                if (result.status !== 0) throw new Error(result.stderr);
+                const header = JSON.parse(result.stdout.split("\n", 1)[0]);
+                if (header.type !== "session" || header.id !== "session-11111111-1111-4111-8111-111111111111") {
+                  throw new Error("invalid compressed session header");
+                }
+              - "{{ code_server_test_workspace.path }}/state/sessions/project/session-11111111-1111-4111-8111-111111111111/session.jsonl.zstd"
+          changed_when: false
+
+        - name: Render the session summary script
+          ansible.builtin.template:
+            src: "{{ session_summary_script_template_path }}"
+            dest: "{{ code_server_test_workspace.path }}/inspect-session.sh"
+            mode: '0700'
+          vars:
+            dsh_state_dir: "{{ code_server_test_workspace.path }}/state"
+
+        - name: Inspect the compressed session summary
+          ansible.builtin.command:
+            argv:
+              - "{{ code_server_test_workspace.path }}/inspect-session.sh"
+              - session-11111111-1111-4111-8111-111111111111
+          register: session_summary
+          changed_when: false
+
+        - name: Verify the session summary is minimal and identifiable
+          ansible.builtin.command:
+            argv:
+              - node
+              - -e
+              - |
+                const summary = JSON.parse(require("node:fs").readFileSync(0, "utf8"));
+                const expected = {
+                  session_id: "session-11111111-1111-4111-8111-111111111111",
+                  title: "Demo deployment",
+                  first_user_message: "Build the first demo",
+                  last_user_message: "Check the published Preview",
+                };
+                for (const [key, value] of Object.entries(expected)) {
+                  if (summary[key] !== value) throw new Error(`unexpected ${key}`);
+                }
+                if (!summary.cwd || "events" in summary || "messages" in summary) throw new Error("summary leaked full session history");
+            stdin: "{{ session_summary.stdout }}"
+          changed_when: false
+
+        - name: Render the skill without Preview slots
+          ansible.builtin.set_fact:
+            skill_without_preview: "{{ lookup('ansible.builtin.template', skill_template_path) }}"
+          vars:
+            dsh_workspace_dir: "{{ code_server_test_workspace.path }}"
+            preview_ports: []
+            preview_public_authorities: []
+
+        - name: Verify environment Skill does not duplicate Preview port details
+          ansible.builtin.assert:
+            that:
+              - "\"ss -H -ltnp '( sport = :<port> )'\" not in skill_without_preview"
+              - "'应用监听 `0.0.0.0' not in skill_without_preview"
+      always:
+        - name: Remove the temporary link-generation workspace
+          ansible.builtin.file:
+            path: "{{ code_server_test_workspace.path }}"
+            state: absent

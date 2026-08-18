@@ -1,0 +1,24 @@
+---
+dsh_port: 3080
+dsh_user: dsh
+dsh_group: dsh
+dsh_home: /home/dsh
+dsh_state_dir: "{{ dsh_home }}/.dsh"
+dsh_pnpm_store_dir: "{{ dsh_home }}/.pnpm-store"
+dsh_workspace_dir: "{{ dsh_home }}/workspace"
+static_preview_dir: "{{ dsh_home }}/.las-static-preview"
+dsh_download_dir: /var/cache/deepseek-harness
+nodejs_version: 24.19.0
+pnpm_version: 11.22.0
+code_server_version: 4.132.0
+code_server_releases:
+  x86_64:
+    archive: "code-server-{{ code_server_version }}-linux-amd64.tar.gz"
+    sha256: a38d26f4cb81f768feddff79e2937fd3f39c83d3da8be3da7225e1087e62e4ed
+  aarch64:
+    archive: "code-server-{{ code_server_version }}-linux-arm64.tar.gz"
+    sha256: ade569a677d1c04ee66ef153382b7e15bf261f955407663c7ddc6b87f9ee29fc
+code_server_port: 3083
+dsh_skills:
+  - name: find-skills
+    source: https://github.com/vercel-labs/skills

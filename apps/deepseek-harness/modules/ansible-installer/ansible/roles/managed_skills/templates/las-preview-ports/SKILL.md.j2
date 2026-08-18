@@ -1,0 +1,43 @@
+---
+name: las-preview-ports
+description: 启动需常驻进程的网页应用并提供公开 Preview 地址时使用；适用于 HMR、WebSocket、SSE、后端接口或其他无法作为纯静态网页发布的场景。
+disable-model-invocation: false
+---
+
+# LAS Preview 端口
+
+Preview 槽位由 HTTPProxy 直接转发到用户应用，不经过本机 Nginx。开发服务器必须监听对应端口的 `0.0.0.0`，并且每次使用前必须先申领端口。
+
+{% if preview_ports | length == 0 %}
+当前未启用 Preview 槽位；不能启动公开 Preview 服务。
+{% else %}
+{% for port in preview_ports %}
+- Preview {{ loop.index }}：`0.0.0.0:{{ port }}`，公网地址 `https://{{ preview_public_authorities[loop.index0] }}`
+{% endfor %}
+
+在本 Skill 目录执行：
+
+```bash
+scripts/manage-preview-port.sh claim <port> <project-dir> [session-id]
+```
+
+申领记录保存在 `{{ dsh_home }}/.las-preview-ports/<port>.json`，包含端口、项目目录、申领时间和可选会话标识。`session-id` 仅在当前会话明确提供时填写，不得猜测或编造。
+
+如果申领报告端口已有监听或已有记录，使用 `ss -H -ltnp '( sport = :<port> )'`，再结合 `ps -fp <pid>`、`readlink -f /proc/<pid>/cwd` 和对应 JSON 记录确认监听进程是否属于当前项目。记录的 `agent_session_id` 非空时，运行 `{{ dsh_home }}/.agents/skills/las-dsh-environment/scripts/inspect-session.sh <session-id>` 查询摘要，以便向用户说明该端口对应的任务；不得默认读取完整会话历史。其他项目或归属不明的进程不得停止、覆盖或释放，应改用其他空闲槽位。
+
+启动服务后，必须再次用 `ss -H -ltnp '( sport = :<port> )'`、`ps -fp <pid>` 和 `readlink -f /proc/<pid>/cwd` 确认监听地址、PID 和工作目录。监听地址必须是 `0.0.0.0:<port>`，然后用 `curl http://127.0.0.1:<port>` 验证本机响应，最后再向用户提供对应公网 URL。
+
+停止服务后，仅由同一项目执行：
+
+```bash
+scripts/manage-preview-port.sh release <port> <project-dir>
+```
+
+脚本会拒绝释放仍有监听的端口或属于其他项目的记录。从 VM 内访问自身公网 Preview URL 不通时，可能是 NAT 回环限制；这是无害的环境特性，应以本机 `curl` 验证服务，由外部网络验证公网链路。
+
+## 清理端口 Preview
+
+用户明确要求下线某个端口 Preview 时，先停止该项目的监听进程，再执行上面的 `release` 命令。`release` 仅删除同一项目的申领元数据；它不会停止进程，也不会影响 HTTPProxy、Nginx 或其他 Preview 槽位。进程归属不明时不得停止或释放。
+{% endif %}
+
+Preview 是公开入口。不得发布密码、令牌、私钥、云凭据或其他敏感信息。

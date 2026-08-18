@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+session_root={{ (dsh_state_dir ~ '/sessions') | quote }}
+
+usage() {
+  printf '%s\n' 'usage: inspect-session.sh <session-id>' >&2
+  exit 2
+}
+
+[ "$#" -eq 1 ] || usage
+
+session_id="$1"
+case "${session_id}" in
+  session-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[1-5][0-9a-f][0-9a-f][0-9a-f]-[89ab][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]) ;;
+  *)
+    printf '%s\n' 'session id must be a DSH session-UUID' >&2
+    exit 2
+    ;;
+esac
+
+node - "${session_root}" "${session_id}" <<'NODE'
+const fs = require('node:fs')
+const path = require('node:path')
+const { zstdDecompressSync } = require('node:zlib')
+const { spawnSync } = require('node:child_process')
+
+const [sessionRoot, sessionId] = process.argv.slice(2)
+const maxMessageLength = 500
+
+function fail(message) {
+  process.stderr.write(`${message}\n`)
+  process.exit(1)
+}
+
+function regularFile(filePath) {
+  try {
+    const entry = fs.lstatSync(filePath)
+    return entry.isFile() && !entry.isSymbolicLink()
+  } catch (error) {
+    if (error && error.code === 'ENOENT') return false
+    throw error
+  }
+}
+
+function findTranscript(root, id) {
+  const resolvedRoot = fs.realpathSync(root)
+  for (const project of fs.readdirSync(resolvedRoot, { withFileTypes: true })) {
+    if (!project.isDirectory() || project.isSymbolicLink()) continue
+    const sessionDir = path.join(resolvedRoot, project.name, id)
+    let directory
+    try {
+      directory = fs.lstatSync(sessionDir)
+    } catch (error) {
+      if (error && error.code === 'ENOENT') continue
+      throw error
+    }
+    if (!directory.isDirectory() || directory.isSymbolicLink()) continue
+    for (const filename of ['session.jsonl.zstd', 'session.jsonl']) {
+      const transcript = path.join(sessionDir, filename)
+      if (regularFile(transcript)) return transcript
+    }
+  }
+  return undefined
+}
+
+function truncate(text) {
+  const characters = Array.from(text)
+  return characters.length <= maxMessageLength
+    ? text
+    : `${characters.slice(0, maxMessageLength).join('')}...`
+}
+
+function userText(event) {
+  if (event.type !== 'user/message' || event.data?.source?.kind !== 'user') return undefined
+  const text = Array.isArray(event.data.content)
+    ? event.data.content.filter(block => block?.type === 'text' && typeof block.text === 'string').map(block => block.text).join('\n').trim()
+    : ''
+  return text === '' ? undefined : truncate(text)
+}
+
+function decompressZstd(bytes) {
+  if (typeof zstdDecompressSync === 'function') return zstdDecompressSync(bytes)
+  const result = spawnSync('zstd', ['-d', '-q', '-c'], { input: bytes, encoding: 'buffer' })
+  if (result.error) throw result.error
+  if (result.status !== 0) throw new Error(result.stderr.toString('utf8').trim() || 'zstd decompression failed')
+  return result.stdout
+}
+
+let transcript
+try {
+  transcript = findTranscript(sessionRoot, sessionId)
+} catch (error) {
+  fail(`cannot inspect session storage: ${error instanceof Error ? error.message : String(error)}`)
+}
+if (transcript === undefined) fail('session log was not found')
+
+let content
+try {
+  const bytes = fs.readFileSync(transcript)
+  content = transcript.endsWith('.zstd') ? decompressZstd(bytes).toString('utf8') : bytes.toString('utf8')
+} catch (error) {
+  fail(`cannot read session log: ${error instanceof Error ? error.message : String(error)}`)
+}
+
+const lines = content.split('\n').filter(line => line !== '')
+if (lines.length === 0) fail('session log is empty')
+
+let header
+try {
+  header = JSON.parse(lines[0])
+} catch {
+  fail('session log has an invalid header')
+}
+if (header.type !== 'session' || header.id !== sessionId) fail('session log header does not match the requested session')
+
+let title = null
+let firstUserMessage = null
+let lastUserMessage = null
+for (const line of lines.slice(1)) {
+  let event
+  try {
+    event = JSON.parse(line)
+  } catch {
+    fail('session log contains invalid JSON')
+  }
+  if (event.type === 'session/title' && typeof event.data?.title === 'string' && event.data.title.trim() !== '') {
+    title = event.data.title
+  }
+  const text = userText(event)
+  if (text !== undefined) {
+    if (firstUserMessage === null) firstUserMessage = text
+    lastUserMessage = text
+  }
+}
+
+process.stdout.write(`${JSON.stringify({
+  session_id: sessionId,
+  cwd: typeof header.cwd === 'string' ? header.cwd : null,
+  created_at: header.createdAt ?? null,
+  title,
+  first_user_message: firstUserMessage,
+  last_user_message: lastUserMessage,
+})}\n`)
+NODE

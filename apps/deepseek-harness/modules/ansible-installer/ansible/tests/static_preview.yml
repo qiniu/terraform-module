@@ -1,0 +1,154 @@
+---
+- name: Verify static preview publishing
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    script_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las-static-preview/publish.sh.j2"
+    unpublish_script_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las-static-preview/unpublish.sh.j2"
+    skill_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las-static-preview/SKILL.md.j2"
+    nginx_template_path: "{{ playbook_dir }}/../roles/nginx/templates/deepseek-harness.conf.j2"
+    dsh_web_proxy_port: 3081
+    dsh_web_public_authority: dsh.example.test
+    dsh_port: 3080
+    code_server_proxy_port: 3084
+    code_server_port: 3083
+    code_server_public_authority: code.example.test
+    static_preview_public_authority: static-preview.example.test
+    static_preview_proxy_port: 3082
+  tasks:
+    - name: Create a temporary static preview test workspace
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: las-dsh-static-preview-
+      register: static_preview_test_root
+
+    - name: Verify static preview publishing
+      block:
+        - name: Render the Static Preview skill
+          ansible.builtin.set_fact:
+            static_preview_skill: "{{ lookup('ansible.builtin.template', skill_template_path) }}"
+          vars:
+            dsh_home: /home/dsh
+            dsh_workspace_dir: "{{ static_preview_test_root.path }}/workspace"
+            static_preview_dir: "{{ static_preview_test_root.path }}/.las-static-preview"
+
+        - name: Verify the Static Preview skill contract
+          ansible.builtin.assert:
+            that:
+              - "'name: las-static-preview' in static_preview_skill"
+              - "'https://static-preview.example.test/<slug>/' in static_preview_skill"
+              - "'scripts/publish.sh <slug> <source-dir> [session-id]' in static_preview_skill"
+              - "'scripts/unpublish.sh <slug>' in static_preview_skill"
+              - "'inspect-session.sh <session-id>' in static_preview_skill"
+              - "'.las-static-preview.json' in static_preview_skill"
+              - "'公开入口' in static_preview_skill"
+
+        - name: Render the Static Preview Nginx server
+          ansible.builtin.set_fact:
+            static_preview_nginx_config: "{{ lookup('ansible.builtin.template', nginx_template_path) }}"
+          vars:
+            static_preview_dir: "{{ static_preview_test_root.path }}/.las-static-preview"
+
+        - name: Verify the public static preview Nginx boundary
+          ansible.builtin.assert:
+            that:
+              - "'listen 0.0.0.0:3082;' in static_preview_nginx_config"
+              - "'root ' ~ static_preview_test_root.path ~ '/.las-static-preview;' in static_preview_nginx_config"
+              - "'location ~ (^|/)\\. {' in static_preview_nginx_config"
+              - "'disable_symlinks on;' in static_preview_nginx_config"
+              - "'auth_basic' not in static_preview_nginx_config.split('server {')[2].split('server {')[0]"
+
+        - name: Create a static site source directory
+          ansible.builtin.file:
+            path: "{{ static_preview_test_root.path }}/workspace/site"
+            state: directory
+            mode: '0755'
+
+        - name: Add a static site entry point
+          ansible.builtin.copy:
+            content: "<h1>Static Preview</h1>\n"
+            dest: "{{ static_preview_test_root.path }}/workspace/site/index.html"
+            mode: '0644'
+
+        - name: Render the static preview management script
+          ansible.builtin.template:
+            src: "{{ script_template_path }}"
+            dest: "{{ static_preview_test_root.path }}/dsh-static-preview"
+            mode: '0700'
+          vars:
+            dsh_workspace_dir: "{{ static_preview_test_root.path }}/workspace"
+            static_preview_dir: "{{ static_preview_test_root.path }}/.las-static-preview"
+
+        - name: Render the static preview unpublish script
+          ansible.builtin.template:
+            src: "{{ unpublish_script_template_path }}"
+            dest: "{{ static_preview_test_root.path }}/dsh-static-preview-unpublish"
+            mode: '0700'
+          vars:
+            static_preview_dir: "{{ static_preview_test_root.path }}/.las-static-preview"
+
+        - name: Publish the static site
+          ansible.builtin.command:
+            argv:
+              - "{{ static_preview_test_root.path }}/dsh-static-preview"
+              - demo-site
+              - "{{ static_preview_test_root.path }}/workspace/site"
+              - session-123
+
+        - name: Verify published files and metadata
+          ansible.builtin.command:
+            argv:
+              - node
+              - -e
+              - |
+                const fs = require("node:fs");
+                const path = require("node:path");
+                const root = process.argv[1];
+                const target = path.join(root, ".las-static-preview", "demo-site");
+                const metadata = JSON.parse(fs.readFileSync(path.join(target, ".las-static-preview.json"), "utf8"));
+                if (fs.readFileSync(path.join(target, "index.html"), "utf8") !== "<h1>Static Preview</h1>\n" ||
+                    metadata.schema_version !== 1 || metadata.slug !== "demo-site" ||
+                    metadata.source_dir !== "site" || metadata.agent_session_id !== "session-123" ||
+                    !/^\d{4}-\d{2}-\d{2}T/.test(metadata.published_at)) {
+                  throw new Error("invalid static preview deployment");
+                }
+              - "{{ static_preview_test_root.path }}"
+          changed_when: false
+
+        - name: Unpublish the static site
+          ansible.builtin.command:
+            argv:
+              - "{{ static_preview_test_root.path }}/dsh-static-preview-unpublish"
+              - demo-site
+
+        - name: Verify the published static site was removed
+          ansible.builtin.stat:
+            path: "{{ static_preview_test_root.path }}/.las-static-preview/demo-site"
+          register: unpublished_static_site
+
+        - name: Confirm the published static site was removed
+          ansible.builtin.assert:
+            that:
+              - not unpublished_static_site.stat.exists
+
+        - name: Add a symlink to the source directory
+          ansible.builtin.file:
+            src: /etc/hostname
+            dest: "{{ static_preview_test_root.path }}/workspace/site/forbidden-link"
+            state: link
+
+        - name: Reject source directories containing symlinks
+          ansible.builtin.command:
+            argv:
+              - "{{ static_preview_test_root.path }}/dsh-static-preview"
+              - rejected-site
+              - "{{ static_preview_test_root.path }}/workspace/site"
+          register: static_preview_symlink_result
+          changed_when: false
+          failed_when: static_preview_symlink_result.rc == 0
+      always:
+        - name: Remove the temporary static preview test workspace
+          ansible.builtin.file:
+            path: "{{ static_preview_test_root.path }}"
+            state: absent

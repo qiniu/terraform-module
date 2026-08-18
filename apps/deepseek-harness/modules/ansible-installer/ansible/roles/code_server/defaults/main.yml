@@ -1,0 +1,3 @@
+---
+code_server_prefix: "/opt/code-server-{{ code_server_version }}"
+code_server_managed_marker: .las-dsh-managed

@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+workspace_dir={{ dsh_workspace_dir | quote }}
+metadata_dir={{ (dsh_home ~ '/.las-preview-ports') | quote }}
+preview_ports=({% for port in preview_ports %}{{ port }} {% endfor %})
+
+usage() {
+  printf '%s\n' 'usage: manage-preview-port.sh claim <port> <project-dir> [session-id]' >&2
+  printf '%s\n' '       manage-preview-port.sh release <port> <project-dir>' >&2
+  exit 2
+}
+
+[ "$#" -ge 3 ] && [ "$#" -le 4 ] || usage
+
+command="$1"
+port="$2"
+project_dir="$3"
+session_id="${4:-}"
+
+case "${command}" in
+  claim|release) ;;
+  *) usage ;;
+esac
+
+case "${port}" in
+  *[!0-9]* | '')
+    printf '%s\n' 'port must be numeric' >&2
+    exit 2
+    ;;
+esac
+
+port_allowed=false
+for configured_port in "${preview_ports[@]}"; do
+  if [ "${port}" = "${configured_port}" ]; then
+    port_allowed=true
+    break
+  fi
+done
+"${port_allowed}" || {
+  printf '%s\n' 'port is not an enabled Preview slot' >&2
+  exit 2
+}
+
+workspace_dir="$(realpath -e -- "${workspace_dir}")"
+project_dir="$(realpath -e -- "${project_dir}")"
+case "${project_dir}" in
+  "${workspace_dir}" | "${workspace_dir}"/*) ;;
+  *)
+    printf '%s\n' 'project directory must be inside the workspace' >&2
+    exit 2
+    ;;
+esac
+
+[ -d "${project_dir}" ] || {
+  printf '%s\n' 'project directory must be a directory' >&2
+  exit 2
+}
+
+mkdir -p -m 0700 -- "${metadata_dir}"
+metadata_file="${metadata_dir}/${port}.json"
+
+if [ "${command}" = release ]; then
+  [ -f "${metadata_file}" ] || {
+    printf '%s\n' 'Preview port is not claimed' >&2
+    exit 1
+  }
+  node -e '
+const fs = require("node:fs");
+const [path, projectDir] = process.argv.slice(1);
+const metadata = JSON.parse(fs.readFileSync(path, "utf8"));
+if (metadata.project_dir !== projectDir) throw new Error("Preview port belongs to another project");
+' "${metadata_file}" "${project_dir}"
+  if ss -H -ltn "( sport = :${port} )" | grep -q .; then
+    printf '%s\n' 'stop the project listener before releasing its Preview port' >&2
+    exit 1
+  fi
+  rm -f -- "${metadata_file}"
+  printf 'released Preview port %s\n' "${port}"
+  exit 0
+fi
+
+if ss -H -ltn "( sport = :${port} )" | grep -q .; then
+  printf '%s\n' 'Preview port is already listening; inspect its owner before choosing a slot' >&2
+  exit 1
+fi
+
+if ! (set -C; : > "${metadata_file}") 2>/dev/null; then
+  printf '%s\n' 'Preview port is already claimed; inspect its metadata before choosing a slot' >&2
+  exit 1
+fi
+
+cleanup_claim() {
+  rm -f -- "${metadata_file}"
+}
+trap cleanup_claim ERR
+claimed_at="$(date --utc +%Y-%m-%dT%H:%M:%SZ)"
+node -e '
+const fs = require("node:fs");
+const [path, port, projectDir, sessionId, claimedAt] = process.argv.slice(1);
+fs.writeFileSync(path, `${JSON.stringify({ schema_version: 1, port: Number(port), project_dir: projectDir, agent_session_id: sessionId || null, claimed_at: claimedAt }, null, 2)}\n`, { mode: 0o600 });
+' "${metadata_file}" "${port}" "${project_dir}" "${session_id}" "${claimed_at}"
+chmod 0600 "${metadata_file}"
+trap - ERR
+printf 'claimed Preview port %s\n' "${port}"

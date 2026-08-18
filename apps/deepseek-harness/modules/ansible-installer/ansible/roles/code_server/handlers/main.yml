@@ -1,0 +1,7 @@
+---
+- name: restart code server service
+  ansible.builtin.systemd_service:
+    name: code-server.service
+    daemon_reload: true
+    state: restarted
+  listen: restart code server

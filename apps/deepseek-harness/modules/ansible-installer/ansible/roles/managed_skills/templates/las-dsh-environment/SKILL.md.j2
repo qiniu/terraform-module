@@ -1,0 +1,55 @@
+---
+name: las-dsh-environment
+description: 在七牛云 LAS 的 DeepSeek Harness 主机中获取当前环境信息、访问服务地址或选择适当的网页交付方式时使用。
+disable-model-invocation: false
+---
+
+# LAS DeepSeek Harness 环境
+
+你正在一台由七牛云 LAS 管理的云主机上，以无 sudo 权限的 `{{ dsh_user }}` 用户运行。
+
+- 用户主目录：`{{ dsh_home }}`
+- `HOME`：`{{ dsh_home }}`
+- DeepSeek Harness 数据目录：`DSH_HOME={{ dsh_state_dir }}`
+- 默认工作目录：`{{ dsh_workspace_dir }}`
+- 用户级 Skill 目录：`{{ dsh_home }}/.agents/skills`
+- DeepSeek Harness 公网地址：`https://{{ dsh_web_public_authority }}`
+- code-server 公网地址：`https://{{ code_server_public_authority }}`
+- LAS 实例 ID：`{{ las_instance_id }}`
+- LAS 区域：`{{ las_region_name }}`（`{{ las_region_id }}`）
+- LAS 控制台：[打开实例详情](https://portal.qiniu.com/las/vm/instances/detail/{{ las_instance_id }})
+{% if dsh_skills | length > 0 %}
+- 已安装的外部 Skills：{% for skill in dsh_skills %}`{{ skill.name }}`（来源：`{{ skill.source }}`）{% if not loop.last %}、{% endif %}{% endfor %}
+{% endif %}
+
+网页项目、配置文件和临时调试文件都应放在 `{{ dsh_workspace_dir }}` 或其子目录中。不要把项目文件写入 `/etc`、`/usr` 或其他系统目录。
+
+## 交付网页
+
+- 纯静态网页：使用 `las-static-preview`。它直接由 Nginx 托管，不占用端口或常驻进程。
+- 需要 HMR、WebSocket、SSE、后端接口或其他常驻进程：使用 `las-preview-ports` 申领一个 Preview 槽位，再启动应用。
+
+Preview 与 Static Preview 都是公开入口，不适用 DeepSeek Harness Basic Auth。不得发布密码、令牌、私钥、云凭据或其他敏感信息。
+
+## 查询会话摘要
+
+当用户要求查询某个会话，或需要确认已有 Static Preview、Preview 端口申领记录的归属时，在本 Skill 目录执行：
+
+```bash
+scripts/inspect-session.sh <session-id>
+```
+
+脚本只输出会话工作目录、标题及首尾用户消息摘要，不会输出完整对话或将日志解压到磁盘。仅在元数据提供了 `agent_session_id` 或用户明确给出会话 ID 时查询；没有会话标识时应说明无法关联，不得猜测。
+
+## code-server 链接
+
+当用户要求查看代码或已完成产物时，提供不含认证信息的 code-server Markdown 链接：
+
+- 工作区：[打开工作区](https://{{ code_server_public_authority }}/?folder={{ dsh_workspace_dir }})
+- 文件：通过 Bash 工具的工作目录参数在目标文件的父目录运行以下固定命令。命令为当前目录中的每个普通文件输出一行 JSON；从目标文件对应记录的 `url` 字段取值，再作为 `[打开文件](<url>)` 提供。不要把目录或文件名拼接进 shell 命令：
+
+```bash
+node -e 'const fs = require("node:fs"), path = require("node:path"); const [authority, workspace] = process.argv.slice(1), root = path.resolve(workspace), cwd = path.resolve("."), relativeDir = path.relative(root, cwd); if (relativeDir === ".." || relativeDir.startsWith(`..${path.sep}`) || path.isAbsolute(relativeDir)) throw new Error("current directory must be inside the workspace"); for (const entry of fs.readdirSync(cwd, { withFileTypes: true })) { if (!entry.isFile()) continue; const absolutePath = path.join(cwd, entry.name), relativePath = path.relative(root, absolutePath), encodedPath = absolutePath.split(path.sep).map(encodeURIComponent).join("/"), fileUri = `vscode-remote://${authority}${encodedPath}`, url = new URL(`https://${authority}/`), payload = JSON.stringify([["openFile", fileUri]]); url.searchParams.set("folder", root); url.searchParams.set("payload", payload); process.stdout.write(`${JSON.stringify({ path: relativePath, url: url.toString() })}\n`); }' '{{ code_server_public_authority }}' '{{ dsh_workspace_dir }}'
+```
+
+Node.js 固定安装在 `/opt/node-v{{ nodejs_version }}`，通过 `/usr/local/bin/node`、`/usr/local/bin/npm`、`/usr/local/bin/npx` 和 `/usr/local/bin/pnpm` 发布。uv 固定版本为 `{{ uv_version }}`，通过 `/usr/local/bin/uv` 和 `/usr/local/bin/uvx` 发布。Python 项目应在工作目录中使用自己的 `.venv`，不得改动 root 管理的 `/opt`、`/usr/local/bin` 或 `{{ dsh_ansible_venv_dir }}`。

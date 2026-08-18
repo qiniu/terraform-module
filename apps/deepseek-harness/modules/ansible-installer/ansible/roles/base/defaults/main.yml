@@ -1,0 +1,9 @@
+---
+dsh_base_packages:
+  - ca-certificates
+  - curl
+  - xz-utils
+  - bubblewrap
+  - git
+  - build-essential
+  - python3
