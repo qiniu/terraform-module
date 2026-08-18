@@ -18,11 +18,11 @@ override_module {
     instance_region_name         = "新加坡"
     deployment_private_key       = "test-private-key"
     dsh_web_public_authority     = "dsh.example.test"
-    dsh_web_port                 = 3081
+    dsh_web_proxy_port           = 3081
     preview_ports                = [30080]
     preview_public_authorities   = ["preview.example.test"]
     code_server_public_authority = "code.example.test"
-    code_server_web_port         = 3087
+    code_server_proxy_port       = 3087
     ssh_endpoints                = []
   }
 }
@@ -56,9 +56,9 @@ run "uses_fixed_versions_and_installer_contract" {
   assert {
     condition = (
       var.preview_count == 1 &&
-      module.infrastructure.dsh_web_port == 3081 &&
+      module.infrastructure.dsh_web_proxy_port == 3081 &&
       module.infrastructure.preview_ports == [30080] &&
-      module.infrastructure.code_server_web_port == 3087
+      module.infrastructure.code_server_proxy_port == 3087
     )
     error_message = "infrastructure 必须固定 DSH Web、Preview 和 code-server 代理端口。"
   }
@@ -235,11 +235,11 @@ run "outputs_ssh_command_when_enabled" {
       instance_region_name         = "新加坡"
       deployment_private_key       = "test-private-key"
       dsh_web_public_authority     = "dsh.example.test"
-      dsh_web_port                 = 3081
+      dsh_web_proxy_port           = 3081
       preview_ports                = [30080]
       preview_public_authorities   = ["preview.example.test"]
       code_server_public_authority = "code.example.test"
-      code_server_web_port         = 3087
+      code_server_proxy_port       = 3087
       ssh_endpoints                = ["203.0.113.10:2222"]
     }
   }
@@ -341,11 +341,11 @@ run "supports_zero_preview_slots" {
       instance_region_name         = "新加坡"
       deployment_private_key       = "test-private-key"
       dsh_web_public_authority     = "dsh.example.test"
-      dsh_web_port                 = 3081
+      dsh_web_proxy_port           = 3081
       preview_ports                = []
       preview_public_authorities   = []
       code_server_public_authority = "code.example.test"
-      code_server_web_port         = 3087
+      code_server_proxy_port       = 3087
       ssh_endpoints                = []
     }
   }

@@ -20,8 +20,8 @@ output "dsh_web_public_authority" {
   value       = qiniu_compute_instance_public_access.dsh_web.endpoint
 }
 
-output "dsh_web_port" {
-  value = local.dsh_web_port
+output "dsh_web_proxy_port" {
+  value = local.dsh_web_proxy_port
 }
 
 output "preview_ports" {
@@ -38,8 +38,8 @@ output "code_server_public_authority" {
   value       = qiniu_compute_instance_public_access.code_server.endpoint
 }
 
-output "code_server_web_port" {
-  value = local.code_server_web_port
+output "code_server_proxy_port" {
+  value = local.code_server_proxy_port
 }
 
 output "ssh_endpoints" {

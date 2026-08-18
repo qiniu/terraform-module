@@ -1,12 +1,12 @@
 variables {
-  dsh_web_port                 = 3081
+  dsh_web_proxy_port           = 3081
   preview_ports                = [30080]
   dsh_web_public_authority     = "dsh.example.test"
   dsh_instance_id              = "i-69832576086fed2869d55cd4"
   dsh_region_id                = "ap-southeast-1"
   dsh_region_name              = "新加坡"
   preview_public_authorities   = ["preview.example.test"]
-  code_server_web_port         = 3087
+  code_server_proxy_port       = 3087
   code_server_public_authority = "code.example.test"
   dsh_web_username             = "admin"
   dsh_web_password             = "web-password-must-not-appear"

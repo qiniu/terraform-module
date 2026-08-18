@@ -20,7 +20,7 @@
     dsh_state_dir: /home/dsh/.dsh
     dsh_user: dsh
     dsh_web_public_authority: dsh.example.test
-    nginx_proxy_port: 3081
+    dsh_web_proxy_port: 3081
     nodejs_version: 24.19.0
     skill_template_path: "{{ playbook_dir }}/../roles/las_dsh_environment/templates/SKILL.md.j2"
     uv_version: 0.12.5

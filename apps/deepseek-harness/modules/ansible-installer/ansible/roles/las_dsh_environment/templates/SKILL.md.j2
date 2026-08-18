@@ -36,7 +36,7 @@ disable-model-invocation: false
 
 公网入口由 HTTPProxy 提供。DeepSeek Harness 和 code-server 后端监听 `127.0.0.1`，由本机 Nginx 代理；Preview 槽位由 HTTPProxy 直接访问实例内网端口。
 
-- DeepSeek Harness：HTTPProxy 将公网请求转发至本机 Nginx `{{ nginx_proxy_port }}`，Nginx 再代理至 `127.0.0.1:{{ dsh_port }}`
+- DeepSeek Harness：HTTPProxy 将公网请求转发至本机 Nginx `{{ dsh_web_proxy_port }}`，Nginx 再代理至 `127.0.0.1:{{ dsh_port }}`
 - code-server：HTTPProxy 将公网请求转发至本机 Nginx `{{ code_server_proxy_port }}`，Nginx 再代理至 `127.0.0.1:{{ code_server_port }}`
 
 ## 用户 Preview 端口

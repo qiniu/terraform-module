@@ -15,7 +15,7 @@
 
     - name: Collect service and Preview ports
       ansible.builtin.set_fact:
-        dsh_all_ports: "{{ [dsh_port, nginx_proxy_port, code_server_port, code_server_proxy_port] + preview_ports }}"
+        dsh_all_ports: "{{ [dsh_port, dsh_web_proxy_port, code_server_port, code_server_proxy_port] + preview_ports }}"
 
     - name: Verify required deployment variables
       ansible.builtin.assert:
@@ -58,7 +58,7 @@
 
     - name: Verify the Harness Nginx authentication boundary
       ansible.builtin.uri:
-        url: "http://127.0.0.1:{{ nginx_proxy_port }}/"
+        url: "http://127.0.0.1:{{ dsh_web_proxy_port }}/"
         status_code: 401
 
     - name: Verify the code-server loopback authentication boundary

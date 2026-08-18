@@ -44,14 +44,14 @@ module "infrastructure" {
 module "installer" {
   source = "./modules/ansible-installer"
 
-  dsh_web_port                 = module.infrastructure.dsh_web_port
+  dsh_web_proxy_port           = module.infrastructure.dsh_web_proxy_port
   dsh_web_public_authority     = module.infrastructure.dsh_web_public_authority
   dsh_instance_id              = module.infrastructure.instance_id
   dsh_region_id                = module.infrastructure.instance_region_id
   dsh_region_name              = module.infrastructure.instance_region_name
   preview_ports                = module.infrastructure.preview_ports
   preview_public_authorities   = module.infrastructure.preview_public_authorities
-  code_server_web_port         = module.infrastructure.code_server_web_port
+  code_server_proxy_port       = module.infrastructure.code_server_proxy_port
   code_server_public_authority = module.infrastructure.code_server_public_authority
   dsh_web_username             = local.dsh_web_username
   dsh_web_password             = local.dsh_web_password

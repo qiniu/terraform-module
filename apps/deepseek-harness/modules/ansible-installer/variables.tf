@@ -1,10 +1,10 @@
-variable "dsh_web_port" {
-  description = "DeepSeek Harness Web 入口端口。"
+variable "dsh_web_proxy_port" {
+  description = "DeepSeek Harness Web 的 HTTPProxy/Nginx 代理端口。"
   type        = number
 
   validation {
-    condition     = var.dsh_web_port >= 1 && var.dsh_web_port <= 65535 && floor(var.dsh_web_port) == var.dsh_web_port
-    error_message = "dsh_web_port 必须是 1 到 65535 之间的整数。"
+    condition     = var.dsh_web_proxy_port >= 1 && var.dsh_web_proxy_port <= 65535 && floor(var.dsh_web_proxy_port) == var.dsh_web_proxy_port
+    error_message = "dsh_web_proxy_port 必须是 1 到 65535 之间的整数。"
   }
 }
 
@@ -18,13 +18,13 @@ variable "preview_ports" {
   }
 }
 
-variable "code_server_web_port" {
-  description = "code-server Web 入口端口。"
+variable "code_server_proxy_port" {
+  description = "code-server 的 HTTPProxy/Nginx 代理端口。"
   type        = number
 
   validation {
-    condition     = var.code_server_web_port >= 1 && var.code_server_web_port <= 65535 && floor(var.code_server_web_port) == var.code_server_web_port
-    error_message = "code_server_web_port 必须是 1 到 65535 之间的整数。"
+    condition     = var.code_server_proxy_port >= 1 && var.code_server_proxy_port <= 65535 && floor(var.code_server_proxy_port) == var.code_server_proxy_port
+    error_message = "code_server_proxy_port 必须是 1 到 65535 之间的整数。"
   }
 }
 
