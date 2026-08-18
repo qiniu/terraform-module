@@ -17,7 +17,7 @@
       - name: find-skills
         source: https://github.com/vercel-labs/skills
     dsh_state_dir: /home/dsh/.dsh
-    static_preview_dir: /home/dsh/static-preview
+    static_preview_dir: /home/dsh/.las-static-preview
     static_preview_public_authority: static-preview.example.test
     dsh_user: dsh
     dsh_web_public_authority: dsh.example.test

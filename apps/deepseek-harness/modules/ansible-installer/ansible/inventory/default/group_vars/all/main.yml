@@ -6,7 +6,7 @@ dsh_home: /home/dsh
 dsh_state_dir: "{{ dsh_home }}/.dsh"
 dsh_pnpm_store_dir: "{{ dsh_home }}/.pnpm-store"
 dsh_workspace_dir: "{{ dsh_home }}/workspace"
-static_preview_dir: "{{ dsh_home }}/static-preview"
+static_preview_dir: "{{ dsh_home }}/.las-static-preview"
 dsh_download_dir: /var/cache/deepseek-harness
 nodejs_version: 24.19.0
 pnpm_version: 11.22.0

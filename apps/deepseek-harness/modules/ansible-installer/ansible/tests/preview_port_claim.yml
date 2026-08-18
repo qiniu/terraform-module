@@ -29,7 +29,7 @@
               - "'0.0.0.0:30080' in preview_ports_skill"
               - "'https://preview.example.test' in preview_ports_skill"
               - "'scripts/manage-preview-port.sh claim <port> <project-dir> [session-id]' in preview_ports_skill"
-              - "'/home/dsh/.preview-ports/<port>.json' in preview_ports_skill"
+              - "'/home/dsh/.las-preview-ports/<port>.json' in preview_ports_skill"
               - "'NAT 回环' in preview_ports_skill"
 
         - name: Create a Preview project directory
@@ -69,7 +69,7 @@
                     metadata.agent_session_id !== "session-123" || !metadata.claimed_at) {
                   throw new Error("invalid Preview port claim");
                 }
-              - "{{ preview_port_test_root.path }}/.preview-ports/30080.json"
+              - "{{ preview_port_test_root.path }}/.las-preview-ports/30080.json"
           changed_when: false
 
         - name: Release the Preview port
@@ -82,7 +82,7 @@
 
         - name: Verify Preview port claim was removed
           ansible.builtin.stat:
-            path: "{{ preview_port_test_root.path }}/.preview-ports/30080.json"
+            path: "{{ preview_port_test_root.path }}/.las-preview-ports/30080.json"
           register: preview_port_claim
 
         - name: Confirm Preview port claim removal

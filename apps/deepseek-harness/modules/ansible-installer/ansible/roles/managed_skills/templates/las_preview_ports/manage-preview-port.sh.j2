@@ -2,7 +2,7 @@
 set -euo pipefail
 
 workspace_dir={{ dsh_workspace_dir | quote }}
-metadata_dir={{ (dsh_home ~ '/.preview-ports') | quote }}
+metadata_dir={{ (dsh_home ~ '/.las-preview-ports') | quote }}
 preview_ports=({% for port in preview_ports %}{{ port }} {% endfor %})
 
 usage() {

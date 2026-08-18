@@ -21,7 +21,7 @@ Preview 槽位由 HTTPProxy 直接转发到用户应用，不经过本机 Nginx�
 scripts/manage-preview-port.sh claim <port> <project-dir> [session-id]
 ```
 
-申领记录保存在 `{{ dsh_home }}/.preview-ports/<port>.json`，包含端口、项目目录、申领时间和可选会话标识。`session-id` 仅在当前会话明确提供时填写，不得猜测或编造。
+申领记录保存在 `{{ dsh_home }}/.las-preview-ports/<port>.json`，包含端口、项目目录、申领时间和可选会话标识。`session-id` 仅在当前会话明确提供时填写，不得猜测或编造。
 
 如果申领报告端口已有监听或已有记录，使用 `ss -H -ltnp '( sport = :<port> )'`，再结合 `ps -fp <pid>`、`readlink -f /proc/<pid>/cwd` 和对应 JSON 记录确认监听进程是否属于当前项目。其他项目或归属不明的进程不得停止、覆盖或释放，应改用其他空闲槽位。
 

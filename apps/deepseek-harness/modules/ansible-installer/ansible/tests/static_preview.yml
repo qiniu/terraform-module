@@ -30,7 +30,7 @@
           vars:
             dsh_home: /home/dsh
             dsh_workspace_dir: "{{ static_preview_test_root.path }}/workspace"
-            static_preview_dir: "{{ static_preview_test_root.path }}/static-preview"
+            static_preview_dir: "{{ static_preview_test_root.path }}/.las-static-preview"
 
         - name: Verify the Static Preview skill contract
           ansible.builtin.assert:
@@ -44,13 +44,13 @@
           ansible.builtin.set_fact:
             static_preview_nginx_config: "{{ lookup('ansible.builtin.template', nginx_template_path) }}"
           vars:
-            static_preview_dir: "{{ static_preview_test_root.path }}/static-preview"
+            static_preview_dir: "{{ static_preview_test_root.path }}/.las-static-preview"
 
         - name: Verify the public static preview Nginx boundary
           ansible.builtin.assert:
             that:
               - "'listen 0.0.0.0:3082;' in static_preview_nginx_config"
-              - "'root ' ~ static_preview_test_root.path ~ '/static-preview;' in static_preview_nginx_config"
+              - "'root ' ~ static_preview_test_root.path ~ '/.las-static-preview;' in static_preview_nginx_config"
               - "'location ~ (^|/)\\. {' in static_preview_nginx_config"
               - "'disable_symlinks on;' in static_preview_nginx_config"
               - "'auth_basic' not in static_preview_nginx_config.split('server {')[2].split('server {')[0]"
@@ -74,7 +74,7 @@
             mode: '0700'
           vars:
             dsh_workspace_dir: "{{ static_preview_test_root.path }}/workspace"
-            static_preview_dir: "{{ static_preview_test_root.path }}/static-preview"
+            static_preview_dir: "{{ static_preview_test_root.path }}/.las-static-preview"
 
         - name: Publish the static site
           ansible.builtin.command:
@@ -93,7 +93,7 @@
                 const fs = require("node:fs");
                 const path = require("node:path");
                 const root = process.argv[1];
-                const target = path.join(root, "static-preview", "demo-site");
+                const target = path.join(root, ".las-static-preview", "demo-site");
                 const metadata = JSON.parse(fs.readFileSync(path.join(target, ".las-static-preview.json"), "utf8"));
                 if (fs.readFileSync(path.join(target, "index.html"), "utf8") !== "<h1>Static Preview</h1>\n" ||
                     metadata.schema_version !== 1 || metadata.slug !== "demo-site" ||
