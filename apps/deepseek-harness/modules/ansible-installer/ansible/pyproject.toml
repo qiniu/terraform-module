@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Standalone Ansible deployment for DeepSeek Harness"
 requires-python = ">=3.12"
 dependencies = [
-    "ansible-core==2.20.2",
+    "ansible-core==2.20.7rc1",
 ]
 
 [tool.uv]
