@@ -14,7 +14,9 @@
     dsh_port: 3080
     dsh_region_id: ap-southeast-1
     dsh_region_name: Singapore
-    dsh_skills: []
+    dsh_skills:
+      - name: find-skills
+        source: https://github.com/vercel-labs/skills
     dsh_state_dir: /home/dsh/.dsh
     dsh_user: dsh
     dsh_web_public_authority: dsh.example.test
@@ -48,16 +50,47 @@
           ansible.builtin.assert:
             that:
               - "'应用监听 `0.0.0.0:30080`' in skill_with_preview"
+              - "'## 用户 Preview 端口' in skill_with_preview"
               - "\"ss -H -ltnp '( sport = :<port> )'\" in skill_with_preview"
               - "'确认监听进程是否属于当前项目' in skill_with_preview"
               - "'当前项目的服务可以复用' in skill_with_preview"
               - "'readlink -f /proc/<pid>/cwd' in skill_with_preview"
               - "'监听地址必须是 `0.0.0.0:<port>`' in skill_with_preview"
-              - "'url.searchParams.set(\"payload\"' in skill_with_preview"
-              - "'openFile' in skill_with_preview"
+              - "'https://preview.example.test' in skill_with_preview"
+              - "'七牛云 LAS 管理的云主机' in skill_with_preview"
+              - "'find-skills' in skill_with_preview"
+              - "'https://github.com/vercel-labs/skills' in skill_with_preview"
+              - "'test-instance' in skill_with_preview"
+              - "'ap-southeast-1' in skill_with_preview"
+              - "'https://portal.qiniu.com/las/vm/instances/detail/test-instance' in skill_with_preview"
+              - "'### 注意事项' in skill_with_preview"
+              - "'NAT 回环' in skill_with_preview"
+              - "'systemctl --user' not in skill_with_preview"
+              - "'journalctl --user' not in skill_with_preview"
               - "'gotoLineMode' not in skill_with_preview"
-              - "'<相对文件路径>' not in skill_with_preview"
               - "'&path=' not in skill_with_preview"
+
+        - name: Extract the code-server workspace link
+          ansible.builtin.set_fact:
+            code_server_workspace_link: >-
+              {{ 'https://code.example.test/?folder=' ~ skill_with_preview.split('](https://code.example.test/?folder=')[1].split(')')[0] }}
+
+        - name: Verify the code-server workspace link contract
+          ansible.builtin.command:
+            argv:
+              - node
+              - -e
+              - |
+                const [link, workspace] = process.argv.slice(1);
+                const url = new URL(link);
+                if (url.origin !== "https://code.example.test" ||
+                    url.searchParams.get("folder") !== workspace ||
+                    url.searchParams.has("path")) {
+                  throw new Error("invalid code-server workspace link");
+                }
+              - "{{ code_server_workspace_link }}"
+              - "{{ code_server_test_workspace.path }}"
+          changed_when: false
 
         - name: Extract the code-server link generator
           ansible.builtin.set_fact:

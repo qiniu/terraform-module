@@ -266,83 +266,18 @@ run "publishes_complete_managed_toolchains" {
   }
 }
 
-run "documents_las_code_server_links" {
+run "publishes_environment_skill_template" {
   command = plan
 
   assert {
     condition = (
-      strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-        "七牛云 LAS 管理的云主机",
+      contains(
+        keys(output.file_contents),
+        "/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2",
       ) &&
-      strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-        "https://{{ code_server_public_authority }}/?folder={{ dsh_workspace_dir }}",
-      ) &&
-      strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-        "url.searchParams.set(\"payload\", payload)",
-      ) &&
-      strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-        "fs.readdirSync(cwd, { withFileTypes: true })",
-      ) &&
-      strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-        "JSON.stringify([[\"openFile\", fileUri]])",
-      ) &&
-      strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-        "map(encodeURIComponent)",
-      ) &&
-      !strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-        "&path=",
-      ) &&
-      !strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-        "gotoLineMode",
-      )
+      length(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"]))) > 0
     )
-    error_message = "部署环境 skill 必须说明七牛云 LAS 主机，并提供不含认证信息的 code-server 工作区和文件链接格式。"
-  }
-}
-
-run "documents_preview_network_binding" {
-  command = plan
-
-  assert {
-    condition = (
-      strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-        "应用监听 `0.0.0.0:{{ port }}`",
-      ) &&
-      strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-        "ss -H -ltnp '( sport = :<port> )'",
-      ) &&
-      strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-        "重新确认监听地址、PID 和工作目录",
-      ) &&
-      strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-        "监听地址必须是 `0.0.0.0:<port>`",
-      ) &&
-      strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-        "## 用户 Preview 端口",
-      ) &&
-      strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-        "NAT 回环",
-      ) &&
-      strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-        "### 注意事项",
-      )
-    )
-    error_message = "Preview 服务必须先检查槽位端口空闲，再监听实例网卡，以便 HTTPProxy 访问对应实例内网端口。"
+    error_message = "部署环境 skill 模板必须作为 Ansible runtime 文件发布。"
   }
 }
 
@@ -415,49 +350,5 @@ run "recognizes_code_server_version_with_build_metadata" {
       "(code_server_installed_version.stdout | default('')).split() | first | default('') != code_server_version",
     )
     error_message = "code-server 版本检查必须忽略 --version 输出中的构建元数据，避免重复安装。"
-  }
-}
-
-run "documents_installed_skills_and_safe_troubleshooting" {
-  command = plan
-
-  assert {
-    condition = (
-      strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-        "{% for skill in dsh_skills %}",
-      ) &&
-      !strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-        "systemctl --user",
-      ) &&
-      !strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-        "journalctl --user",
-      )
-    )
-    error_message = "部署环境 skill 必须列出已安装 skill，且不得建议 dsh 用户管理不存在的 user-level systemd 服务。"
-  }
-}
-
-run "documents_las_instance_context" {
-  command = plan
-
-  assert {
-    condition = (
-      strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-        "{{ dsh_instance_id }}",
-      ) &&
-      strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-        "{{ dsh_region_id }}",
-      ) &&
-      strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"])),
-        "https://portal.qiniu.com/las/vm/instances/detail/{{ dsh_instance_id }}",
-      )
-    )
-    error_message = "部署环境 skill 必须提供 LAS 实例 ID、区域和控制台详情链接。"
   }
 }
