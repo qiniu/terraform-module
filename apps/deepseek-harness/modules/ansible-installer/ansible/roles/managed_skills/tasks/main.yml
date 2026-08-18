@@ -28,6 +28,14 @@
     group: "{{ dsh_group }}"
     mode: '0600'
 
+- name: Render the LAS session summary script
+  ansible.builtin.template:
+    src: las-dsh-environment/inspect-session.sh.j2
+    dest: "{{ dsh_home }}/.agents/skills/las-dsh-environment/scripts/inspect-session.sh"
+    owner: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    mode: '0700'
+
 - name: Render the LAS Static Preview Skill
   ansible.builtin.template:
     src: las-static-preview/SKILL.md.j2
@@ -40,6 +48,14 @@
   ansible.builtin.template:
     src: las-static-preview/publish.sh.j2
     dest: "{{ dsh_home }}/.agents/skills/las-static-preview/scripts/publish.sh"
+    owner: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    mode: '0700'
+
+- name: Render the LAS Static Preview unpublish script
+  ansible.builtin.template:
+    src: las-static-preview/unpublish.sh.j2
+    dest: "{{ dsh_home }}/.agents/skills/las-static-preview/scripts/unpublish.sh"
     owner: "{{ dsh_user }}"
     group: "{{ dsh_group }}"
     mode: '0700'

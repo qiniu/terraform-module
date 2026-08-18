@@ -281,11 +281,19 @@ run "publishes_managed_skill_templates" {
       ) &&
       contains(
         keys(output.file_contents),
+        "/opt/las-dsh-installer/project/roles/managed_skills/templates/las-dsh-environment/inspect-session.sh.j2",
+      ) &&
+      contains(
+        keys(output.file_contents),
         "/opt/las-dsh-installer/project/roles/managed_skills/templates/las-static-preview/SKILL.md.j2",
       ) &&
       contains(
         keys(output.file_contents),
         "/opt/las-dsh-installer/project/roles/managed_skills/templates/las-static-preview/publish.sh.j2",
+      ) &&
+      contains(
+        keys(output.file_contents),
+        "/opt/las-dsh-installer/project/roles/managed_skills/templates/las-static-preview/unpublish.sh.j2",
       ) &&
       contains(
         keys(output.file_contents),

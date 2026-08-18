@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+static_preview_dir={{ static_preview_dir | quote }}
+
+usage() {
+  printf '%s\n' 'usage: unpublish.sh <slug>' >&2
+  exit 2
+}
+
+[ "$#" -eq 1 ] || usage
+
+slug="$1"
+case "${slug}" in
+  *[!a-z0-9-]* | '' | -* | *-)
+    printf '%s\n' 'slug must contain lowercase letters, digits, and internal hyphens only' >&2
+    exit 2
+    ;;
+esac
+
+slug_length="$(printf '%s' "${slug}" | wc -c)"
+[ "${slug_length}" -le 63 ] || {
+  printf '%s\n' 'slug must be at most 63 characters' >&2
+  exit 2
+}
+
+static_preview_dir="$(realpath -e -- "${static_preview_dir}")"
+target_dir="${static_preview_dir}/${slug}"
+
+[ -d "${target_dir}" ] && [ ! -L "${target_dir}" ] && [ -f "${target_dir}/.las-static-preview.json" ] && [ ! -L "${target_dir}/.las-static-preview.json" ] || {
+  printf '%s\n' 'static Preview deployment was not found' >&2
+  exit 1
+}
+
+node -e '
+const fs = require("node:fs");
+const [path, slug] = process.argv.slice(1);
+const metadata = JSON.parse(fs.readFileSync(path, "utf8"));
+if (metadata.schema_version !== 1 || metadata.slug !== slug) throw new Error("static Preview metadata does not match the requested slug");
+' "${target_dir}/.las-static-preview.json" "${slug}"
+
+rm -rf -- "${target_dir}"
+printf 'unpublished static Preview %s\n' "${slug}"

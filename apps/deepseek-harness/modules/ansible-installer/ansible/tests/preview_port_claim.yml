@@ -30,6 +30,9 @@
               - "'0.0.0.0:30080' in preview_ports_skill"
               - "'https://preview.example.test' in preview_ports_skill"
               - "'scripts/manage-preview-port.sh claim <port> <project-dir> [session-id]' in preview_ports_skill"
+              - "'## 清理端口 Preview' in preview_ports_skill"
+              - "'scripts/manage-preview-port.sh release <port> <project-dir>' in preview_ports_skill"
+              - "'inspect-session.sh <session-id>' in preview_ports_skill"
               - "'/home/dsh/.las-preview-ports/<port>.json' in preview_ports_skill"
               - "'NAT 回环' in preview_ports_skill"
 

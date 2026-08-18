@@ -31,6 +31,16 @@ disable-model-invocation: false
 
 Preview 与 Static Preview 都是公开入口，不适用 DeepSeek Harness Basic Auth。不得发布密码、令牌、私钥、云凭据或其他敏感信息。
 
+## 查询会话摘要
+
+当用户要求查询某个会话，或需要确认已有 Static Preview、Preview 端口申领记录的归属时，在本 Skill 目录执行：
+
+```bash
+scripts/inspect-session.sh <session-id>
+```
+
+脚本只输出会话工作目录、标题及首尾用户消息摘要，不会输出完整对话或将日志解压到磁盘。仅在元数据提供了 `agent_session_id` 或用户明确给出会话 ID 时查询；没有会话标识时应说明无法关联，不得猜测。
+
 ## code-server 链接
 
 当用户要求查看代码或已完成产物时，提供不含认证信息的 code-server Markdown 链接：

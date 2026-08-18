@@ -21,4 +21,16 @@ scripts/publish.sh <slug> <source-dir> [session-id]
 
 `slug` 只能包含小写字母、数字和中间连字符。可选 `session-id` 仅在当前会话明确提供时填写，不得猜测或编造。脚本会拒绝符号链接，替换同名站点，并记录来源目录、发布时间和会话标识。
 
+同名站点已存在或用户要求说明其归属时，先读取该站点的 `.las-static-preview.json`。其中 `agent_session_id` 非空时，运行 `{{ dsh_home }}/.agents/skills/las-dsh-environment/scripts/inspect-session.sh <session-id>` 查询摘要，再向用户说明关联的会话任务；不得默认读取完整会话历史。没有会话标识时应说明无法关联。
+
+## 下线站点
+
+当用户明确要求删除某个 Static Preview 部署时，在本 Skill 目录执行：
+
+```bash
+scripts/unpublish.sh <slug>
+```
+
+脚本只会删除该 slug 对应、且元数据匹配的已发布目录；不会删除其他站点或工作区文件。下线后，该站点 URL 将不可访问。
+
 Static Preview 是公开入口。不得发布密码、令牌、私钥、云凭据或其他敏感信息。需要 HMR、WebSocket、SSE、后端接口或其他常驻进程时，改用 `las-preview-ports` Skill。

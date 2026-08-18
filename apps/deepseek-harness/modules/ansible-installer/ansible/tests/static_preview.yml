@@ -5,6 +5,7 @@
   gather_facts: false
   vars:
     script_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las-static-preview/publish.sh.j2"
+    unpublish_script_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las-static-preview/unpublish.sh.j2"
     skill_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las-static-preview/SKILL.md.j2"
     nginx_template_path: "{{ playbook_dir }}/../roles/nginx/templates/deepseek-harness.conf.j2"
     dsh_web_proxy_port: 3081
@@ -38,6 +39,8 @@
               - "'name: las-static-preview' in static_preview_skill"
               - "'https://static-preview.example.test/<slug>/' in static_preview_skill"
               - "'scripts/publish.sh <slug> <source-dir> [session-id]' in static_preview_skill"
+              - "'scripts/unpublish.sh <slug>' in static_preview_skill"
+              - "'inspect-session.sh <session-id>' in static_preview_skill"
               - "'.las-static-preview.json' in static_preview_skill"
               - "'公开入口' in static_preview_skill"
 
@@ -77,6 +80,14 @@
             dsh_workspace_dir: "{{ static_preview_test_root.path }}/workspace"
             static_preview_dir: "{{ static_preview_test_root.path }}/.las-static-preview"
 
+        - name: Render the static preview unpublish script
+          ansible.builtin.template:
+            src: "{{ unpublish_script_template_path }}"
+            dest: "{{ static_preview_test_root.path }}/dsh-static-preview-unpublish"
+            mode: '0700'
+          vars:
+            static_preview_dir: "{{ static_preview_test_root.path }}/.las-static-preview"
+
         - name: Publish the static site
           ansible.builtin.command:
             argv:
@@ -104,6 +115,22 @@
                 }
               - "{{ static_preview_test_root.path }}"
           changed_when: false
+
+        - name: Unpublish the static site
+          ansible.builtin.command:
+            argv:
+              - "{{ static_preview_test_root.path }}/dsh-static-preview-unpublish"
+              - demo-site
+
+        - name: Verify the published static site was removed
+          ansible.builtin.stat:
+            path: "{{ static_preview_test_root.path }}/.las-static-preview/demo-site"
+          register: unpublished_static_site
+
+        - name: Confirm the published static site was removed
+          ansible.builtin.assert:
+            that:
+              - not unpublished_static_site.stat.exists
 
         - name: Add a symlink to the source directory
           ansible.builtin.file:

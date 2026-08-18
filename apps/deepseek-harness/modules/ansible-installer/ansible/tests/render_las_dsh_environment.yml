@@ -24,6 +24,7 @@
     dsh_web_proxy_port: 3081
     nodejs_version: 24.19.0
     skill_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las-dsh-environment/SKILL.md.j2"
+    session_summary_script_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las-dsh-environment/inspect-session.sh.j2"
     uv_version: 0.12.5
     code_server_test_files:
       - "dir-it's #?&中文.js"
@@ -58,6 +59,7 @@
               - "'https://portal.qiniu.com/las/vm/instances/detail/test-instance' in skill_with_preview"
               - "'las-static-preview' in skill_with_preview"
               - "'las-preview-ports' in skill_with_preview"
+              - "'scripts/inspect-session.sh <session-id>' in skill_with_preview"
               - "'systemctl --user' not in skill_with_preview"
               - "'journalctl --user' not in skill_with_preview"
               - "'gotoLineMode' not in skill_with_preview"
@@ -148,6 +150,92 @@
           ansible.builtin.assert:
             that:
               - not code_server_injected_marker.stat.exists
+
+        - name: Create a session log for summary inspection
+          ansible.builtin.command:
+            argv:
+              - node
+              - -e
+              - |
+                const fs = require("node:fs");
+                const path = require("node:path");
+                const [root, cwd, sessionId] = process.argv.slice(1);
+                const directory = path.join(root, "sessions", "project", sessionId);
+                const records = [
+                  { type: "session", version: 1, id: sessionId, cwd, createdAt: 1, delegationDepth: 0 },
+                  { type: "user/message", seq: 0, time: 2, data: { content: [{ type: "text", text: "Build the first demo" }], source: { kind: "user" } } },
+                  { type: "session/title", seq: 1, time: 3, data: { title: "Demo deployment", messageSeqs: [0], source: { kind: "fallback" } } },
+                  { type: "user/message", seq: 2, time: 4, data: { content: [{ type: "text", text: "Check the published Preview" }], source: { kind: "user" } } },
+                ];
+                fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
+                fs.writeFileSync(path.join(directory, "session.jsonl"), `${records.map(JSON.stringify).join(String.fromCharCode(10))}${String.fromCharCode(10)}`, { mode: 0o600 });
+              - "{{ code_server_test_workspace.path }}/state"
+              - "{{ code_server_test_workspace.path }}"
+              - session-11111111-1111-4111-8111-111111111111
+          changed_when: false
+
+        - name: Compress the session log
+          ansible.builtin.command:
+            argv:
+              - zstd
+              - --quiet
+              - --force
+              - -o
+              - "{{ code_server_test_workspace.path }}/state/sessions/project/session-11111111-1111-4111-8111-111111111111/session.jsonl.zstd"
+              - "{{ code_server_test_workspace.path }}/state/sessions/project/session-11111111-1111-4111-8111-111111111111/session.jsonl"
+          changed_when: false
+
+        - name: Verify the compressed session log header
+          ansible.builtin.command:
+            argv:
+              - node
+              - -e
+              - |
+                const { spawnSync } = require("node:child_process");
+                const result = spawnSync("zstd", ["-d", "-q", "-c", process.argv[1]], { encoding: "utf8" });
+                if (result.status !== 0) throw new Error(result.stderr);
+                const header = JSON.parse(result.stdout.split("\n", 1)[0]);
+                if (header.type !== "session" || header.id !== "session-11111111-1111-4111-8111-111111111111") {
+                  throw new Error("invalid compressed session header");
+                }
+              - "{{ code_server_test_workspace.path }}/state/sessions/project/session-11111111-1111-4111-8111-111111111111/session.jsonl.zstd"
+          changed_when: false
+
+        - name: Render the session summary script
+          ansible.builtin.template:
+            src: "{{ session_summary_script_template_path }}"
+            dest: "{{ code_server_test_workspace.path }}/inspect-session.sh"
+            mode: '0700'
+          vars:
+            dsh_state_dir: "{{ code_server_test_workspace.path }}/state"
+
+        - name: Inspect the compressed session summary
+          ansible.builtin.command:
+            argv:
+              - "{{ code_server_test_workspace.path }}/inspect-session.sh"
+              - session-11111111-1111-4111-8111-111111111111
+          register: session_summary
+          changed_when: false
+
+        - name: Verify the session summary is minimal and identifiable
+          ansible.builtin.command:
+            argv:
+              - node
+              - -e
+              - |
+                const summary = JSON.parse(require("node:fs").readFileSync(0, "utf8"));
+                const expected = {
+                  session_id: "session-11111111-1111-4111-8111-111111111111",
+                  title: "Demo deployment",
+                  first_user_message: "Build the first demo",
+                  last_user_message: "Check the published Preview",
+                };
+                for (const [key, value] of Object.entries(expected)) {
+                  if (summary[key] !== value) throw new Error(`unexpected ${key}`);
+                }
+                if (!summary.cwd || "events" in summary || "messages" in summary) throw new Error("summary leaked full session history");
+            stdin: "{{ session_summary.stdout }}"
+          changed_when: false
 
         - name: Render the skill without Preview slots
           ansible.builtin.set_fact:
