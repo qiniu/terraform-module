@@ -23,7 +23,7 @@
     dsh_web_public_authority: dsh.example.test
     dsh_web_proxy_port: 3081
     nodejs_version: 24.19.0
-    skill_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las_dsh_environment/SKILL.md.j2"
+    skill_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las-dsh-environment/SKILL.md.j2"
     uv_version: 0.12.5
     code_server_test_files:
       - "dir-it's #?&中文.js"
@@ -56,10 +56,8 @@
               - "'test-instance' in skill_with_preview"
               - "'ap-southeast-1' in skill_with_preview"
               - "'https://portal.qiniu.com/las/vm/instances/detail/test-instance' in skill_with_preview"
-              - "'las_static_preview' in skill_with_preview"
-              - "'las_preview_ports' in skill_with_preview"
-              - "'las_static_preview' in skill_with_preview"
-              - "'las_preview_ports' in skill_with_preview"
+              - "'las-static-preview' in skill_with_preview"
+              - "'las-preview-ports' in skill_with_preview"
               - "'systemctl --user' not in skill_with_preview"
               - "'journalctl --user' not in skill_with_preview"
               - "'gotoLineMode' not in skill_with_preview"

@@ -4,8 +4,8 @@
   connection: local
   gather_facts: false
   vars:
-    script_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las_static_preview/publish.sh.j2"
-    skill_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las_static_preview/SKILL.md.j2"
+    script_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las-static-preview/publish.sh.j2"
+    skill_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las-static-preview/SKILL.md.j2"
     nginx_template_path: "{{ playbook_dir }}/../roles/nginx/templates/deepseek-harness.conf.j2"
     dsh_web_proxy_port: 3081
     dsh_web_public_authority: dsh.example.test
@@ -35,6 +35,7 @@
         - name: Verify the Static Preview skill contract
           ansible.builtin.assert:
             that:
+              - "'name: las-static-preview' in static_preview_skill"
               - "'https://static-preview.example.test/<slug>/' in static_preview_skill"
               - "'scripts/publish.sh <slug> <source-dir> [session-id]' in static_preview_skill"
               - "'.las-static-preview.json' in static_preview_skill"

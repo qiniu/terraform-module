@@ -277,25 +277,25 @@ run "publishes_managed_skill_templates" {
     condition = (
       contains(
         keys(output.file_contents),
-        "/opt/las-dsh-installer/project/roles/managed_skills/templates/las_dsh_environment/SKILL.md.j2",
+        "/opt/las-dsh-installer/project/roles/managed_skills/templates/las-dsh-environment/SKILL.md.j2",
       ) &&
       contains(
         keys(output.file_contents),
-        "/opt/las-dsh-installer/project/roles/managed_skills/templates/las_static_preview/SKILL.md.j2",
+        "/opt/las-dsh-installer/project/roles/managed_skills/templates/las-static-preview/SKILL.md.j2",
       ) &&
       contains(
         keys(output.file_contents),
-        "/opt/las-dsh-installer/project/roles/managed_skills/templates/las_static_preview/publish.sh.j2",
+        "/opt/las-dsh-installer/project/roles/managed_skills/templates/las-static-preview/publish.sh.j2",
       ) &&
       contains(
         keys(output.file_contents),
-        "/opt/las-dsh-installer/project/roles/managed_skills/templates/las_preview_ports/SKILL.md.j2",
+        "/opt/las-dsh-installer/project/roles/managed_skills/templates/las-preview-ports/SKILL.md.j2",
       ) &&
       contains(
         keys(output.file_contents),
-        "/opt/las-dsh-installer/project/roles/managed_skills/templates/las_preview_ports/manage-preview-port.sh.j2",
+        "/opt/las-dsh-installer/project/roles/managed_skills/templates/las-preview-ports/manage-preview-port.sh.j2",
       ) &&
-      length(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las_dsh_environment/SKILL.md.j2"]))) > 0
+      length(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-dsh-environment/SKILL.md.j2"]))) > 0
     )
     error_message = "内置 las_* Skill 模板和脚本必须作为 Ansible runtime 文件发布。"
   }

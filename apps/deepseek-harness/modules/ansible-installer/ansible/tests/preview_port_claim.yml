@@ -4,8 +4,8 @@
   connection: local
   gather_facts: false
   vars:
-    script_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las_preview_ports/manage-preview-port.sh.j2"
-    skill_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las_preview_ports/SKILL.md.j2"
+    script_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las-preview-ports/manage-preview-port.sh.j2"
+    skill_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las-preview-ports/SKILL.md.j2"
     dsh_home: /home/dsh
     preview_public_authorities: [preview.example.test]
   tasks:
@@ -26,6 +26,7 @@
         - name: Verify the LAS Preview ports Skill contract
           ansible.builtin.assert:
             that:
+              - "'name: las-preview-ports' in preview_ports_skill"
               - "'0.0.0.0:30080' in preview_ports_skill"
               - "'https://preview.example.test' in preview_ports_skill"
               - "'scripts/manage-preview-port.sh claim <port> <project-dir> [session-id]' in preview_ports_skill"
