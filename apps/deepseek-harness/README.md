@@ -50,7 +50,7 @@ terraform output -raw code_server_password
 
 打开 `dsh_web_public_url`，使用 `dsh_web_username`（默认 `admin`）和上述随机密码通过 HTTP Basic Auth 登录。模型 API Key 仅在登录后的 Web 设置中配置，保存在服务器上，不作为 Terraform 输入，也不会进入 Terraform state。
 
-打开 `code_server_public_url`，使用 `code_server_password` 通过 code-server 自带密码认证登录。code-server 使用独立密码，不复用 Harness Basic Auth；密码是 sensitive output，不要粘贴到日志、聊天或网页内容中。code-server 仅监听实例内的 `127.0.0.1:3086`，公网入口由独立 HTTPProxy 转发至 Nginx 的 `3087`。
+打开 `code_server_public_url`，使用 `code_server_password` 通过 code-server 自带密码认证登录。code-server 使用独立密码，不复用 Harness Basic Auth；密码是 sensitive output，不要粘贴到日志、聊天或网页内容中。code-server 仅监听实例内的 `127.0.0.1:3083`，公网入口由独立 HTTPProxy 转发至 Nginx 的 `3084`。
 
 服务以无 sudo 权限的 `dsh` 用户运行，`HOME=/home/dsh`；Harness 数据目录为 `/home/dsh/.dsh`（即 `DSH_HOME`），systemd 工作目录为 `/home/dsh/workspace`。
 

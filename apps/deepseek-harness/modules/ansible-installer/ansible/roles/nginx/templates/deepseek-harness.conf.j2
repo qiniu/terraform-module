@@ -43,6 +43,23 @@ server {
 }
 
 server {
+    listen 0.0.0.0:{{ static_preview_proxy_port }};
+    server_name _;
+    root {{ static_preview_dir }};
+    autoindex off;
+    index index.html;
+    disable_symlinks on;
+
+    location ~ (^|/)\. {
+        return 404;
+    }
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+
+server {
     listen 0.0.0.0:{{ code_server_proxy_port }};
     server_name _;
 

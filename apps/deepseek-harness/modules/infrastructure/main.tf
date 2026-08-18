@@ -6,10 +6,11 @@ resource "random_string" "suffix" {
 }
 
 locals {
-  instance_name          = "deepseek-harness-${random_string.suffix.result}"
-  dsh_web_proxy_port     = 3081
-  preview_slot_ports     = [30080, 30081, 30082, 30083]
-  code_server_proxy_port = 3087
+  instance_name             = "deepseek-harness-${random_string.suffix.result}"
+  dsh_web_proxy_port        = 3081
+  static_preview_proxy_port = 3082
+  preview_slot_ports        = [30080, 30081, 30082, 30083]
+  code_server_proxy_port    = 3084
 }
 
 resource "qiniu_compute_key_pair" "deployment" {
@@ -79,6 +80,11 @@ resource "qiniu_compute_instance_public_access" "dsh_web" {
   type          = "HTTPProxy"
 }
 
+resource "qiniu_compute_instance_public_access" "static_preview" {
+  instance_id   = qiniu_compute_instance.deepseek_harness.id
+  internal_port = local.static_preview_proxy_port
+  type          = "HTTPProxy"
+}
 
 resource "qiniu_compute_instance_public_access" "preview" {
   count = var.preview_count
@@ -97,9 +103,10 @@ resource "qiniu_compute_instance_public_access" "code_server" {
     precondition {
       condition = (
         local.code_server_proxy_port != local.dsh_web_proxy_port &&
+        local.code_server_proxy_port != local.static_preview_proxy_port &&
         !contains(local.preview_slot_ports, local.code_server_proxy_port)
       )
-      error_message = "code_server_proxy_port 不得与 dsh_web_proxy_port 或 Preview 端口重复。"
+      error_message = "code_server_proxy_port 不得与 dsh_web_proxy_port、static_preview_proxy_port 或 Preview 端口重复。"
     }
   }
 }

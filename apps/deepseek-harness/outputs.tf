@@ -3,6 +3,11 @@ output "dsh_web_public_url" {
   value       = "https://${module.infrastructure.dsh_web_public_authority}"
 }
 
+output "static_preview_public_url" {
+  description = "Static Preview HTTPS 地址。"
+  value       = "https://${module.infrastructure.static_preview_public_authority}"
+}
+
 output "preview_public_urls" {
   description = "Preview HTTPS 地址列表。"
   value       = [for authority in module.infrastructure.preview_public_authorities : "https://${authority}"]

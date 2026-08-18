@@ -4,11 +4,11 @@
   connection: local
   gather_facts: false
   vars:
-    code_server_port: 3086
-    code_server_proxy_port: 3087
+    code_server_port: 3083
+    code_server_proxy_port: 3084
     code_server_public_authority: code.example.test
     dsh_ansible_venv_dir: /opt/las-dsh-installer/venv
-    dsh_environment_skill_name: las-dsh-environment
+    las_dsh_environment_skill_name: las_dsh_environment
     dsh_home: /home/dsh
     las_instance_id: test-instance
     dsh_port: 3080
@@ -18,11 +18,13 @@
       - name: find-skills
         source: https://github.com/vercel-labs/skills
     dsh_state_dir: /home/dsh/.dsh
+    static_preview_dir: /home/dsh/static-preview
+    static_preview_public_authority: static-preview.example.test
     dsh_user: dsh
     dsh_web_public_authority: dsh.example.test
     dsh_web_proxy_port: 3081
     nodejs_version: 24.19.0
-    skill_template_path: "{{ playbook_dir }}/../roles/las_dsh_environment/templates/SKILL.md.j2"
+    skill_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las_dsh_environment/SKILL.md.j2"
     uv_version: 0.12.5
     code_server_test_files:
       - "dir-it's #?&中文.js"
@@ -49,22 +51,16 @@
         - name: Verify the enabled Preview guidance
           ansible.builtin.assert:
             that:
-              - "'应用监听 `0.0.0.0:30080`' in skill_with_preview"
-              - "'## 用户 Preview 端口' in skill_with_preview"
-              - "\"ss -H -ltnp '( sport = :<port> )'\" in skill_with_preview"
-              - "'确认监听进程是否属于当前项目' in skill_with_preview"
-              - "'当前项目的服务可以复用' in skill_with_preview"
-              - "'readlink -f /proc/<pid>/cwd' in skill_with_preview"
-              - "'监听地址必须是 `0.0.0.0:<port>`' in skill_with_preview"
-              - "'https://preview.example.test' in skill_with_preview"
               - "'七牛云 LAS 管理的云主机' in skill_with_preview"
               - "'find-skills' in skill_with_preview"
               - "'https://github.com/vercel-labs/skills' in skill_with_preview"
               - "'test-instance' in skill_with_preview"
               - "'ap-southeast-1' in skill_with_preview"
               - "'https://portal.qiniu.com/las/vm/instances/detail/test-instance' in skill_with_preview"
-              - "'### 注意事项' in skill_with_preview"
-              - "'NAT 回环' in skill_with_preview"
+              - "'las_static_preview' in skill_with_preview"
+              - "'las_preview_ports' in skill_with_preview"
+              - "'las_static_preview' in skill_with_preview"
+              - "'las_preview_ports' in skill_with_preview"
               - "'systemctl --user' not in skill_with_preview"
               - "'journalctl --user' not in skill_with_preview"
               - "'gotoLineMode' not in skill_with_preview"
@@ -156,11 +152,6 @@
             that:
               - not code_server_injected_marker.stat.exists
 
-        - name: Verify the post-start Preview ownership check
-          ansible.builtin.assert:
-            that:
-              - "'重新确认监听地址、PID 和工作目录' in skill_with_preview"
-
         - name: Render the skill without Preview slots
           ansible.builtin.set_fact:
             skill_without_preview: "{{ lookup('ansible.builtin.template', skill_template_path) }}"
@@ -169,14 +160,11 @@
             preview_ports: []
             preview_public_authorities: []
 
-        - name: Verify the disabled Preview guidance
+        - name: Verify environment Skill does not duplicate Preview port details
           ansible.builtin.assert:
             that:
-              - "'当前未启用 Preview 槽位' in skill_without_preview"
               - "\"ss -H -ltnp '( sport = :<port> )'\" not in skill_without_preview"
               - "'应用监听 `0.0.0.0' not in skill_without_preview"
-              - "'推荐流程是' not in skill_without_preview"
-              - "'NAT 回环' not in skill_without_preview"
       always:
         - name: Remove the temporary link-generation workspace
           ansible.builtin.file:

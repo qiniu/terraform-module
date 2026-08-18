@@ -44,18 +44,20 @@ module "infrastructure" {
 module "installer" {
   source = "./modules/ansible-installer"
 
-  dsh_web_proxy_port           = module.infrastructure.dsh_web_proxy_port
-  dsh_web_public_authority     = module.infrastructure.dsh_web_public_authority
-  las_instance_id              = module.infrastructure.instance_id
-  las_region_id                = module.infrastructure.instance_region_id
-  las_region_name              = module.infrastructure.instance_region_name
-  preview_ports                = module.infrastructure.preview_ports
-  preview_public_authorities   = module.infrastructure.preview_public_authorities
-  code_server_proxy_port       = module.infrastructure.code_server_proxy_port
-  code_server_public_authority = module.infrastructure.code_server_public_authority
-  dsh_web_username             = local.dsh_web_username
-  dsh_web_password             = local.dsh_web_password
-  code_server_password         = local.code_server_password
+  dsh_web_proxy_port              = module.infrastructure.dsh_web_proxy_port
+  dsh_web_public_authority        = module.infrastructure.dsh_web_public_authority
+  static_preview_proxy_port       = module.infrastructure.static_preview_proxy_port
+  static_preview_public_authority = module.infrastructure.static_preview_public_authority
+  las_instance_id                 = module.infrastructure.instance_id
+  las_region_id                   = module.infrastructure.instance_region_id
+  las_region_name                 = module.infrastructure.instance_region_name
+  preview_ports                   = module.infrastructure.preview_ports
+  preview_public_authorities      = module.infrastructure.preview_public_authorities
+  code_server_proxy_port          = module.infrastructure.code_server_proxy_port
+  code_server_public_authority    = module.infrastructure.code_server_public_authority
+  dsh_web_username                = local.dsh_web_username
+  dsh_web_password                = local.dsh_web_password
+  code_server_password            = local.code_server_password
 }
 
 module "ansible_runtime_transfer" {

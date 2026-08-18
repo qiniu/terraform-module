@@ -24,6 +24,15 @@ output "dsh_web_proxy_port" {
   value = local.dsh_web_proxy_port
 }
 
+output "static_preview_public_authority" {
+  description = "Static Preview HTTPProxy 公网 authority（不含 scheme）。"
+  value       = qiniu_compute_instance_public_access.static_preview.endpoint
+}
+
+output "static_preview_proxy_port" {
+  value = local.static_preview_proxy_port
+}
+
 output "preview_ports" {
   value = slice(local.preview_slot_ports, 0, var.preview_count)
 }

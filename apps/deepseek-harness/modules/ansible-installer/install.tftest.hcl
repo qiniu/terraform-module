@@ -1,16 +1,18 @@
 variables {
-  dsh_web_proxy_port           = 3081
-  preview_ports                = [30080]
-  dsh_web_public_authority     = "dsh.example.test"
-  las_instance_id              = "i-69832576086fed2869d55cd4"
-  las_region_id                = "ap-southeast-1"
-  las_region_name              = "新加坡"
-  preview_public_authorities   = ["preview.example.test"]
-  code_server_proxy_port       = 3087
-  code_server_public_authority = "code.example.test"
-  dsh_web_username             = "admin"
-  dsh_web_password             = "web-password-must-not-appear"
-  code_server_password         = "Code-server-safe-1234"
+  dsh_web_proxy_port              = 3081
+  preview_ports                   = [30080]
+  dsh_web_public_authority        = "dsh.example.test"
+  static_preview_public_authority = "static-preview.example.test"
+  static_preview_proxy_port       = 3082
+  las_instance_id                 = "i-69832576086fed2869d55cd4"
+  las_region_id                   = "ap-southeast-1"
+  las_region_name                 = "新加坡"
+  preview_public_authorities      = ["preview.example.test"]
+  code_server_proxy_port          = 3084
+  code_server_public_authority    = "code.example.test"
+  dsh_web_username                = "admin"
+  dsh_web_password                = "web-password-must-not-appear"
+  code_server_password            = "Code-server-safe-1234"
 }
 
 run "renders_sensitive_bootstrap_command" {
@@ -24,6 +26,8 @@ run "renders_sensitive_bootstrap_command" {
       output.file_metadata[local.bootstrap_target_path].sha256 == sha256(local.bootstrap_content) &&
       !strcontains(nonsensitive(output.install_command), "runtime-sha256") &&
       !strcontains(nonsensitive(output.install_command), "ansible_archive") &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).static_preview_proxy_port == 3082 &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).static_preview_public_authority == "static-preview.example.test" &&
       !strcontains(nonsensitive(output.install_command), "web-password-must-not-appear") &&
       !strcontains(nonsensitive(output.install_command), "Code-server-safe-1234") &&
       length(nonsensitive(output.install_command)) <= 8192
@@ -266,18 +270,34 @@ run "publishes_complete_managed_toolchains" {
   }
 }
 
-run "publishes_environment_skill_template" {
+run "publishes_managed_skill_templates" {
   command = plan
 
   assert {
     condition = (
       contains(
         keys(output.file_contents),
-        "/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2",
+        "/opt/las-dsh-installer/project/roles/managed_skills/templates/las_dsh_environment/SKILL.md.j2",
       ) &&
-      length(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/las_dsh_environment/templates/SKILL.md.j2"]))) > 0
+      contains(
+        keys(output.file_contents),
+        "/opt/las-dsh-installer/project/roles/managed_skills/templates/las_static_preview/SKILL.md.j2",
+      ) &&
+      contains(
+        keys(output.file_contents),
+        "/opt/las-dsh-installer/project/roles/managed_skills/templates/las_static_preview/publish.sh.j2",
+      ) &&
+      contains(
+        keys(output.file_contents),
+        "/opt/las-dsh-installer/project/roles/managed_skills/templates/las_preview_ports/SKILL.md.j2",
+      ) &&
+      contains(
+        keys(output.file_contents),
+        "/opt/las-dsh-installer/project/roles/managed_skills/templates/las_preview_ports/manage-preview-port.sh.j2",
+      ) &&
+      length(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las_dsh_environment/SKILL.md.j2"]))) > 0
     )
-    error_message = "部署环境 skill 模板必须作为 Ansible runtime 文件发布。"
+    error_message = "内置 las_* Skill 模板和脚本必须作为 Ansible runtime 文件发布。"
   }
 }
 

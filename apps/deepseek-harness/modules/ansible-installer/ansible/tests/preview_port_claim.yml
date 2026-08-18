@@ -1,0 +1,96 @@
+---
+- name: Verify Preview port claims
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    script_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las_preview_ports/manage-preview-port.sh.j2"
+    skill_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las_preview_ports/SKILL.md.j2"
+    dsh_home: /home/dsh
+    preview_public_authorities: [preview.example.test]
+  tasks:
+    - name: Create a temporary Preview port test workspace
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: las-dsh-preview-port-
+      register: preview_port_test_root
+
+    - name: Verify Preview port claims
+      block:
+        - name: Render the LAS Preview ports Skill
+          ansible.builtin.set_fact:
+            preview_ports_skill: "{{ lookup('ansible.builtin.template', skill_template_path) }}"
+          vars:
+            preview_ports: [30080]
+
+        - name: Verify the LAS Preview ports Skill contract
+          ansible.builtin.assert:
+            that:
+              - "'0.0.0.0:30080' in preview_ports_skill"
+              - "'https://preview.example.test' in preview_ports_skill"
+              - "'scripts/manage-preview-port.sh claim <port> <project-dir> [session-id]' in preview_ports_skill"
+              - "'/home/dsh/.preview-ports/<port>.json' in preview_ports_skill"
+              - "'NAT 回环' in preview_ports_skill"
+
+        - name: Create a Preview project directory
+          ansible.builtin.file:
+            path: "{{ preview_port_test_root.path }}/workspace/demo"
+            state: directory
+            mode: '0755'
+
+        - name: Render the Preview port management script
+          ansible.builtin.template:
+            src: "{{ script_template_path }}"
+            dest: "{{ preview_port_test_root.path }}/manage-preview-port.sh"
+            mode: '0700'
+          vars:
+            dsh_home: "{{ preview_port_test_root.path }}"
+            dsh_workspace_dir: "{{ preview_port_test_root.path }}/workspace"
+            preview_ports: [30080]
+
+        - name: Claim a Preview port
+          ansible.builtin.command:
+            argv:
+              - "{{ preview_port_test_root.path }}/manage-preview-port.sh"
+              - claim
+              - '30080'
+              - "{{ preview_port_test_root.path }}/workspace/demo"
+              - session-123
+
+        - name: Verify Preview port claim metadata
+          ansible.builtin.command:
+            argv:
+              - node
+              - -e
+              - |
+                const fs = require("node:fs");
+                const metadata = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+                if (metadata.schema_version !== 1 || metadata.port !== 30080 ||
+                    metadata.agent_session_id !== "session-123" || !metadata.claimed_at) {
+                  throw new Error("invalid Preview port claim");
+                }
+              - "{{ preview_port_test_root.path }}/.preview-ports/30080.json"
+          changed_when: false
+
+        - name: Release the Preview port
+          ansible.builtin.command:
+            argv:
+              - "{{ preview_port_test_root.path }}/manage-preview-port.sh"
+              - release
+              - '30080'
+              - "{{ preview_port_test_root.path }}/workspace/demo"
+
+        - name: Verify Preview port claim was removed
+          ansible.builtin.stat:
+            path: "{{ preview_port_test_root.path }}/.preview-ports/30080.json"
+          register: preview_port_claim
+
+        - name: Confirm Preview port claim removal
+          ansible.builtin.assert:
+            that:
+              - not preview_port_claim.stat.exists
+      always:
+        - name: Remove the temporary Preview port test workspace
+          ansible.builtin.file:
+            path: "{{ preview_port_test_root.path }}"
+            state: absent

@@ -8,6 +8,16 @@ variable "dsh_web_proxy_port" {
   }
 }
 
+variable "static_preview_proxy_port" {
+  description = "Static Preview 的 HTTPProxy/Nginx 代理端口。"
+  type        = number
+
+  validation {
+    condition     = var.static_preview_proxy_port >= 1 && var.static_preview_proxy_port <= 65535 && floor(var.static_preview_proxy_port) == var.static_preview_proxy_port
+    error_message = "static_preview_proxy_port 必须是 1 到 65535 之间的整数。"
+  }
+}
+
 variable "preview_ports" {
   description = "Preview 应用回环端口列表。"
   type        = list(number)
@@ -68,6 +78,19 @@ variable "dsh_web_public_authority" {
       length(element(split(":", var.dsh_web_public_authority), 0)) <= 253
     )
     error_message = "dsh_web_public_authority 必须是主机部分不超过 253 字节的有效 authority。"
+  }
+}
+
+variable "static_preview_public_authority" {
+  description = "Static Preview 的外部 Host。"
+  type        = string
+
+  validation {
+    condition = (
+      can(regex("^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*(:[0-9]{1,5})?$", var.static_preview_public_authority)) &&
+      length(element(split(":", var.static_preview_public_authority), 0)) <= 253
+    )
+    error_message = "static_preview_public_authority 必须是主机部分不超过 253 字节的有效 authority。"
   }
 }
 

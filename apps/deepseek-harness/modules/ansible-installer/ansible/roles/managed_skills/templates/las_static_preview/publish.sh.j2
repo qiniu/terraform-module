@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+workspace_dir={{ dsh_workspace_dir | quote }}
+static_preview_dir={{ static_preview_dir | quote }}
+static_preview_authority={{ static_preview_public_authority | quote }}
+
+usage() {
+  printf '%s\n' 'usage: publish.sh <slug> <source-dir> [session-id]' >&2
+  exit 2
+}
+
+[ "$#" -ge 2 ] && [ "$#" -le 3 ] || usage
+
+slug="$1"
+source_dir="$2"
+session_id="${3:-}"
+
+case "${slug}" in
+  *[!a-z0-9-]* | '' | -* | *-)
+    printf '%s\n' 'slug must contain lowercase letters, digits, and internal hyphens only' >&2
+    exit 2
+    ;;
+esac
+
+slug_length="$(printf '%s' "${slug}" | wc -c)"
+[ "${slug_length}" -le 63 ] || {
+  printf '%s\n' 'slug must be at most 63 characters' >&2
+  exit 2
+}
+
+workspace_dir="$(realpath -e -- "${workspace_dir}")"
+source_dir="$(realpath -e -- "${source_dir}")"
+case "${source_dir}" in
+  "${workspace_dir}"/*) ;;
+  *)
+    printf '%s\n' 'source directory must be inside the workspace' >&2
+    exit 2
+    ;;
+esac
+
+[ -d "${source_dir}" ] && [ -f "${source_dir}/index.html" ] || {
+  printf '%s\n' 'source directory must contain index.html' >&2
+  exit 2
+}
+
+if find -P "${source_dir}" -type l -print -quit | grep -q .; then
+  printf '%s\n' 'source directory must not contain symbolic links' >&2
+  exit 2
+fi
+
+mkdir -p -- "${static_preview_dir}"
+staging_dir="$(mktemp -d "${static_preview_dir}/.${slug}.XXXXXX")"
+target_dir="${static_preview_dir}/${slug}"
+cleanup() {
+  rm -rf -- "${staging_dir}"
+}
+trap cleanup EXIT
+
+cp -a -- "${source_dir}/." "${staging_dir}/"
+find "${staging_dir}" -type d -exec chmod 0755 {} +
+find "${staging_dir}" -type f -exec chmod 0644 {} +
+published_at="$(date --utc +%Y-%m-%dT%H:%M:%SZ)"
+relative_source_dir="$(realpath --relative-to="${workspace_dir}" -- "${source_dir}")"
+node -e '
+const fs = require("node:fs");
+const [path, slug, sourceDir, sessionId, publishedAt] = process.argv.slice(1);
+fs.writeFileSync(path, `${JSON.stringify({ schema_version: 1, slug, source_dir: sourceDir, agent_session_id: sessionId || null, published_at: publishedAt }, null, 2)}\n`, { mode: 0o640 });
+' "${staging_dir}/.las-static-preview.json" "${slug}" "${relative_source_dir}" "${session_id}" "${published_at}"
+chmod 0640 "${staging_dir}/.las-static-preview.json"
+
+rm -rf -- "${target_dir}"
+mv -- "${staging_dir}" "${target_dir}"
+trap - EXIT
+printf 'published https://%s/%s/\n' "${static_preview_authority}" "${slug}"

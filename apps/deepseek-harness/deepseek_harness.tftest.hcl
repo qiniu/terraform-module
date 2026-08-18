@@ -13,17 +13,19 @@ override_module {
   target          = module.infrastructure
   override_during = plan
   outputs = {
-    instance_id                  = "test-instance"
-    instance_region_id           = "ap-southeast-1"
-    instance_region_name         = "新加坡"
-    deployment_private_key       = "test-private-key"
-    dsh_web_public_authority     = "dsh.example.test"
-    dsh_web_proxy_port           = 3081
-    preview_ports                = [30080]
-    preview_public_authorities   = ["preview.example.test"]
-    code_server_public_authority = "code.example.test"
-    code_server_proxy_port       = 3087
-    ssh_endpoints                = []
+    instance_id                     = "test-instance"
+    instance_region_id              = "ap-southeast-1"
+    instance_region_name            = "新加坡"
+    deployment_private_key          = "test-private-key"
+    dsh_web_public_authority        = "dsh.example.test"
+    dsh_web_proxy_port              = 3081
+    static_preview_public_authority = "static-preview.example.test"
+    static_preview_proxy_port       = 3082
+    preview_ports                   = [30080]
+    preview_public_authorities      = ["preview.example.test"]
+    code_server_public_authority    = "code.example.test"
+    code_server_proxy_port          = 3084
+    ssh_endpoints                   = []
   }
 }
 
@@ -57,10 +59,11 @@ run "uses_fixed_versions_and_installer_contract" {
     condition = (
       var.preview_count == 1 &&
       module.infrastructure.dsh_web_proxy_port == 3081 &&
+      module.infrastructure.static_preview_proxy_port == 3082 &&
       module.infrastructure.preview_ports == [30080] &&
-      module.infrastructure.code_server_proxy_port == 3087
+      module.infrastructure.code_server_proxy_port == 3084
     )
-    error_message = "infrastructure 必须固定 DSH Web、Preview 和 code-server 代理端口。"
+    error_message = "infrastructure 必须固定 DSH Web、Static Preview、Preview 和 code-server 代理端口。"
   }
 
   assert {
@@ -230,17 +233,19 @@ run "outputs_ssh_command_when_enabled" {
     target          = module.infrastructure
     override_during = plan
     outputs = {
-      instance_id                  = "test-instance"
-      instance_region_id           = "ap-southeast-1"
-      instance_region_name         = "新加坡"
-      deployment_private_key       = "test-private-key"
-      dsh_web_public_authority     = "dsh.example.test"
-      dsh_web_proxy_port           = 3081
-      preview_ports                = [30080]
-      preview_public_authorities   = ["preview.example.test"]
-      code_server_public_authority = "code.example.test"
-      code_server_proxy_port       = 3087
-      ssh_endpoints                = ["203.0.113.10:2222"]
+      instance_id                     = "test-instance"
+      instance_region_id              = "ap-southeast-1"
+      instance_region_name            = "新加坡"
+      deployment_private_key          = "test-private-key"
+      dsh_web_public_authority        = "dsh.example.test"
+      dsh_web_proxy_port              = 3081
+      static_preview_public_authority = "static-preview.example.test"
+      static_preview_proxy_port       = 3082
+      preview_ports                   = [30080]
+      preview_public_authorities      = ["preview.example.test"]
+      code_server_public_authority    = "code.example.test"
+      code_server_proxy_port          = 3084
+      ssh_endpoints                   = ["203.0.113.10:2222"]
     }
   }
   assert {
@@ -276,9 +281,11 @@ run "outputs_public_contract" {
   assert {
     condition = (
       output.dsh_web_public_url == "https://dsh.example.test" &&
+      output.static_preview_public_url == "https://static-preview.example.test" &&
       output.preview_public_urls == ["https://preview.example.test"] &&
       output.code_server_public_url == "https://code.example.test" &&
       !issensitive(output.preview_public_urls) &&
+      !issensitive(output.static_preview_public_url) &&
       !issensitive(output.code_server_public_url) &&
       output.dsh_web_username == "admin" &&
       output.dsh_web_password == sensitive(random_password.dsh_web[0].result) &&
@@ -336,17 +343,19 @@ run "supports_zero_preview_slots" {
     target          = module.infrastructure
     override_during = plan
     outputs = {
-      instance_id                  = "test-instance"
-      instance_region_id           = "ap-southeast-1"
-      instance_region_name         = "新加坡"
-      deployment_private_key       = "test-private-key"
-      dsh_web_public_authority     = "dsh.example.test"
-      dsh_web_proxy_port           = 3081
-      preview_ports                = []
-      preview_public_authorities   = []
-      code_server_public_authority = "code.example.test"
-      code_server_proxy_port       = 3087
-      ssh_endpoints                = []
+      instance_id                     = "test-instance"
+      instance_region_id              = "ap-southeast-1"
+      instance_region_name            = "新加坡"
+      deployment_private_key          = "test-private-key"
+      dsh_web_public_authority        = "dsh.example.test"
+      dsh_web_proxy_port              = 3081
+      static_preview_public_authority = "static-preview.example.test"
+      static_preview_proxy_port       = 3082
+      preview_ports                   = []
+      preview_public_authorities      = []
+      code_server_public_authority    = "code.example.test"
+      code_server_proxy_port          = 3084
+      ssh_endpoints                   = []
     }
   }
 

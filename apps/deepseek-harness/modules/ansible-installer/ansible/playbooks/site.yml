@@ -15,12 +15,13 @@
 
     - name: Collect service and Preview ports
       ansible.builtin.set_fact:
-        dsh_all_ports: "{{ [dsh_port, dsh_web_proxy_port, code_server_port, code_server_proxy_port] + preview_ports }}"
+        dsh_all_ports: "{{ [dsh_port, dsh_web_proxy_port, static_preview_proxy_port, code_server_port, code_server_proxy_port] + preview_ports }}"
 
     - name: Verify required deployment variables
       ansible.builtin.assert:
         that:
           - dsh_web_public_authority | default('') | length > 0
+          - static_preview_public_authority | default('') | length > 0
           - code_server_public_authority | default('') | length > 0
           - preview_public_authorities is sequence
           - preview_public_authorities is not string
@@ -42,7 +43,7 @@
     - code_server
     - deepseek_harness
     - nginx
-    - las_dsh_environment
+    - managed_skills
   post_tasks:
     - name: Apply pending service handlers before health checks
       ansible.builtin.meta: flush_handlers

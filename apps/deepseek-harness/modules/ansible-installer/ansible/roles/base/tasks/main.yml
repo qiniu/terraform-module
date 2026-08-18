@@ -113,4 +113,5 @@
     - { path: "{{ dsh_state_dir }}", mode: '0700' }
     - { path: "{{ dsh_pnpm_store_dir }}", mode: '0700' }
     - { path: "{{ dsh_workspace_dir }}", mode: '0750' }
+    - { path: "{{ static_preview_dir }}", mode: '0755' }
     - { path: "{{ dsh_download_dir }}", mode: '0700' }
