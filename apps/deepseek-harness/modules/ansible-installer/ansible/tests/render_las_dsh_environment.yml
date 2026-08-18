@@ -10,10 +10,10 @@
     dsh_ansible_venv_dir: /opt/las-dsh-installer/venv
     dsh_environment_skill_name: las-dsh-environment
     dsh_home: /home/dsh
-    dsh_instance_id: test-instance
+    las_instance_id: test-instance
     dsh_port: 3080
-    dsh_region_id: ap-southeast-1
-    dsh_region_name: Singapore
+    las_region_id: ap-southeast-1
+    las_region_name: Singapore
     dsh_skills:
       - name: find-skills
         source: https://github.com/vercel-labs/skills

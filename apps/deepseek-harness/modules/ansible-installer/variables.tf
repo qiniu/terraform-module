@@ -28,33 +28,33 @@ variable "code_server_proxy_port" {
   }
 }
 
-variable "dsh_instance_id" {
+variable "las_instance_id" {
   description = "部署 DeepSeek Harness 的 LAS 实例 ID。"
   type        = string
 
   validation {
-    condition     = trimspace(var.dsh_instance_id) != ""
-    error_message = "dsh_instance_id 不能为空。"
+    condition     = trimspace(var.las_instance_id) != ""
+    error_message = "las_instance_id 不能为空。"
   }
 }
 
-variable "dsh_region_id" {
+variable "las_region_id" {
   description = "LAS 实例所在区域 ID。"
   type        = string
 
   validation {
-    condition     = trimspace(var.dsh_region_id) != ""
-    error_message = "dsh_region_id 不能为空。"
+    condition     = trimspace(var.las_region_id) != ""
+    error_message = "las_region_id 不能为空。"
   }
 }
 
-variable "dsh_region_name" {
+variable "las_region_name" {
   description = "LAS 实例所在区域名称。"
   type        = string
 
   validation {
-    condition     = trimspace(var.dsh_region_name) != ""
-    error_message = "dsh_region_name 不能为空。"
+    condition     = trimspace(var.las_region_name) != ""
+    error_message = "las_region_name 不能为空。"
   }
 }
 

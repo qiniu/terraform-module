@@ -18,9 +18,9 @@ disable-model-invocation: false
 - 当前 skill 文件：`{{ dsh_home }}/.agents/skills/{{ dsh_environment_skill_name }}/SKILL.md`
 - DeepSeek Harness 公网地址：`https://{{ dsh_web_public_authority }}`
 - code-server 公网地址：`https://{{ code_server_public_authority }}`
-- LAS 实例 ID：`{{ dsh_instance_id }}`
-- LAS 区域：`{{ dsh_region_name }}`（`{{ dsh_region_id }}`）
-- LAS 控制台：[打开实例详情](https://portal.qiniu.com/las/vm/instances/detail/{{ dsh_instance_id }})
+- LAS 实例 ID：`{{ las_instance_id }}`
+- LAS 区域：`{{ las_region_name }}`（`{{ las_region_id }}`）
+- LAS 控制台：[打开实例详情](https://portal.qiniu.com/las/vm/instances/detail/{{ las_instance_id }})
 {% if dsh_skills | length == 0 %}
 - 已预装用户级 skill：无
 {% else %}
