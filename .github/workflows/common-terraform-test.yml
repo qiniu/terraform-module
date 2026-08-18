@@ -26,7 +26,7 @@ jobs:
       fail-fast: false
       matrix:
         module:
-          - openclaw
+          - apps/openclaw
           - apps/ci-runner/single
           - pkg/instance-exec-file-transfer
           - pkg/instance-exec-file-transfer/modules/direct
