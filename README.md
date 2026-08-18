@@ -62,7 +62,7 @@ export QINIU_REGION_ID="ap-southeast-1"
 #### 一键部署单实例 MySQL 应用
 
 ```bash
-cd mysql/standalone
+cd apps/mysql/standalone
 terraform init
 terraform apply
 # 之后将要交互式输入各个tf模板参数，绝大部分参数都有默认值，这里只必填一个密码即可

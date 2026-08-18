@@ -49,6 +49,7 @@ git diff --check
 - 未经用户明确要求，不执行 `git commit` 或 `git push`。
 - 不擅自执行 `reset`、`revert`、`amend`、`squash`，也不改写用户已有提交。
 - 用户要求提交时，先检查 diff、相关测试和工作区范围；提交保持单一目的，并遵循仓库现有提交风格。
+- 用户要求创建 PR 时，默认向 `upstream`（`qiniu/terraform-module`）发起，使用 `origin` fork 中的同名分支作为来源；PR 标题和正文使用中文。若目标仓库或来源分支不同，先向用户确认。
 
 ## 目录专属规则
 

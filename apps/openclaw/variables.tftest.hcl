@@ -1,7 +1,7 @@
 # ============================================================================
 # OpenClaw Module - Variable Validation Unit Tests
 # ============================================================================
-# 运行方式：在 openclaw 目录下执行 terraform test
+# 运行方式：在 apps/openclaw 目录下执行 terraform test
 # 要求：Terraform >= 1.6
 #
 # 策略说明：
