@@ -102,6 +102,14 @@
     shell: /bin/bash
     password_lock: true
 
+- name: Allow Nginx to traverse to public static previews
+  ansible.builtin.file:
+    path: "{{ dsh_home }}"
+    state: directory
+    owner: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    mode: '0711'
+
 - name: Create DeepSeek Harness directories
   ansible.builtin.file:
     path: "{{ item.path }}"
