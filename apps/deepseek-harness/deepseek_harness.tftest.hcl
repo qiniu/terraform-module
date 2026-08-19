@@ -40,18 +40,6 @@ variables {
   instance_password       = "Safe-pass-123"
 }
 
-run "accepts_custom_image_id" {
-  command = plan
-  variables {
-    image_id = "golden-image-id"
-  }
-
-  assert {
-    condition     = var.image_id == "golden-image-id"
-    error_message = "根模块必须接受预制镜像 ID。"
-  }
-}
-
 run "uses_fixed_versions_and_installer_contract" {
   command = plan
 
@@ -105,13 +93,7 @@ run "uses_fixed_versions_and_installer_contract" {
       random_password.dsh_web[0].lower &&
       random_password.dsh_web[0].numeric &&
       random_password.dsh_web[0].special &&
-      random_password.dsh_web[0].override_special == "-._~" &&
-      random_password.code_server[0].length == 30 &&
-      random_password.code_server[0].upper &&
-      random_password.code_server[0].lower &&
-      random_password.code_server[0].numeric &&
-      random_password.code_server[0].special &&
-      random_password.code_server[0].override_special == "-._~"
+      random_password.dsh_web[0].override_special == "-._~"
     )
     error_message = "Web 密码必须为 24 位并包含所有字符类别，特殊字符须对 URL、Basic Auth 与 shell 安全。"
   }
@@ -281,15 +263,10 @@ run "outputs_public_contract" {
   assert {
     condition = (
       output.dsh_web_public_url == "https://dsh.example.test" &&
-      output.static_preview_public_url == "https://static-preview.example.test" &&
-      output.preview_public_urls == ["https://preview.example.test"] &&
       output.code_server_public_url == "https://code.example.test" &&
-      !issensitive(output.preview_public_urls) &&
-      !issensitive(output.static_preview_public_url) &&
       !issensitive(output.code_server_public_url) &&
       output.dsh_web_username == "admin" &&
       output.dsh_web_password == sensitive(random_password.dsh_web[0].result) &&
-      output.code_server_password == sensitive(random_password.code_server[0].result) &&
       output.ssh_command == null
     )
     error_message = "根模块输出必须包含 Web 凭据和可空 SSH 命令。"
@@ -300,29 +277,16 @@ run "uses_user_supplied_web_passwords" {
   command = plan
 
   variables {
-    dsh_web_password     = "Custom-dsh-pass-123"
-    code_server_password = "Custom-code-server!123"
+    dsh_web_password = "Custom-dsh-pass-123"
   }
 
   assert {
     condition = (
       try(length(random_password.dsh_web), -1) == 0 &&
-      try(length(random_password.code_server), -1) == 0 &&
-      output.dsh_web_password == sensitive(var.dsh_web_password) &&
-      output.code_server_password == sensitive(var.code_server_password)
+      output.dsh_web_password == null
     )
-    error_message = "非空 Web 密码必须直接生效，且不得创建未使用的随机密码。"
+    error_message = "用户输入 Web 密码时不得重复通过 output 返回，且不得创建未使用的随机密码。"
   }
-}
-
-run "rejects_invalid_user_supplied_code_server_password" {
-  command = plan
-
-  variables {
-    code_server_password = "too-short"
-  }
-
-  expect_failures = [var.code_server_password]
 }
 
 run "rejects_invalid_user_supplied_dsh_web_password" {
@@ -359,8 +323,4 @@ run "supports_zero_preview_slots" {
     }
   }
 
-  assert {
-    condition     = output.preview_public_urls == []
-    error_message = "preview_count=0 时根模块必须返回空 Preview 列表。"
-  }
 }

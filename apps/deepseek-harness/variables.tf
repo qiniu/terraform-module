@@ -9,17 +9,6 @@ variable "instance_type" {
   }
 }
 
-variable "image_id" {
-  type        = string
-  description = "可选的预制镜像 ID；未设置时使用当前区域的 Ubuntu 24.04 LTS 官方镜像。"
-  default     = null
-
-  validation {
-    condition     = var.image_id == null || trimspace(var.image_id) != ""
-    error_message = "image_id 不能是空字符串。"
-  }
-}
-
 variable "preview_count" {
   type        = number
   description = "启用的 Preview 槽位数量（0 到 4）。"
@@ -127,7 +116,7 @@ variable "instance_password" {
 
 variable "dsh_web_password" {
   type        = string
-  description = "DeepSeek Harness Web Basic Auth 密码；空字符串时自动生成。"
+  description = "DeepSeek Harness Web 和 code-server 共用的登录密码；空字符串时自动生成。"
   default     = ""
   nullable    = false
   sensitive   = true
@@ -141,24 +130,5 @@ variable "dsh_web_password" {
       can(regex("[^A-Za-z0-9]", var.dsh_web_password))
     )
     error_message = "dsh_web_password 必须为空字符串，或为 8 到 30 位且同时包含字母、数字和特殊符号的密码。"
-  }
-}
-
-variable "code_server_password" {
-  type        = string
-  description = "code-server 登录密码；空字符串时自动生成。"
-  default     = ""
-  nullable    = false
-  sensitive   = true
-
-  validation {
-    condition = var.code_server_password == "" || (
-      length(var.code_server_password) >= 8 &&
-      length(var.code_server_password) <= 30 &&
-      can(regex("[A-Za-z]", var.code_server_password)) &&
-      can(regex("[0-9]", var.code_server_password)) &&
-      can(regex("[^A-Za-z0-9]", var.code_server_password))
-    )
-    error_message = "code_server_password 必须为空字符串，或为 8 到 30 位且同时包含字母、数字和特殊符号的密码。"
   }
 }

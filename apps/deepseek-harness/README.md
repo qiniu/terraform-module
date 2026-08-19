@@ -8,7 +8,7 @@
 
 - Terraform `>= 1.6.0`；
 - Qiniu Provider `1.0.0`，按仓库根目录的[本地安装说明](../../README.md#基于本地-terraform-运行)安装；
-- 支持 `public_access_http_proxy` 的七牛云区域；未指定 `image_id` 时，该区域还须恰好存在一个 Ubuntu 24.04 LTS 官方镜像；
+- 支持 `public_access_http_proxy` 的七牛云区域，并且该区域须恰好存在一个 Ubuntu 24.04 LTS 官方镜像；
 - ECS 能访问 Ubuntu 软件源、nodejs.org 和 npm registry。
 
 设置七牛云凭证和区域（不要把真实值写入源码）：
@@ -30,14 +30,11 @@ terraform apply deepseek-harness.tfplan
 
 默认创建 `ecs.t1s.c2m4`、40 GiB 系统盘和 100 Mbps 峰值带宽，采用 `PostPaid` 按量计费。也可在本地 `terraform.tfvars` 中设置实例规格、磁盘、带宽及预付费参数；部署和保留资源都会产生费用。
 
-可选的 `image_id` 可指定同一区域的预制镜像。镜像中已存在固定版本的 uv、Ansible venv、Node.js、DeepSeek Harness 与 code-server 时，安装过程会复用它们；Ansible 仍会重新渲染服务、Nginx 和认证配置。制作镜像前必须清理 `/home/dsh/.dsh`、Nginx Basic Auth、code-server 配置、部署私钥、临时执行文件和日志中的敏感信息。
-
 部署成功后查看 Harness 地址、用户名和网页预览地址：
 
 ```bash
 terraform output -raw dsh_web_public_url
 terraform output -raw dsh_web_username
-terraform output -json preview_public_urls
 terraform output -raw code_server_public_url
 ```
 
@@ -45,18 +42,17 @@ terraform output -raw code_server_public_url
 
 ```bash
 terraform output -raw dsh_web_password
-terraform output -raw code_server_password
 ```
 
 打开 `dsh_web_public_url`，使用 `dsh_web_username`（默认 `admin`）和上述随机密码通过 HTTP Basic Auth 登录。模型 API Key 仅在登录后的 Web 设置中配置，保存在服务器上，不作为 Terraform 输入，也不会进入 Terraform state。
 
-打开 `code_server_public_url`，使用 `code_server_password` 通过 code-server 自带密码认证登录。code-server 使用独立密码，不复用 Harness Basic Auth；密码是 sensitive output，不要粘贴到日志、聊天或网页内容中。code-server 仅监听实例内的 `127.0.0.1:3083`，公网入口由独立 HTTPProxy 转发至 Nginx 的 `3084`。
+打开 `code_server_public_url`，使用与 Harness Web Basic Auth 相同的密码通过 code-server 自带密码认证登录。密码是 sensitive output，不要粘贴到日志、聊天或网页内容中。code-server 仅监听实例内的 `127.0.0.1:3083`，公网入口由独立 HTTPProxy 转发至 Nginx 的 `3084`。
 
 服务以无 sudo 权限的 `dsh` 用户运行，`HOME=/home/dsh`；Harness 数据目录为 `/home/dsh/.dsh`（即 `DSH_HOME`），systemd 工作目录为 `/home/dsh/workspace`。
 
 ## 网页预览与运行环境 skill
 
-`preview_public_urls` 是独立的公开 HTTPS 网页预览入口列表：任何知道其中地址的人都可以访问，且不需要 Harness 的 Basic Auth。请只在确认可以公开的页面上使用它们；不要在页面或日志中写入密码、令牌、私钥或其他敏感信息。
+网页预览入口是独立的公开 HTTPS 地址：任何知道地址的人都可以访问，且不需要 Harness 的 Basic Auth。请只在确认可以公开的页面上使用它们；不要在页面或日志中写入密码、令牌、私钥或其他敏感信息。
 
 Preview 数量通过 `preview_count` 配置，支持 `0..4` 个。用户网页开发服务应按槽位监听 `0.0.0.0:30080` 到 `0.0.0.0:30083`，不要自行暴露其他端口。Preview 地址由 HTTPProxy 直接转发到对应应用，不经过 Nginx；尚未启动开发服务时返回 5xx（通常为 `502`，HTTPProxy 也可能返回 `503`）属于正常状态。
 
@@ -66,7 +62,7 @@ Preview 数量通过 `preview_count` 配置，支持 `0..4` 个。用户网页�
 /home/dsh/.agents/skills/las-dsh-environment/SKILL.md
 ```
 
-它会告知 Harness 网页开发时应使用的工作目录、监听地址和 `preview_public_urls`。`las-dsh-environment` 是用户级 skill，项目级同名 skill 的优先级更高，会遮蔽它；如需覆盖，请明确使用项目级同名名称。skill 正文更新后，需在新会话中使用，或再次加载该 skill 才能看到新内容；已加载旧正文的会话不会被主动改写。
+它会告知 Harness 网页开发时应使用的工作目录、监听地址和预览地址。`las-dsh-environment` 是用户级 skill，项目级同名 skill 的优先级更高，会遮蔽它；如需覆盖，请明确使用项目级同名名称。skill 正文更新后，需在新会话中使用，或再次加载该 skill 才能看到新内容；已加载旧正文的会话不会被主动改写。
 
 ## 网络与 SSH
 

@@ -1,7 +1,6 @@
 locals {
-  dsh_web_username     = "admin"
-  dsh_web_password     = nonsensitive(var.dsh_web_password) == "" ? random_password.dsh_web[0].result : var.dsh_web_password
-  code_server_password = nonsensitive(var.code_server_password) == "" ? random_password.code_server[0].result : var.code_server_password
+  dsh_web_username = "admin"
+  dsh_web_password = nonsensitive(var.dsh_web_password) == "" ? random_password.dsh_web[0].result : var.dsh_web_password
 }
 
 resource "random_password" "dsh_web" {
@@ -15,21 +14,9 @@ resource "random_password" "dsh_web" {
   override_special = "-._~"
 }
 
-resource "random_password" "code_server" {
-  count = nonsensitive(var.code_server_password) == "" ? 1 : 0
-
-  length           = 30
-  upper            = true
-  lower            = true
-  numeric          = true
-  special          = true
-  override_special = "-._~"
-}
-
 module "infrastructure" {
   source = "./modules/infrastructure"
 
-  image_id                = var.image_id
   preview_count           = var.preview_count
   instance_type           = var.instance_type
   system_disk_size        = var.system_disk_size
@@ -57,7 +44,7 @@ module "installer" {
   code_server_public_authority    = module.infrastructure.code_server_public_authority
   dsh_web_username                = local.dsh_web_username
   dsh_web_password                = local.dsh_web_password
-  code_server_password            = local.code_server_password
+  code_server_password            = local.dsh_web_password
 }
 
 module "ansible_runtime_transfer" {
