@@ -7,6 +7,7 @@
     code_server_port: 3083
     code_server_proxy_port: 3084
     code_server_public_authority: code.example.test
+    enable_code_server: true
     dsh_ansible_venv_dir: /opt/las-dsh-installer/venv
     dsh_home: /home/dsh
     las_instance_id: test-instance
@@ -250,6 +251,21 @@
             that:
               - "\"ss -H -ltnp '( sport = :<port> )'\" not in skill_without_preview"
               - "'应用监听 `0.0.0.0' not in skill_without_preview"
+
+        - name: Render the skill without code-server
+          ansible.builtin.set_fact:
+            skill_without_code_server: "{{ lookup('ansible.builtin.template', skill_template_path) }}"
+          vars:
+            dsh_workspace_dir: "{{ code_server_test_workspace.path }}"
+            enable_code_server: false
+            preview_ports: [30080]
+            preview_public_authorities: [preview.example.test]
+
+        - name: Verify disabled code-server is absent from environment Skill
+          ansible.builtin.assert:
+            that:
+              - "'code-server' not in skill_without_code_server"
+              - "'code.example.test' not in skill_without_code_server"
       always:
         - name: Remove the temporary link-generation workspace
           ansible.builtin.file:

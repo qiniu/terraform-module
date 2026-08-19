@@ -17,6 +17,10 @@ variable "preview_count" {
   }
 }
 
+variable "enable_code_server" {
+  type = bool
+}
+
 variable "instance_type" {
   type = string
 }

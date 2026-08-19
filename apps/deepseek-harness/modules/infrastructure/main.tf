@@ -95,6 +95,8 @@ resource "qiniu_compute_instance_public_access" "preview" {
 }
 
 resource "qiniu_compute_instance_public_access" "code_server" {
+  count = var.enable_code_server ? 1 : 0
+
   instance_id   = qiniu_compute_instance.deepseek_harness.id
   internal_port = local.code_server_proxy_port
   type          = "HTTPProxy"

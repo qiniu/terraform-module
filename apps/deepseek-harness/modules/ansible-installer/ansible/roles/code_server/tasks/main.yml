@@ -1,4 +1,24 @@
 ---
+- name: Check whether code-server service unit exists
+  ansible.builtin.stat:
+    path: /etc/systemd/system/code-server.service
+  register: code_server_service_unit
+  when: not (enable_code_server | bool)
+
+- name: Disable existing code-server service
+  ansible.builtin.systemd_service:
+    name: code-server.service
+    daemon_reload: true
+    enabled: false
+    state: stopped
+  when:
+    - not (enable_code_server | bool)
+    - code_server_service_unit.stat.exists
+
+- name: Skip code-server installation when disabled
+  ansible.builtin.meta: end_role
+  when: not (enable_code_server | bool)
+
 - name: Validate required code-server inputs
   ansible.builtin.assert:
     that:
@@ -169,3 +189,16 @@
     name: code-server.service
     enabled: true
     state: started
+
+- name: Apply code-server handlers before health check
+  ansible.builtin.meta: flush_handlers
+
+- name: Verify the code-server loopback authentication boundary
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ code_server_port }}/"
+    status_code: [302, 401]
+    follow_redirects: none
+  register: code_server_health
+  retries: 60
+  delay: 1
+  until: code_server_health.status in [302, 401]

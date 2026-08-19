@@ -20,6 +20,12 @@ variable "preview_count" {
   }
 }
 
+variable "enable_code_server" {
+  type        = bool
+  description = "是否安装并公开 code-server。"
+  default     = true
+}
+
 variable "system_disk_size" {
   type        = number
   description = "ECS 系统盘大小（GiB）。"
@@ -116,7 +122,7 @@ variable "instance_password" {
 
 variable "dsh_web_password" {
   type        = string
-  description = "DeepSeek Harness Web 和 code-server 共用的登录密码；空字符串时自动生成。"
+  description = "DeepSeek Harness Web 的登录密码；启用 code-server 时也用作其登录密码。空字符串时自动生成。"
   default     = ""
   nullable    = false
   sensitive   = true

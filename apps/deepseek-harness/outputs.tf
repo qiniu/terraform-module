@@ -4,8 +4,8 @@ output "dsh_web_public_url" {
 }
 
 output "code_server_public_url" {
-  description = "code-server HTTPS 地址。"
-  value       = "https://${module.infrastructure.code_server_public_authority}"
+  description = "启用 code-server 时的 HTTPS 地址；禁用时为 null。"
+  value       = var.enable_code_server ? "https://${module.infrastructure.code_server_public_authority}" : null
 }
 
 output "dsh_web_username" {
@@ -14,7 +14,7 @@ output "dsh_web_username" {
 }
 
 output "dsh_web_password" {
-  description = "自动生成的 Web Basic Auth 和 code-server 共用密码；显式输入密码时为 null。"
+  description = "自动生成的 Web Basic Auth 密码；启用 code-server 时也用作其登录密码。显式输入密码时为 null。"
   value       = nonsensitive(var.dsh_web_password) == "" ? local.dsh_web_password : null
   sensitive   = true
 }

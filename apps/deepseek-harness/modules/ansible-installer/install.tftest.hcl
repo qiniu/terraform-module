@@ -1,4 +1,5 @@
 variables {
+  enable_code_server              = true
   dsh_web_proxy_port              = 3081
   preview_ports                   = [30080]
   dsh_web_public_authority        = "dsh.example.test"
@@ -13,6 +14,90 @@ variables {
   dsh_web_username                = "admin"
   dsh_web_password                = "web-password-must-not-appear"
   code_server_password            = "Code-server-safe-1234"
+}
+
+run "omits_code_server_settings_when_disabled" {
+  command = plan
+
+  variables {
+    enable_code_server = false
+  }
+
+  assert {
+    condition = (
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).enable_code_server == false &&
+      !contains(keys(jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0]))), "code_server_proxy_port") &&
+      !contains(keys(jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0]))), "code_server_public_authority") &&
+      !contains(keys(jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0]))), "code_server_password")
+    )
+    error_message = "禁用 code-server 时 bootstrap 参数不得包含其端点或密码。"
+  }
+}
+
+run "code_server_role_disables_existing_service_when_disabled" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/code_server/tasks/main.yml"])),
+        "Disable existing code-server service",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/code_server/tasks/main.yml"])),
+        "meta: end_role",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/code_server/tasks/main.yml"])),
+        "Verify the code-server loopback authentication boundary",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/playbooks/site.yml"])),
+        "Disable existing code-server service",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/playbooks/site.yml"])),
+        "Verify the code-server loopback authentication boundary",
+      )
+    )
+    error_message = "code-server 的停用逻辑必须封装在 code_server role 内。"
+  }
+}
+
+run "playbook_requires_code_server_feature_flag" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/playbooks/site.yml"])),
+        "enable_code_server is defined",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/playbooks/site.yml"])),
+        "enable_code_server is boolean",
+      )
+    )
+    error_message = "playbook 必须要求 enable_code_server 作为布尔部署输入。"
+  }
+}
+
+run "templates_do_not_default_code_server_feature_flag" {
+  command = plan
+
+  assert {
+    condition = (
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/nginx/templates/deepseek-harness.conf.j2"])),
+        "enable_code_server | default(true)",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-dsh-environment/SKILL.md.j2"])),
+        "enable_code_server | default(true)",
+      )
+    )
+    error_message = "code-server 模板不得为必填开关提供默认值。"
+  }
 }
 
 run "renders_sensitive_bootstrap_command" {

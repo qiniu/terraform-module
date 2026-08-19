@@ -14,7 +14,9 @@ disable-model-invocation: false
 - 默认工作目录：`{{ dsh_workspace_dir }}`
 - 用户级 Skill 目录：`{{ dsh_home }}/.agents/skills`
 - DeepSeek Harness 公网地址：`https://{{ dsh_web_public_authority }}`
+{% if enable_code_server | bool %}
 - code-server 公网地址：`https://{{ code_server_public_authority }}`
+{% endif %}
 - LAS 实例 ID：`{{ las_instance_id }}`
 - LAS 区域：`{{ las_region_name }}`（`{{ las_region_id }}`）
 - LAS 控制台：[打开实例详情](https://portal.qiniu.com/las/vm/instances/detail/{{ las_instance_id }})
@@ -41,6 +43,7 @@ scripts/inspect-session.sh <session-id>
 
 脚本只输出会话工作目录、标题及首尾用户消息摘要，不会输出完整对话或将日志解压到磁盘。仅在元数据提供了 `agent_session_id` 或用户明确给出会话 ID 时查询；没有会话标识时应说明无法关联，不得猜测。
 
+{% if enable_code_server | bool %}
 ## code-server 链接
 
 当用户要求查看代码或已完成产物时，提供不含认证信息的 code-server Markdown 链接：
@@ -51,5 +54,6 @@ scripts/inspect-session.sh <session-id>
 ```bash
 node -e 'const fs = require("node:fs"), path = require("node:path"); const [authority, workspace] = process.argv.slice(1), root = path.resolve(workspace), cwd = path.resolve("."), relativeDir = path.relative(root, cwd); if (relativeDir === ".." || relativeDir.startsWith(`..${path.sep}`) || path.isAbsolute(relativeDir)) throw new Error("current directory must be inside the workspace"); for (const entry of fs.readdirSync(cwd, { withFileTypes: true })) { if (!entry.isFile()) continue; const absolutePath = path.join(cwd, entry.name), relativePath = path.relative(root, absolutePath), encodedPath = absolutePath.split(path.sep).map(encodeURIComponent).join("/"), fileUri = `vscode-remote://${authority}${encodedPath}`, url = new URL(`https://${authority}/`), payload = JSON.stringify([["openFile", fileUri]]); url.searchParams.set("folder", root); url.searchParams.set("payload", payload); process.stdout.write(`${JSON.stringify({ path: relativePath, url: url.toString() })}\n`); }' '{{ code_server_public_authority }}' '{{ dsh_workspace_dir }}'
 ```
+{% endif %}
 
 Node.js 固定安装在 `/opt/node-v{{ nodejs_version }}`，通过 `/usr/local/bin/node`、`/usr/local/bin/npm`、`/usr/local/bin/npx` 和 `/usr/local/bin/pnpm` 发布。uv 固定版本为 `{{ uv_version }}`，通过 `/usr/local/bin/uv` 和 `/usr/local/bin/uvx` 发布。Python 项目应在工作目录中使用自己的 `.venv`，不得改动 root 管理的 `/opt`、`/usr/local/bin` 或 `{{ dsh_ansible_venv_dir }}`。

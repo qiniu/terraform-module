@@ -106,6 +106,18 @@ run "enables_ssh_port_forward" {
   }
 }
 
+run "disables_code_server" {
+  command = plan
+  variables {
+    enable_code_server = false
+  }
+
+  assert {
+    condition     = output.code_server_public_url == null
+    error_message = "禁用 code-server 时不应输出公网地址。"
+  }
+}
+
 run "rejects_invalid_instance_type" {
   command = plan
   variables { instance_type = "c2m4" }

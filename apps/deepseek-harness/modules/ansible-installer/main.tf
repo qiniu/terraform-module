@@ -5,7 +5,7 @@ locals {
   install_command = format(
     "exec '%s' '%s'",
     local.bootstrap_target_path,
-    base64encode(jsonencode({
+    base64encode(jsonencode(merge({
       dsh_web_proxy_port              = var.dsh_web_proxy_port
       dsh_web_public_authority        = var.dsh_web_public_authority
       static_preview_proxy_port       = var.static_preview_proxy_port
@@ -15,12 +15,14 @@ locals {
       las_region_name                 = var.las_region_name
       preview_public_authorities      = var.preview_public_authorities
       preview_ports                   = var.preview_ports
-      code_server_proxy_port          = var.code_server_proxy_port
-      code_server_public_authority    = var.code_server_public_authority
+      enable_code_server              = var.enable_code_server
       dsh_web_username                = var.dsh_web_username
       dsh_web_password                = var.dsh_web_password
-      code_server_password            = var.code_server_password
-    })),
+      }, var.enable_code_server ? {
+      code_server_proxy_port       = var.code_server_proxy_port
+      code_server_public_authority = var.code_server_public_authority
+      code_server_password         = var.code_server_password
+    } : {}))),
   )
 }
 
