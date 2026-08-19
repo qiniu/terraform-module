@@ -1,0 +1,3 @@
+---
+filebrowser_prefix: "/opt/filebrowser-{{ filebrowser_version }}"
+filebrowser_managed_marker: .las-dsh-managed

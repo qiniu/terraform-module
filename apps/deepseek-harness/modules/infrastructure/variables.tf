@@ -21,6 +21,10 @@ variable "enable_code_server" {
   type = bool
 }
 
+variable "enable_filebrowser" {
+  type = bool
+}
+
 variable "instance_type" {
   type = string
 }

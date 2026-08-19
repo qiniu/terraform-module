@@ -1,0 +1,269 @@
+#!/usr/bin/env bash
+set -euo pipefail
+umask 077
+
+api_base='http://127.0.0.1:{{ filebrowser_port }}'
+root='{{ dsh_home }}'
+workspace='{{ dsh_workspace_dir }}'
+source_name='{{ filebrowser_source_name }}'
+token_file='{{ filebrowser_token_path }}'
+state_dir='{{ filebrowser_state_dir }}'
+registry="${state_dir}/managed-shares.json"
+exports_dir="${workspace}/.filebrowser-exports"
+inbox_root="${workspace}/.filebrowser-inbox"
+
+fail() {
+  printf '{"error":%s}\n' "$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$1")" >&2
+  exit 2
+}
+[ -r "$token_file" ] || fail 'FileBrowser agent token is unavailable'
+token=$(<"$token_file")
+[ -n "$token" ] || fail 'FileBrowser agent token is empty'
+
+resolve_path() {
+  local candidate="$1" resolved
+  resolved=$(realpath -e -- "$candidate" 2>/dev/null) || fail 'path does not exist'
+  case "$resolved" in
+    "$root"|"$root/.filebrowser"|"$root/.filebrowser"/*|"$root/.config"|"$root/.config"/*|"$root/.ssh"|"$root/.ssh"/*)
+      fail 'path is protected from sharing'
+      ;;
+    "$root"|"$root"/*) printf '%s\n' "$resolved" ;;
+    *) fail 'path must remain under /home/dsh' ;;
+  esac
+}
+api() {
+  curl --fail --silent --show-error \
+    -H "Authorization: Bearer $token" -H 'Accept: application/json' "$@"
+}
+api_path() {
+  local resolved="$1"
+  if [ "$resolved" = "$root" ]; then printf '/\n'; else printf '/%s\n' "${resolved#"$root"/}"; fi
+}
+require_positive() {
+  local name="$1" value="${2:-}"
+  [ -n "$value" ] || fail "$name must be provided"
+  [[ "$value" =~ ^[1-9][0-9]*$ ]] || fail "$name must be a positive integer"
+}
+record_share() {
+  local response_file="$1" kind="$2"
+  python3 - "$registry" "$response_file" "$kind" <<'PY'
+import json, os, sys, tempfile
+registry, response_file, kind = sys.argv[1:]
+with open(response_file, encoding="utf-8") as stream: response = json.load(stream)
+if kind == "direct" and str(response.get("status", "")) == "201": raise SystemExit(0)
+share_hash = response.get("hash")
+if not isinstance(share_hash, str) or not share_hash: raise SystemExit(0)
+try:
+    with open(registry, encoding="utf-8") as stream: entries = json.load(stream)
+except FileNotFoundError: entries = []
+if not isinstance(entries, list): entries = []
+entries = [e for e in entries if isinstance(e, dict) and e.get("hash") != share_hash]
+entries.append({"hash": share_hash, "kind": kind, "path": response.get("path", ""), "expire": response.get("expire", 0)})
+os.makedirs(os.path.dirname(registry), mode=0o700, exist_ok=True)
+fd, temporary = tempfile.mkstemp(prefix="managed-shares.", dir=os.path.dirname(registry), text=True)
+try:
+    os.fchmod(fd, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as stream:
+        json.dump(entries, stream, separators=(",", ":")); stream.write("\n")
+    os.replace(temporary, registry)
+finally:
+    if os.path.exists(temporary): os.unlink(temporary)
+PY
+}
+emit_response() {
+  local response_file="$1" kind="$2"
+  record_share "$response_file" "$kind"
+  cat "$response_file"
+  rm -f -- "$response_file"
+}
+share_path() {
+  local remote_path="$1" share_type="$2" duration="$3" unit="${4:-days}" response_file body
+  body=$(python3 - "$remote_path" "$source_name" "$share_type" "$duration" "$unit" <<'PY'
+import json, sys
+path, source, share_type, duration, unit = sys.argv[1:]
+print(json.dumps({"path": path, "source": source, "shareType": share_type, "expires": duration, "unit": unit, "showHidden": False, "disableAnonymous": False, "allowCreate": share_type == "upload", "allowModify": False, "allowDelete": False, "allowReplacements": False, "disableDownload": share_type == "upload", "disableFileViewer": share_type == "upload"}, separators=(",", ":")))
+PY
+)
+  response_file=$(mktemp)
+  api -X POST -H 'Content-Type: application/json' --data "$body" "$api_base/api/share" >"$response_file" || { rm -f -- "$response_file"; fail 'FileBrowser share creation failed'; }
+  emit_response "$response_file" "$share_type"
+}
+search_files() {
+  local query="$1" limit="${2:-50}"
+  [ -n "$query" ] || fail 'search query must be provided'
+  require_positive 'limit' "$limit"
+  python3 - "$root" "$query" "$limit" <<'PY'
+import json, os, sys
+root, query, limit = sys.argv[1], sys.argv[2].casefold(), int(sys.argv[3])
+results = []
+for directory, dirnames, filenames in os.walk(root, followlinks=False):
+    dirnames[:] = sorted(n for n in dirnames if n not in {".filebrowser", ".config", ".ssh"} and not os.path.islink(os.path.join(directory, n)))
+    for name in sorted(dirnames + filenames):
+        if query not in name.casefold(): continue
+        path = os.path.join(directory, name)
+        try: info = os.lstat(path)
+        except OSError: continue
+        if os.path.islink(path): continue
+        results.append({"path": path, "type": "directory" if os.path.isdir(path) else "file", "size": info.st_size, "mtime": int(info.st_mtime)})
+        if len(results) >= limit:
+            print(json.dumps({"query": sys.argv[2], "results": results, "truncated": True}, sort_keys=True)); raise SystemExit(0)
+print(json.dumps({"query": sys.argv[2], "results": results, "truncated": False}, sort_keys=True))
+PY
+}
+list_managed() {
+  local response_file="$1" path_filter="${2:-}"
+  python3 - "$registry" "$response_file" "$path_filter" <<'PY'
+import json, sys
+registry, response_file, path_filter = sys.argv[1:]
+try:
+    with open(registry, encoding="utf-8") as stream: hashes = {e.get("hash") for e in json.load(stream) if isinstance(e, dict)}
+except FileNotFoundError: hashes = set()
+with open(response_file, encoding="utf-8") as stream: response = json.load(stream)
+items = response if isinstance(response, list) else []
+filtered = []
+for item in items:
+    if not isinstance(item, dict) or item.get("hash") not in hashes: continue
+    if path_filter and item.get("path", "") != path_filter: continue
+    item = dict(item); item.pop("token", None); item.pop("password_hash", None); filtered.append(item)
+print(json.dumps(filtered, sort_keys=True))
+PY
+  rm -f -- "$response_file"
+}
+
+action="${1:-}"
+[ -n "$action" ] || fail 'missing operation'
+shift
+case "$action" in
+  inspect)
+    [ "$#" -eq 1 ] || fail 'inspect requires PATH'
+    resolved=$(resolve_path "$1")
+    python3 - "$resolved" <<'PY'
+import json, os, sys
+path = sys.argv[1]; info = os.stat(path)
+print(json.dumps({"path": path, "type": "directory" if os.path.isdir(path) else "file", "size": info.st_size, "mode": oct(info.st_mode & 0o777), "mtime": int(info.st_mtime)}, sort_keys=True))
+PY
+    ;;
+  checksum)
+    [ "$#" -eq 1 ] || fail 'checksum requires PATH'
+    resolved=$(resolve_path "$1"); [ -f "$resolved" ] || fail 'checksum requires a file'
+    python3 - "$resolved" <<'PY'
+import hashlib, json, sys
+digest = hashlib.sha256()
+with open(sys.argv[1], "rb") as stream:
+    for chunk in iter(lambda: stream.read(1024 * 1024), b""): digest.update(chunk)
+print(json.dumps({"path": sys.argv[1], "sha256": digest.hexdigest()}, sort_keys=True))
+PY
+    ;;
+  search)
+    [ "$#" -ge 1 ] && [ "$#" -le 2 ] || fail 'search requires QUERY [LIMIT]'
+    search_files "$1" "${2:-50}"
+    ;;
+  direct)
+    [ "$#" -eq 2 ] || fail 'direct requires PATH MINUTES'
+    resolved=$(resolve_path "$1"); [ -f "$resolved" ] || fail 'direct requires a file'; require_positive 'minutes' "$2"
+    mkdir -p -- "$exports_dir"; chmod 0700 -- "$exports_dir"
+    staging_dir=$(mktemp -d "$exports_dir/direct.XXXXXX"); chmod 0700 -- "$staging_dir"
+    staging_name=$(basename -- "$resolved")
+    cp -- "$resolved" "$staging_dir/$staging_name"; chmod 0600 -- "$staging_dir/$staging_name"
+    response_file=$(mktemp)
+    share_path "$(api_path "$staging_dir")" normal "$2" minutes >"$response_file" || { rm -f -- "$response_file"; rm -rf -- "$staging_dir"; fail 'FileBrowser direct link creation failed'; }
+    python3 - "$response_file" "$staging_name" <<'PY'
+import json, sys
+response_file, name = sys.argv[1:]
+with open(response_file, encoding="utf-8") as stream: response = json.load(stream)
+response["status"] = "200"
+from urllib.parse import quote
+response["url"] = response.get("downloadURL", "") + "&file=" + quote(name)
+with open(response_file, "w", encoding="utf-8") as stream: json.dump(response, stream, separators=(",", ":")); stream.write("\n")
+PY
+    emit_response "$response_file" direct
+    ;;
+  share)
+    [ "$#" -eq 2 ] || fail 'share requires PATH DAYS'
+    resolved=$(resolve_path "$1"); require_positive 'days' "$2"; share_path "$(api_path "$resolved")" normal "$2"
+    ;;
+  inbox)
+    [ "$#" -eq 1 ] || fail 'inbox requires DAYS'
+    require_positive 'days' "$1"; mkdir -p -- "$inbox_root"; chmod 0700 -- "$inbox_root"
+    inbox=$(mktemp -d "$inbox_root/inbox.XXXXXX"); chmod 0700 -- "$inbox"; share_path "$(api_path "$inbox")" upload "$1"
+    ;;
+  archive)
+    [ "$#" -ge 3 ] || fail 'archive requires PATH [PATH ...] --days DAYS'
+    days=''; paths=()
+    while [ "$#" -gt 0 ]; do
+      case "$1" in
+        --days) [ "$#" -ge 2 ] || fail 'archive requires DAYS'; days="$2"; shift 2 ;;
+        *) paths+=("$1"); shift ;;
+      esac
+    done
+    [ -n "${paths[*]}" ] || fail 'archive requires at least one PATH'; require_positive 'days' "$days"
+    remote_paths=()
+    for path in "${paths[@]}"; do resolved=$(resolve_path "$path"); remote_paths+=("$(api_path "$resolved")"); done
+    mkdir -p -- "$exports_dir"; chmod 0700 -- "$exports_dir"
+    suffix=$(python3 -c 'import secrets; print(secrets.token_hex(8))')
+    archive_remote_path="$(api_path "$exports_dir")/archive-$suffix.tar.gz"
+    body=$(python3 - "$source_name" "$archive_remote_path" "${remote_paths[@]}" <<'PY'
+import json, sys
+source, destination, *paths = sys.argv[1:]
+print(json.dumps({"fromSource": source, "toSource": source, "paths": paths, "destination": destination, "format": "tar.gz", "deleteAfter": False}, separators=(",", ":")))
+PY
+)
+    response_file=$(mktemp)
+    api -X POST -H 'Content-Type: application/json' --data "$body" "$api_base/api/resources/archive" >"$response_file" || { rm -f -- "$response_file"; fail 'FileBrowser archive creation failed'; }
+    rm -f -- "$response_file"; share_path "$archive_remote_path" normal "$days"
+    ;;
+  list)
+    [ "$#" -le 1 ] || fail 'list accepts optional PATH'; path_filter=''
+    if [ "$#" -eq 1 ]; then resolved=$(resolve_path "$1"); path_filter=$(api_path "$resolved"); fi
+    response_file=$(mktemp)
+    if [ -n "$path_filter" ]; then
+      api --get "$api_base/api/share" --data-urlencode "source=$source_name" --data-urlencode "path=$path_filter" >"$response_file"
+    else
+      api "$api_base/api/share/list" >"$response_file"
+    fi
+    list_managed "$response_file" "$path_filter"
+    ;;
+  revoke)
+    [ "$#" -eq 1 ] || fail 'revoke requires HASH'; [[ "$1" =~ ^[A-Za-z0-9_-]{8,128}$ ]] || fail 'invalid share hash'
+    python3 - "$registry" "$1" <<'PY'
+import json, sys
+try:
+    with open(sys.argv[1], encoding="utf-8") as stream: entries = json.load(stream)
+except FileNotFoundError: entries = []
+if not any(isinstance(e, dict) and e.get("hash") == sys.argv[2] for e in entries): raise SystemExit("share is not managed by this helper")
+PY
+    staging_dir=$(python3 - "$registry" "$1" "$root" <<'PY'
+import json, sys
+registry, share_hash, root = sys.argv[1:]
+with open(registry, encoding="utf-8") as stream: entries = json.load(stream)
+for entry in entries:
+    if not isinstance(entry, dict) or entry.get("hash") != share_hash or entry.get("kind") != "direct": continue
+    path = entry.get("path", "")
+    if isinstance(path, str) and path.startswith("/"):
+        print(root + path)
+    break
+PY
+)
+    api --get -X DELETE "$api_base/api/share" --data-urlencode "hash=$1" >/dev/null || fail 'FileBrowser share revoke failed'
+    python3 - "$registry" "$1" <<'PY'
+import json, os, sys, tempfile
+registry, share_hash = sys.argv[1:]
+with open(registry, encoding="utf-8") as stream: entries = json.load(stream)
+entries = [e for e in entries if not (isinstance(e, dict) and e.get("hash") == share_hash)]
+fd, temporary = tempfile.mkstemp(prefix="managed-shares.", dir=os.path.dirname(registry), text=True)
+try:
+    os.fchmod(fd, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as stream: json.dump(entries, stream, separators=(",", ":")); stream.write("\n")
+    os.replace(temporary, registry)
+finally:
+    if os.path.exists(temporary): os.unlink(temporary)
+PY
+    if [ -n "$staging_dir" ] && [ "$(realpath -m -- "$staging_dir")" = "$staging_dir" ]; then
+      case "$staging_dir" in
+        "$exports_dir"/direct.*) rm -rf -- "$staging_dir" ;;
+      esac
+    fi
+    printf '{"revoked":true}\n'
+    ;;
+  *) fail 'unsupported operation' ;;
+esac

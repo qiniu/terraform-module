@@ -11,6 +11,7 @@ locals {
   static_preview_proxy_port = 3082
   preview_slot_ports        = [30080, 30081, 30082, 30083]
   code_server_proxy_port    = 3084
+  filebrowser_proxy_port    = 3086
 }
 
 resource "qiniu_compute_key_pair" "deployment" {
@@ -109,6 +110,26 @@ resource "qiniu_compute_instance_public_access" "code_server" {
         !contains(local.preview_slot_ports, local.code_server_proxy_port)
       )
       error_message = "code_server_proxy_port 不得与 dsh_web_proxy_port、static_preview_proxy_port 或 Preview 端口重复。"
+    }
+  }
+}
+
+resource "qiniu_compute_instance_public_access" "filebrowser" {
+  count = var.enable_filebrowser ? 1 : 0
+
+  instance_id   = qiniu_compute_instance.deepseek_harness.id
+  internal_port = local.filebrowser_proxy_port
+  type          = "HTTPProxy"
+
+  lifecycle {
+    precondition {
+      condition = (
+        local.filebrowser_proxy_port != local.dsh_web_proxy_port &&
+        local.filebrowser_proxy_port != local.static_preview_proxy_port &&
+        local.filebrowser_proxy_port != local.code_server_proxy_port &&
+        !contains(local.preview_slot_ports, local.filebrowser_proxy_port)
+      )
+      error_message = "filebrowser_proxy_port 不得与受管服务或 Preview 端口重复。"
     }
   }
 }

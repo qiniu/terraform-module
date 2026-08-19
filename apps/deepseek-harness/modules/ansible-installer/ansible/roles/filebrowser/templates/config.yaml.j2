@@ -1,0 +1,34 @@
+server:
+  port: {{ filebrowser_port }}
+  listen: "127.0.0.1"
+  baseURL: "/"
+  externalUrl: {{ ("https://" ~ filebrowser_public_authority) | to_json }}
+  database: {{ filebrowser_database_path | to_json }}
+  disableUpdateCheck: true
+  sources:
+    - name: {{ filebrowser_source_name | to_json }}
+      path: {{ dsh_home | to_json }}
+      config:
+        defaultEnabled: true
+        defaultUserScope: "/"
+auth:
+  tokenExpirationHours: 24
+  adminUsername: {{ filebrowser_username | to_json }}
+  adminPassword: {{ filebrowser_password | to_json }}
+  methods:
+    password:
+      enabled: true
+      signup: false
+userDefaults:
+  listing:
+    showHidden: false
+  account:
+    permissions:
+      api: true
+      admin: true
+      modify: true
+      share: true
+      realtime: true
+      delete: true
+      create: true
+      download: true

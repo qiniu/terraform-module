@@ -1,7 +1,14 @@
 ---
+- name: Check whether the DeepSeek Harness service unit exists before restart
+  ansible.builtin.stat:
+    path: /etc/systemd/system/deepseek-harness.service
+  register: deepseek_harness_service_unit
+  listen: restart deepseek harness
+
 - name: restart deepseek harness service
   ansible.builtin.systemd_service:
     name: deepseek-harness.service
     daemon_reload: true
     state: restarted
+  when: deepseek_harness_service_unit.stat.exists
   listen: restart deepseek harness

@@ -19,6 +19,7 @@ module "infrastructure" {
 
   preview_count           = var.preview_count
   enable_code_server      = var.enable_code_server
+  enable_filebrowser      = var.enable_filebrowser
   instance_type           = var.instance_type
   system_disk_size        = var.system_disk_size
   internet_max_bandwidth  = var.internet_max_bandwidth
@@ -44,9 +45,14 @@ module "installer" {
   enable_code_server              = var.enable_code_server
   code_server_proxy_port          = var.enable_code_server ? module.infrastructure.code_server_proxy_port : null
   code_server_public_authority    = var.enable_code_server ? module.infrastructure.code_server_public_authority : null
+  enable_filebrowser              = var.enable_filebrowser
+  filebrowser_proxy_port          = var.enable_filebrowser ? module.infrastructure.filebrowser_proxy_port : null
+  filebrowser_public_authority    = var.enable_filebrowser ? module.infrastructure.filebrowser_public_authority : null
   dsh_web_username                = local.dsh_web_username
   dsh_web_password                = local.dsh_web_password
   code_server_password            = var.enable_code_server ? local.dsh_web_password : null
+  filebrowser_username            = var.enable_filebrowser ? local.dsh_web_username : null
+  filebrowser_password            = var.enable_filebrowser ? local.dsh_web_password : null
 }
 
 module "ansible_runtime_transfer" {

@@ -8,6 +8,8 @@
     code_server_proxy_port: 3084
     code_server_public_authority: code.example.test
     enable_code_server: true
+    enable_filebrowser: true
+    filebrowser_public_authority: filebrowser.example.test
     dsh_ansible_venv_dir: /opt/las-dsh-installer/venv
     dsh_home: /home/dsh
     las_instance_id: test-instance
@@ -60,6 +62,7 @@
               - "'https://portal.qiniu.com/las/vm/instances/detail/test-instance' in skill_with_preview"
               - "'las-static-preview' in skill_with_preview"
               - "'las-preview-ports' in skill_with_preview"
+              - "'https://filebrowser.example.test' in skill_with_preview"
               - "'scripts/inspect-session.sh <session-id>' in skill_with_preview"
               - "'systemctl --user' not in skill_with_preview"
               - "'journalctl --user' not in skill_with_preview"

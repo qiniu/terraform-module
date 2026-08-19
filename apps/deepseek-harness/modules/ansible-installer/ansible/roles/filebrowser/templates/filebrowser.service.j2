@@ -1,0 +1,22 @@
+[Unit]
+Description=FileBrowser Quantum
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{ dsh_user }}
+Group={{ dsh_group }}
+WorkingDirectory={{ filebrowser_state_dir }}
+Environment=FILEBROWSER_CONFIG={{ filebrowser_config_path }}
+ExecStart={{ filebrowser_prefix }}/filebrowser
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=false
+ReadWritePaths={{ dsh_home }}
+
+[Install]
+WantedBy=multi-user.target

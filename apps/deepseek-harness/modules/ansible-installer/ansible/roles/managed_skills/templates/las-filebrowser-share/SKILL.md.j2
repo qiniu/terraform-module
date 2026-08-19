@@ -1,0 +1,32 @@
+---
+name: las-filebrowser-share
+description: 使用 FileBrowser Quantum 安全地检索、打包、分享和撤销 /home/dsh 下的文件或目录。
+---
+
+# FileBrowser Sharing
+
+使用 `scripts/filebrowser-share.sh`，不要直接把长期 token 写入提示词、日志或命令参数。
+
+## 支持的操作
+
+```text
+filebrowser-share.sh direct PATH MINUTES
+filebrowser-share.sh share PATH DAYS
+filebrowser-share.sh archive PATH [PATH ...] --days DAYS
+filebrowser-share.sh inbox DAYS
+filebrowser-share.sh list [PATH]
+filebrowser-share.sh revoke HASH
+filebrowser-share.sh inspect PATH
+filebrowser-share.sh checksum PATH
+filebrowser-share.sh search QUERY [LIMIT]
+```
+
+- `direct` 只接受普通文件，返回临时下载链接。
+- `share` 分享文件或目录；`inbox` 每次创建新的专用仅上传目录，不可浏览、下载或删除既有内容。
+- `archive` 使用 FileBrowser server-side API 将一个或多个目标打包到 `.filebrowser-exports`，归档名带随机后缀后再分享。
+- `list` / `revoke` 仅查询/撤销由当前受管 token 创建的分享，只接受 registry 中的 hash。
+- `search` 只返回 `/home/dsh` 内的路径、类型、大小和更新时间等最小元数据；`inspect` 返回安全的文件元数据；`checksum` 返回 SHA-256。
+- 所有路径必须解析到 `/home/dsh` 内；默认不展示隐藏目录，但不从源中排除，管理员可以在 FileBrowser UI 主动显示它们。
+- 分享前确认目标、有效期和接收方；所有分享命令必须显式提供正整数有效期；不提供删除、移动或批量重命名操作。
+
+输出为结构化 JSON。长期 token 保存在 `{{ filebrowser_token_path }}`，权限为 `0600`，不得输出其内容。

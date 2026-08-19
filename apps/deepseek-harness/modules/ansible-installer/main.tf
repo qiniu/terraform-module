@@ -16,12 +16,18 @@ locals {
       preview_public_authorities      = var.preview_public_authorities
       preview_ports                   = var.preview_ports
       enable_code_server              = var.enable_code_server
+      enable_filebrowser              = var.enable_filebrowser
       dsh_web_username                = var.dsh_web_username
       dsh_web_password                = var.dsh_web_password
       }, var.enable_code_server ? {
       code_server_proxy_port       = var.code_server_proxy_port
       code_server_public_authority = var.code_server_public_authority
       code_server_password         = var.code_server_password
+      } : {}, var.enable_filebrowser ? {
+      filebrowser_proxy_port       = tonumber(var.filebrowser_proxy_port)
+      filebrowser_public_authority = var.filebrowser_public_authority
+      filebrowser_username         = var.filebrowser_username
+      filebrowser_password         = var.filebrowser_password
     } : {}))),
   )
 }

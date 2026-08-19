@@ -17,6 +17,9 @@ disable-model-invocation: false
 {% if enable_code_server | bool %}
 - code-server 公网地址：`https://{{ code_server_public_authority }}`
 {% endif %}
+{% if enable_filebrowser | bool %}
+- FileBrowser Quantum 公网地址：`https://{{ filebrowser_public_authority }}`（默认隐藏 UI 中的点号目录）
+{% endif %}
 - LAS 实例 ID：`{{ las_instance_id }}`
 - LAS 区域：`{{ las_region_name }}`（`{{ las_region_id }}`）
 - LAS 控制台：[打开实例详情](https://portal.qiniu.com/las/vm/instances/detail/{{ las_instance_id }})
