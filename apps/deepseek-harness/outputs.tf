@@ -3,25 +3,9 @@ output "dsh_web_public_url" {
   value       = "https://${module.infrastructure.dsh_web_public_authority}"
 }
 
-output "static_preview_public_url" {
-  description = "Static Preview HTTPS 地址。"
-  value       = "https://${module.infrastructure.static_preview_public_authority}"
-}
-
-output "preview_public_urls" {
-  description = "Preview HTTPS 地址列表。"
-  value       = [for authority in module.infrastructure.preview_public_authorities : "https://${authority}"]
-}
-
 output "code_server_public_url" {
   description = "code-server HTTPS 地址。"
   value       = "https://${module.infrastructure.code_server_public_authority}"
-}
-
-output "code_server_password" {
-  description = "code-server 实际生效的登录密码。"
-  value       = local.code_server_password
-  sensitive   = true
 }
 
 output "dsh_web_username" {
@@ -30,8 +14,8 @@ output "dsh_web_username" {
 }
 
 output "dsh_web_password" {
-  description = "Web Basic Auth 实际生效的密码。"
-  value       = local.dsh_web_password
+  description = "自动生成的 Web Basic Auth 和 code-server 共用密码；显式输入密码时为 null。"
+  value       = nonsensitive(var.dsh_web_password) == "" ? local.dsh_web_password : null
   sensitive   = true
 }
 
