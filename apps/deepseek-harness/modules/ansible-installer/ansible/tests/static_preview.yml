@@ -14,6 +14,7 @@
     code_server_proxy_port: 3084
     code_server_port: 3083
     code_server_public_authority: code.example.test
+    enable_code_server: true
     static_preview_public_authority: static-preview.example.test
     static_preview_proxy_port: 3082
   tasks:
@@ -58,6 +59,18 @@
               - "'location ~ (^|/)\\. {' in static_preview_nginx_config"
               - "'disable_symlinks on;' in static_preview_nginx_config"
               - "'auth_basic' not in static_preview_nginx_config.split('server {')[2].split('server {')[0]"
+
+        - name: Render Nginx without code-server
+          ansible.builtin.set_fact:
+            nginx_without_code_server: "{{ lookup('ansible.builtin.template', nginx_template_path) }}"
+          vars:
+            static_preview_dir: "{{ static_preview_test_root.path }}/.las-static-preview"
+            enable_code_server: false
+
+        - name: Verify code-server Nginx endpoint is absent when disabled
+          ansible.builtin.assert:
+            that:
+              - "'listen 0.0.0.0:3084;' not in nginx_without_code_server"
 
         - name: Create a static site source directory
           ansible.builtin.file:

@@ -44,7 +44,7 @@ output "preview_public_authorities" {
 
 output "code_server_public_authority" {
   description = "code-server HTTPProxy 公网 authority（不含 scheme）。"
-  value       = qiniu_compute_instance_public_access.code_server.endpoint
+  value       = var.enable_code_server ? qiniu_compute_instance_public_access.code_server[0].endpoint : null
 }
 
 output "code_server_proxy_port" {

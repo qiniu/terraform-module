@@ -59,6 +59,7 @@ server {
     }
 }
 
+{% if enable_code_server | bool %}
 server {
     listen 0.0.0.0:{{ code_server_proxy_port }};
     server_name _;
@@ -79,3 +80,4 @@ server {
         proxy_send_timeout 3600s;
     }
 }
+{% endif %}

@@ -13,16 +13,14 @@
           - preview_ports | length <= 4
         fail_msg: Provide valid endpoint authorities, passwords, and distinct service ports through inventory or extra vars.
 
-    - name: Collect service and Preview ports
-      ansible.builtin.set_fact:
-        dsh_all_ports: "{{ [dsh_port, dsh_web_proxy_port, static_preview_proxy_port, code_server_port, code_server_proxy_port] + preview_ports }}"
-
     - name: Verify required deployment variables
       ansible.builtin.assert:
         that:
+          - enable_code_server is defined
+          - enable_code_server is boolean
           - dsh_web_public_authority | default('') | length > 0
           - static_preview_public_authority | default('') | length > 0
-          - code_server_public_authority | default('') | length > 0
+          - not (enable_code_server | bool) or code_server_public_authority | default('') | length > 0
           - preview_public_authorities is sequence
           - preview_public_authorities is not string
           - preview_public_authorities is not mapping
@@ -30,12 +28,22 @@
           - preview_public_authorities | select('string') | list | length == preview_ports | length
           - preview_public_authorities | map('trim') | reject('equalto', '') | list | length == preview_ports | length
           - dsh_web_password | default('') | length > 0
-          - code_server_password | default('') | length > 0
+          - not (enable_code_server | bool) or code_server_password | default('') | length > 0
+        fail_msg: Provide valid endpoint authorities, passwords, and distinct service ports through inventory or extra vars.
+
+    - name: Collect service and Preview ports
+      ansible.builtin.set_fact:
+        dsh_all_ports: "{{ [dsh_port, dsh_web_proxy_port, static_preview_proxy_port] + ([code_server_port, code_server_proxy_port] if enable_code_server | bool else []) + preview_ports }}"
+
+    - name: Verify service and Preview ports
+      ansible.builtin.assert:
+        that:
           - dsh_all_ports | map('string') | select('match', '^[1-9][0-9]{0,4}$') | list | length == dsh_all_ports | length
           - dsh_all_ports | map('int') | select('>=', 1) | list | length == dsh_all_ports | length
           - dsh_all_ports | map('int') | select('<=', 65535) | list | length == dsh_all_ports | length
           - dsh_all_ports | map('int') | unique | list | length == dsh_all_ports | length
         fail_msg: Provide valid endpoint authorities, passwords, and distinct service ports through inventory or extra vars.
+
   roles:
     - base
     - nodejs
@@ -62,21 +70,12 @@
         url: "http://127.0.0.1:{{ dsh_web_proxy_port }}/"
         status_code: 401
 
-    - name: Verify the code-server loopback authentication boundary
-      ansible.builtin.uri:
-        url: "http://127.0.0.1:{{ code_server_port }}/"
-        status_code: [302, 401]
-        follow_redirects: none
-      register: code_server_health
-      retries: 60
-      delay: 1
-      until: code_server_health.status in [302, 401]
-
     - name: Verify the code-server Nginx authentication boundary
       ansible.builtin.uri:
         url: "http://127.0.0.1:{{ code_server_proxy_port }}/"
         status_code: [302, 401]
         follow_redirects: none
+      when: enable_code_server | bool
 
     - name: Remove superseded managed Node.js toolchains after health checks
       ansible.builtin.include_role:

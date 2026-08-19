@@ -18,6 +18,7 @@ module "infrastructure" {
   source = "./modules/infrastructure"
 
   preview_count           = var.preview_count
+  enable_code_server      = var.enable_code_server
   instance_type           = var.instance_type
   system_disk_size        = var.system_disk_size
   internet_max_bandwidth  = var.internet_max_bandwidth
@@ -40,11 +41,12 @@ module "installer" {
   las_region_name                 = module.infrastructure.instance_region_name
   preview_ports                   = module.infrastructure.preview_ports
   preview_public_authorities      = module.infrastructure.preview_public_authorities
-  code_server_proxy_port          = module.infrastructure.code_server_proxy_port
-  code_server_public_authority    = module.infrastructure.code_server_public_authority
+  enable_code_server              = var.enable_code_server
+  code_server_proxy_port          = var.enable_code_server ? module.infrastructure.code_server_proxy_port : null
+  code_server_public_authority    = var.enable_code_server ? module.infrastructure.code_server_public_authority : null
   dsh_web_username                = local.dsh_web_username
   dsh_web_password                = local.dsh_web_password
-  code_server_password            = local.dsh_web_password
+  code_server_password            = var.enable_code_server ? local.dsh_web_password : null
 }
 
 module "ansible_runtime_transfer" {

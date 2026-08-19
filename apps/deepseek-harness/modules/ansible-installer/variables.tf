@@ -28,12 +28,18 @@ variable "preview_ports" {
   }
 }
 
+variable "enable_code_server" {
+  description = "是否安装并公开 code-server。"
+  type        = bool
+}
+
 variable "code_server_proxy_port" {
   description = "code-server 的 HTTPProxy/Nginx 代理端口。"
   type        = number
+  default     = null
 
   validation {
-    condition     = var.code_server_proxy_port >= 1 && var.code_server_proxy_port <= 65535 && floor(var.code_server_proxy_port) == var.code_server_proxy_port
+    condition     = !var.enable_code_server || (var.code_server_proxy_port >= 1 && var.code_server_proxy_port <= 65535 && floor(var.code_server_proxy_port) == var.code_server_proxy_port)
     error_message = "code_server_proxy_port 必须是 1 到 65535 之间的整数。"
   }
 }
@@ -107,9 +113,10 @@ variable "preview_public_authorities" {
 variable "code_server_public_authority" {
   description = "code-server 的外部 Host。"
   type        = string
+  default     = null
 
   validation {
-    condition = (
+    condition = !var.enable_code_server || (
       can(regex("^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*(:[0-9]{1,5})?$", var.code_server_public_authority)) &&
       length(element(split(":", var.code_server_public_authority), 0)) <= 253
     )
@@ -137,9 +144,10 @@ variable "code_server_password" {
   description = "code-server 自带密码。"
   type        = string
   sensitive   = true
+  default     = null
 
   validation {
-    condition = (
+    condition = !var.enable_code_server || (
       length(var.code_server_password) >= 8 &&
       length(var.code_server_password) <= 30 &&
       can(regex("[A-Za-z]", var.code_server_password)) &&
