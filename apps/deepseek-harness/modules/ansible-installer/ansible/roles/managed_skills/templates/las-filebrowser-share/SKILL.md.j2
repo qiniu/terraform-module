@@ -23,7 +23,7 @@ filebrowser-share.sh search QUERY [LIMIT]
 
 - `direct` 只接受普通文件，返回临时下载链接。
 - `share` 分享文件或目录；`inbox` 每次创建新的专用仅上传目录，不可浏览、下载或删除既有内容。
-- `archive` 使用 FileBrowser server-side API 将一个或多个目标打包到 `.filebrowser-exports`，归档名带随机后缀后再分享。
+- `archive` 使用 FileBrowser server-side API 将一个或多个目标打包到 `filebrowser-exports`，归档名带随机后缀后再分享。
 - `list` / `revoke` 仅查询/撤销由当前受管 token 创建的分享，只接受 registry 中的 hash。
 - `search` 只返回 `/home/dsh` 内的路径、类型、大小和更新时间等最小元数据；`inspect` 返回安全的文件元数据；`checksum` 返回 SHA-256。
 - 所有路径必须解析到 `/home/dsh` 内；默认不展示隐藏目录，但不从源中排除，管理员可以在 FileBrowser UI 主动显示它们。

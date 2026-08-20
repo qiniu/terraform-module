@@ -31,7 +31,7 @@ SOURCE = required_env("LAS_FILEBROWSER_SOURCE")
 TOKEN_FILE = Path(required_env("LAS_FILEBROWSER_TOKEN_FILE"))
 STATE_DIR = Path(required_env("LAS_FILEBROWSER_STATE_DIR"))
 REGISTRY = STATE_DIR / "managed-shares.json"
-EXPORTS_DIR = WORKSPACE / ".filebrowser-exports"
+EXPORTS_DIR = WORKSPACE / "filebrowser-exports"
 INBOX_ROOT = WORKSPACE / ".filebrowser-inbox"
 PROTECTED = {".filebrowser", ".config", ".ssh"}
 
