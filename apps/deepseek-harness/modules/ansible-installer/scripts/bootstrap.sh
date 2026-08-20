@@ -102,7 +102,10 @@ run_install() {
   find "${UV_PROJECT_ENVIRONMENT}/bin" -type f -exec chmod 0755 {} +
   printf '%s\n' 'Ansible runtime ready'
 
-  "${uv_bin_dir}/uv" run --locked ansible-playbook -i inventory/default playbooks/site.yml --extra-vars "@${extra_vars_file}" --extra-vars "uv_version=${uv_version}" --extra-vars "dsh_ansible_venv_dir=${UV_PROJECT_ENVIRONMENT}"
+  mitogen_strategy_plugins="$(${uv_bin_dir}/uv run --locked python -c 'import pathlib, ansible_mitogen; print(pathlib.Path(ansible_mitogen.__file__).parent / "plugins" / "strategy")')"
+  [ -d "${mitogen_strategy_plugins}" ] || fail 'Ansible runtime is missing Mitogen strategy plugins'
+  ANSIBLE_STRATEGY_PLUGINS="${mitogen_strategy_plugins}" \
+    "${uv_bin_dir}/uv" run --locked ansible-playbook -i inventory/default playbooks/site.yml --extra-vars "@${extra_vars_file}" --extra-vars "uv_version=${uv_version}" --extra-vars "dsh_ansible_venv_dir=${UV_PROJECT_ENVIRONMENT}"
   printf '%s\n' 'bootstrap completed'
 }
 

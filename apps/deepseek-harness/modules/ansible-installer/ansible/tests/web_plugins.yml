@@ -23,6 +23,7 @@
             dsh_workspace_dir: "{{ web_plugin_test_root.path }}/workspace"
             dsh_pnpm_store_dir: "{{ web_plugin_test_root.path }}/home/.pnpm-store"
             dsh_user: "{{ ansible_facts['user_id'] }}"
+            dsh_group: "{{ ansible_facts['user_id'] }}"
             dsh_web_plugins:
               - dshmarket
               - dsh-better-sidebar
@@ -38,6 +39,19 @@
           loop:
             - "{{ dsh_state_dir }}/profiles/web"
             - "{{ dsh_workspace_dir }}"
+
+        - name: Create a pnpm workspace with an unresolved build policy
+          ansible.builtin.copy:
+            content: |
+              packages:
+                - .
+
+              nodeLinker: hoisted
+              autoInstallPeers: false
+              allowBuilds:
+                node-pty: set this to true or false
+            dest: "{{ dsh_state_dir }}/profiles/web/pnpm-workspace.yaml"
+            mode: '0600'
 
         - name: Create an empty Web Profile manifest
           ansible.builtin.copy:
@@ -78,10 +92,16 @@
             src: "{{ dsh_state_dir }}/plugin-install.log"
           register: first_plugin_install_log
 
+        - name: Read the pnpm workspace build policy
+          ansible.builtin.slurp:
+            src: "{{ dsh_state_dir }}/profiles/web/pnpm-workspace.yaml"
+          register: pnpm_workspace
+
         - name: Verify both plugins were installed with the expected command
           ansible.builtin.assert:
             that:
               - "(first_plugin_install_log.content | b64decode).splitlines() == ['dlx --allow-build=node-pty @deepseek-ai/dsh@0.1.0-rc.6 plugin --profile web add dshmarket', 'dlx --allow-build=node-pty @deepseek-ai/dsh@0.1.0-rc.6 plugin --profile web add dsh-better-sidebar']"
+              - "'node-pty: true' in (pnpm_workspace.content | b64decode)"
 
         - name: Install the configured plugins for the second time
           ansible.builtin.include_tasks: ../roles/deepseek_harness/tasks/install_web_plugins.yml

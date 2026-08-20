@@ -5,6 +5,7 @@ description = "Standalone Ansible deployment for DeepSeek Harness"
 requires-python = ">=3.12"
 dependencies = [
     "ansible-core==2.20.2",
+    "mitogen>=0.3.51",
 ]
 
 [tool.uv]
