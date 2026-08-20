@@ -1,4 +1,8 @@
 ---
+- name: Install configured DeepSeek Harness Web Profile plugins
+  ansible.builtin.include_tasks: install_web_plugins.yml
+  when: dsh_web_plugins | length > 0
+
 - name: Read the cached DeepSeek Harness version
   ansible.builtin.command:
     argv:

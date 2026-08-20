@@ -3,3 +3,4 @@ dsh_version: 0.1.0-rc.6
 dsh_cache_key: "{{ dsh_version }}:pnpm-{{ pnpm_version }}:node-pty-build"
 dsh_cache_version_file: "{{ dsh_state_dir }}/CACHED_VERSION"
 dsh_pnpm_dlx_cache_dir: "{{ dsh_home }}/.cache/pnpm/dlx"
+dsh_web_plugins: []
