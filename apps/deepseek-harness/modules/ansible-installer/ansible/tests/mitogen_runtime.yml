@@ -1,0 +1,24 @@
+---
+- name: Verify Mitogen runtime configuration contract
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Read the Ansible configuration
+      ansible.builtin.slurp:
+        src: "{{ playbook_dir }}/../ansible.cfg"
+      register: ansible_config
+
+    - name: Read the installer bootstrap
+      ansible.builtin.slurp:
+        src: "{{ playbook_dir }}/../../scripts/bootstrap.sh"
+      register: bootstrap
+
+    - name: Verify Mitogen uses the runtime venv path
+      ansible.builtin.assert:
+        that:
+          - "'strategy = mitogen_linear' in (ansible_config.content | b64decode)"
+          - "'python3.13' not in (ansible_config.content | b64decode)"
+          - "'ANSIBLE_STRATEGY_PLUGINS=' in (bootstrap.content | b64decode)"
+          - "'ansible_mitogen' in (bootstrap.content | b64decode)"
+        fail_msg: Mitogen strategy plugins must be resolved from the actual uv runtime environment.

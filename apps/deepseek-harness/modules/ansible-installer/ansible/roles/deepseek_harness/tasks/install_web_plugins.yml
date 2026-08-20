@@ -1,4 +1,29 @@
 ---
+- name: Create the DeepSeek Harness Web Profile directory
+  ansible.builtin.file:
+    path: "{{ dsh_state_dir }}/profiles/web"
+    state: directory
+    owner: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    mode: '0700'
+  become_user: "{{ dsh_user }}"
+
+- name: Prepare the DeepSeek Harness Web Profile pnpm build policy
+  ansible.builtin.copy:
+    content: |
+      packages:
+        - .
+
+      nodeLinker: hoisted
+      autoInstallPeers: false
+      allowBuilds:
+        node-pty: true
+    dest: "{{ dsh_state_dir }}/profiles/web/pnpm-workspace.yaml"
+    owner: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    mode: '0600'
+  become_user: "{{ dsh_user }}"
+
 - name: Check installed DeepSeek Harness Web Profile plugins
   ansible.builtin.command:
     argv:
