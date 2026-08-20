@@ -37,6 +37,7 @@ locals {
     "roles/managed_skills/templates/las-preview-ports/manage-preview-port.sh.j2",
     "roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2",
     "roles/managed_skills/templates/las-filebrowser-share/filebrowser-share.sh.j2",
+    "roles/managed_skills/templates/las-filebrowser-share/filebrowser-share.py.j2",
     "roles/nginx/handlers/main.yml",
     "roles/nginx/tasks/main.yml",
     "roles/nginx/templates/deepseek-harness.conf.j2",

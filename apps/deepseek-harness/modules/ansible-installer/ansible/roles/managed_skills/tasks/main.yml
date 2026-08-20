@@ -93,3 +93,11 @@
     owner: "{{ dsh_user }}"
     group: "{{ dsh_group }}"
     mode: '0700'
+
+- name: Render the FileBrowser sharing Python implementation
+  ansible.builtin.template:
+    src: las-filebrowser-share/filebrowser-share.py.j2
+    dest: "{{ dsh_home }}/.agents/skills/las-filebrowser-share/scripts/filebrowser-share.py"
+    owner: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    mode: '0700'
