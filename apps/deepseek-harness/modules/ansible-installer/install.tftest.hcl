@@ -791,3 +791,25 @@ run "protects_root_install_caches_when_filebrowser_disabled" {
     error_message = "禁用 FileBrowser 时 Node.js 和 code-server 仍必须独立验证 root 安装缓存边界。"
   }
 }
+
+run "reconciles_filebrowser_admin_credentials_before_api_setup" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/tasks/main.yml"])),
+        "Reconcile FileBrowser administrator credentials",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/tasks/main.yml"])),
+        "filebrowser_prefix }}/filebrowser",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/tasks/main.yml"])),
+        "      - -u",
+      )
+    )
+    error_message = "FileBrowser 必须在 API 登录前协调管理员凭据。"
+  }
+}
