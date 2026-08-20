@@ -8,6 +8,40 @@
     that: nodejs_platform | length > 0
     fail_msg: "Unsupported architecture for Node.js: {{ ansible_facts['architecture'] }}"
 
+- name: Check the Node.js download directory
+  ansible.builtin.stat:
+    path: "{{ dsh_download_dir }}"
+    follow: false
+  register: nodejs_download_dir_path
+
+- name: Verify the root-owned Node.js download directory
+  ansible.builtin.assert:
+    that:
+      - nodejs_download_dir_path.stat.exists
+      - nodejs_download_dir_path.stat.isdir
+      - not nodejs_download_dir_path.stat.islnk | default(false)
+      - nodejs_download_dir_path.stat.pw_name == 'root'
+      - nodejs_download_dir_path.stat.gr_name == 'root'
+      - nodejs_download_dir_path.stat.mode == '0700'
+    fail_msg: "Node.js download directory must be a root-owned, non-symlink directory with mode 0700."
+
+- name: Check the Node.js npm cache
+  ansible.builtin.stat:
+    path: "{{ dsh_npm_cache_dir }}"
+    follow: false
+  register: nodejs_npm_cache_path
+
+- name: Verify the root-owned Node.js npm cache
+  ansible.builtin.assert:
+    that:
+      - nodejs_npm_cache_path.stat.exists
+      - nodejs_npm_cache_path.stat.isdir
+      - not nodejs_npm_cache_path.stat.islnk | default(false)
+      - nodejs_npm_cache_path.stat.pw_name == 'root'
+      - nodejs_npm_cache_path.stat.gr_name == 'root'
+      - nodejs_npm_cache_path.stat.mode == '0700'
+    fail_msg: "Node.js npm cache must be a root-owned, non-symlink directory with mode 0700."
+
 - name: Check for the pinned Node.js binary
   ansible.builtin.stat:
     path: "{{ nodejs_prefix }}/bin/node"
@@ -152,7 +186,7 @@
       - "pnpm@{{ pnpm_version }}"
   environment:
     PATH: "{{ nodejs_prefix }}/bin:{{ ansible_env.PATH }}"
-    npm_config_cache: "{{ dsh_download_dir }}/npm"
+    npm_config_cache: "{{ dsh_npm_cache_dir }}"
   when: >-
     not pnpm_binary.stat.exists
     or pnpm_installed_version.rc | default(1) != 0

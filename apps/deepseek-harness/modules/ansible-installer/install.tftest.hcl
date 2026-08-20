@@ -715,3 +715,79 @@ run "recognizes_code_server_version_with_build_metadata" {
     error_message = "code-server 版本检查必须忽略 --version 输出中的构建元数据，避免重复安装。"
   }
 }
+
+run "protects_root_install_caches_in_all_feature_paths" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+        "dsh_npm_cache_dir: /var/cache/deepseek-harness/npm",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/base/tasks/main.yml"])),
+        "owner: root",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/base/tasks/main.yml"])),
+        "path: \"{{ dsh_npm_cache_dir }}\"",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/nodejs/tasks/main.yml"])),
+        "npm_config_cache: \"{{ dsh_npm_cache_dir }}\"",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/nodejs/tasks/main.yml"])),
+        "Verify the root-owned Node.js download directory",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/nodejs/tasks/main.yml"])),
+        "nodejs_download_dir_path.stat.mode == '0700'",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/code_server/tasks/main.yml"])),
+        "Verify the root-owned code-server download directory",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/code_server/tasks/main.yml"])),
+        "code_server_download_dir_path.stat.mode == '0700'",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/tasks/main.yml"])),
+        "Verify the root-owned FileBrowser download directory",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/tasks/main.yml"])),
+        "filebrowser_download_dir_path.stat.mode == '0700'",
+      )
+    )
+    error_message = "所有安装路径都必须使用 root-owned、非 symlink 且 0700 的下载目录和 npm cache。"
+  }
+}
+
+run "protects_root_install_caches_when_filebrowser_disabled" {
+  command = plan
+
+  variables {
+    enable_filebrowser = false
+  }
+
+  assert {
+    condition = (
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/base/tasks/main.yml"])),
+        "dsh_download_dir",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/nodejs/tasks/main.yml"])),
+        "Verify the root-owned Node.js npm cache",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/code_server/tasks/main.yml"])),
+        "Verify the root-owned code-server download directory",
+      )
+    )
+    error_message = "禁用 FileBrowser 时 Node.js 和 code-server 仍必须独立验证 root 安装缓存边界。"
+  }
+}

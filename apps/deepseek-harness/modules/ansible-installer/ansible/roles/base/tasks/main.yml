@@ -123,7 +123,17 @@
     - { path: "{{ dsh_pnpm_store_dir }}", mode: '0700' }
     - { path: "{{ dsh_workspace_dir }}", mode: '0750' }
     - { path: "{{ static_preview_dir }}", mode: '0755' }
+
+- name: Create root-owned installation cache directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "{{ item.mode }}"
+  loop:
     - { path: "{{ dsh_download_dir }}", mode: '0700' }
+    - { path: "{{ dsh_npm_cache_dir }}", mode: '0700' }
 
 - name: Repair npm cache ownership
   ansible.builtin.command:

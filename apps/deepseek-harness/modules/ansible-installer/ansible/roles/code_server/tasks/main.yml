@@ -37,6 +37,23 @@
     that: code_server_release | length > 0
     fail_msg: "Unsupported architecture for code-server: {{ ansible_facts['architecture'] }}"
 
+- name: Check the code-server download directory
+  ansible.builtin.stat:
+    path: "{{ dsh_download_dir }}"
+    follow: false
+  register: code_server_download_dir_path
+
+- name: Verify the root-owned code-server download directory
+  ansible.builtin.assert:
+    that:
+      - code_server_download_dir_path.stat.exists
+      - code_server_download_dir_path.stat.isdir
+      - not code_server_download_dir_path.stat.islnk | default(false)
+      - code_server_download_dir_path.stat.pw_name == 'root'
+      - code_server_download_dir_path.stat.gr_name == 'root'
+      - code_server_download_dir_path.stat.mode == '0700'
+    fail_msg: "code-server download directory must be a root-owned, non-symlink directory with mode 0700."
+
 - name: Check the pinned code-server prefix
   ansible.builtin.stat:
     path: "{{ code_server_prefix }}"
