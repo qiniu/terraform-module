@@ -305,6 +305,48 @@ run "uses_pnpm_for_dsh_prewarm_and_offline_service" {
   }
 }
 
+run "preinstalls_default_dsh_web_plugins" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+        "dsh_web_plugins:\n  - dshmarket\n  - dsh-better-sidebar",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/install_web_plugins.yml"])),
+        "plugin\n      - --profile\n      - web\n      - add",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/install_web_plugins.yml"])),
+        "- \"{{ dsh_state_dir }}/profiles/web/package.json\"",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/install_web_plugins.yml"])),
+        "manifest.dsh?.profile?.bundles",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/install_web_plugins.yml"])),
+        "manifest.dependencies",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/install_web_plugins.yml"])),
+        "HOME: \"{{ dsh_home }}\"",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/install_web_plugins.yml"])),
+        "DSH_HOME: \"{{ dsh_state_dir }}\"",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/install_web_plugins.yml"])),
+        "PNPM_CONFIG_STORE_DIR: \"{{ dsh_pnpm_store_dir }}\"",
+      )
+    )
+    error_message = "DeepSeek Harness 必须在服务启动前幂等预装默认 Web Profile 插件，并使用 dsh 用户环境。"
+  }
+}
+
 run "publishes_complete_managed_toolchains" {
   command = plan
 

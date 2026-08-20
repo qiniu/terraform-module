@@ -1,0 +1,102 @@
+---
+- name: Verify DeepSeek Harness Web Profile plugin installation
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  handlers:
+    - name: restart deepseek harness
+      ansible.builtin.debug:
+        msg: fake restart
+  tasks:
+    - name: Create a temporary Web Profile test workspace
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: las-dsh-web-plugins-
+      register: web_plugin_test_root
+
+    - name: Verify Web Profile plugin installation
+      block:
+        - name: Set test paths
+          ansible.builtin.set_fact:
+            dsh_home: "{{ web_plugin_test_root.path }}/home"
+            dsh_state_dir: "{{ web_plugin_test_root.path }}/home/.dsh"
+            dsh_workspace_dir: "{{ web_plugin_test_root.path }}/workspace"
+            dsh_pnpm_store_dir: "{{ web_plugin_test_root.path }}/home/.pnpm-store"
+            dsh_user: "{{ ansible_facts['user_id'] }}"
+            dsh_web_plugins:
+              - dshmarket
+              - dsh-better-sidebar
+            dsh_version: 0.1.0-rc.6
+            dsh_node_bin: node
+            dsh_pnpm_bin: "{{ web_plugin_test_root.path }}/fake-pnpm"
+
+        - name: Create the profile and workspace directories
+          ansible.builtin.file:
+            path: "{{ item }}"
+            state: directory
+            mode: '0700'
+          loop:
+            - "{{ dsh_state_dir }}/profiles/web"
+            - "{{ dsh_workspace_dir }}"
+
+        - name: Create an empty Web Profile manifest
+          ansible.builtin.copy:
+            content: "{\"name\":\"web\",\"dependencies\":{\"dshmarket\":\"latest\",\"dsh-better-sidebar\":\"latest\"}}\n"
+            dest: "{{ dsh_state_dir }}/profiles/web/package.json"
+            mode: '0600'
+
+        - name: Create a fake pnpm command
+          ansible.builtin.copy:
+            content: |
+              #!/usr/bin/env bash
+              set -euo pipefail
+              manifest="${DSH_HOME}/profiles/web/package.json"
+              printf '%s\n' "$*" >> "${DSH_HOME}/plugin-install.log"
+              plugin="${!#}"
+              node - "${manifest}" "${plugin}" <<'NODE'
+              const fs = require("node:fs");
+              const [manifestPath, packageName] = process.argv.slice(2);
+              const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+              manifest.dependencies ??= {};
+              manifest.dependencies[packageName] = "latest";
+              manifest.dsh ??= {};
+              manifest.dsh.profile ??= {};
+              manifest.dsh.profile.bundles ??= [];
+              if (!manifest.dsh.profile.bundles.includes(packageName)) {
+                manifest.dsh.profile.bundles.push(packageName);
+              }
+              fs.writeFileSync(manifestPath, `${JSON.stringify(manifest)}\n`);
+              NODE
+            dest: "{{ dsh_pnpm_bin }}"
+            mode: '0700'
+
+        - name: Install the configured plugins for the first time
+          ansible.builtin.include_tasks: ../roles/deepseek_harness/tasks/install_web_plugins.yml
+
+        - name: Read the first installation log
+          ansible.builtin.slurp:
+            src: "{{ dsh_state_dir }}/plugin-install.log"
+          register: first_plugin_install_log
+
+        - name: Verify both plugins were installed with the expected command
+          ansible.builtin.assert:
+            that:
+              - "(first_plugin_install_log.content | b64decode).splitlines() == ['dlx --allow-build=node-pty @deepseek-ai/dsh@0.1.0-rc.6 plugin --profile web add dshmarket', 'dlx --allow-build=node-pty @deepseek-ai/dsh@0.1.0-rc.6 plugin --profile web add dsh-better-sidebar']"
+
+        - name: Install the configured plugins for the second time
+          ansible.builtin.include_tasks: ../roles/deepseek_harness/tasks/install_web_plugins.yml
+
+        - name: Read the second installation log
+          ansible.builtin.slurp:
+            src: "{{ dsh_state_dir }}/plugin-install.log"
+          register: second_plugin_install_log
+
+        - name: Verify the second run is idempotent
+          ansible.builtin.assert:
+            that:
+              - second_plugin_install_log.content == first_plugin_install_log.content
+      always:
+        - name: Remove the temporary Web Profile test workspace
+          ansible.builtin.file:
+            path: "{{ web_plugin_test_root.path }}"
+            state: absent

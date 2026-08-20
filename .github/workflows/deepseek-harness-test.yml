@@ -60,3 +60,4 @@ jobs:
           uv run --locked ansible-playbook -i localhost, tests/render_las_dsh_environment.yml
           uv run --locked ansible-playbook -i localhost, tests/static_preview.yml
           uv run --locked ansible-playbook -i localhost, tests/preview_port_claim.yml
+          uv run --locked ansible-playbook -i localhost, tests/web_plugins.yml
