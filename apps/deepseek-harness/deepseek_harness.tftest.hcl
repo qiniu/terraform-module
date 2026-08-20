@@ -291,7 +291,7 @@ run "rejects_instance_password_longer_than_thirty" {
 run "accepts_thirty_character_instance_password" {
   command = plan
   variables {
-    instance_password = "Aa1!aaaaaaaaaaaaaaaaaaaaaaaaaa"
+    instance_password = "Aa1~aaaaaaaaaaaaaaaaaaaaaaaaaa"
   }
 }
 
@@ -336,6 +336,27 @@ run "rejects_invalid_user_supplied_dsh_web_password" {
   }
 
   expect_failures = [var.dsh_web_password]
+}
+
+run "rejects_comma_in_user_supplied_dsh_web_password" {
+  command = plan
+
+  variables {
+    dsh_web_password = "Comma,password-123"
+  }
+
+  expect_failures = [var.dsh_web_password]
+}
+
+run "rejects_unsupported_special_character_in_passwords" {
+  command = plan
+
+  variables {
+    instance_password = "Instance!pass-123"
+    dsh_web_password  = "Web!password-123"
+  }
+
+  expect_failures = [var.instance_password, var.dsh_web_password]
 }
 
 run "supports_zero_preview_slots" {

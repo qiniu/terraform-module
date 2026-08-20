@@ -150,6 +150,32 @@
     mode: '0644'
   notify: restart filebrowser
 
+- name: Stop FileBrowser before reconciling administrator credentials
+  ansible.builtin.systemd_service:
+    name: filebrowser.service
+    daemon_reload: true
+    state: stopped
+
+- name: Reconcile FileBrowser administrator credentials
+  ansible.builtin.command:
+    argv:
+      - "{{ filebrowser_prefix }}/filebrowser"
+      - set
+      - -u
+      - "{{ filebrowser_username }},{{ filebrowser_password }}"
+      - -a
+      - -c
+      - "{{ filebrowser_config_path }}"
+  changed_when: true
+  no_log: true
+
+- name: Restore FileBrowser state ownership after credential reconciliation
+  ansible.builtin.file:
+    path: "{{ filebrowser_state_dir }}"
+    owner: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    recurse: true
+
 - name: Enable and start FileBrowser
   ansible.builtin.systemd_service:
     name: filebrowser.service
