@@ -49,6 +49,10 @@ terraform output -raw dsh_web_password
 
 可通过 `enable_code_server = false` 跳过 code-server 的安装和公网入口创建；此时 `code_server_public_url` 为 `null`。已安装实例切换为关闭时会停止并禁用该服务，但保留已下载的文件和配置。
 
+默认还会安装 FileBrowser Quantum。运行 `terraform output -raw filebrowser_public_url` 获取地址，并使用与 Harness Web 相同的用户名和密码通过 FileBrowser 自带认证登录；它不使用 Nginx Basic Auth。FileBrowser 只监听实例内的 `127.0.0.1:3085`，公网 HTTPProxy 经 Nginx `3086` 转发。其根目录是 `/home/dsh`，普通用户默认看不到点号目录，但管理员可在 UI 中主动显示。
+
+可通过 `enable_filebrowser = false` 停止并禁用 FileBrowser，同时移除公网入口；`filebrowser_public_url` 变为 `null`。已下载二进制、配置、数据库和长期 agent token 会保留，以便重新启用后继续使用。
+
 服务以无 sudo 权限的 `dsh` 用户运行，`HOME=/home/dsh`；Harness 数据目录为 `/home/dsh/.dsh`（即 `DSH_HOME`），systemd 工作目录为 `/home/dsh/workspace`。
 
 ## 网页预览与运行环境 skill
@@ -64,6 +68,8 @@ Preview 数量通过 `preview_count` 配置，支持 `0..4` 个。用户网页�
 ```
 
 它会告知 Harness 网页开发时应使用的工作目录、监听地址和预览地址。`las-dsh-environment` 是用户级 skill，项目级同名 skill 的优先级更高，会遮蔽它；如需覆盖，请明确使用项目级同名名称。skill 正文更新后，需在新会话中使用，或再次加载该 skill 才能看到新内容；已加载旧正文的会话不会被主动改写。
+
+FileBrowser 同时安装 `las-filebrowser-share` skill，用于创建临时下载链接、分享文件或目录、查询或撤销分享、打包目录、创建上传收件箱、安全检索以及计算 SHA-256。它通过 `/home/dsh/.filebrowser/agent-api-token` 中权限为 `0600` 的 10 年 token 调用本机 API；token 不会进入 Terraform output、日志或 skill 正文。
 
 ## 网络与 SSH
 

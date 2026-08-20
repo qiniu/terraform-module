@@ -18,6 +18,8 @@
         that:
           - enable_code_server is defined
           - enable_code_server is boolean
+          - enable_filebrowser is defined
+          - enable_filebrowser is boolean
           - dsh_web_public_authority | default('') | length > 0
           - static_preview_public_authority | default('') | length > 0
           - not (enable_code_server | bool) or code_server_public_authority | default('') | length > 0
@@ -29,11 +31,14 @@
           - preview_public_authorities | map('trim') | reject('equalto', '') | list | length == preview_ports | length
           - dsh_web_password | default('') | length > 0
           - not (enable_code_server | bool) or code_server_password | default('') | length > 0
+          - not (enable_filebrowser | bool) or filebrowser_public_authority | default('') | length > 0
+          - not (enable_filebrowser | bool) or filebrowser_username | default('') | length > 0
+          - not (enable_filebrowser | bool) or filebrowser_password | default('') | length > 0
         fail_msg: Provide valid endpoint authorities, passwords, and distinct service ports through inventory or extra vars.
 
     - name: Collect service and Preview ports
       ansible.builtin.set_fact:
-        dsh_all_ports: "{{ [dsh_port, dsh_web_proxy_port, static_preview_proxy_port] + ([code_server_port, code_server_proxy_port] if enable_code_server | bool else []) + preview_ports }}"
+        dsh_all_ports: "{{ [dsh_port, dsh_web_proxy_port, static_preview_proxy_port] + ([code_server_port, code_server_proxy_port] if enable_code_server | bool else []) + ([filebrowser_port, filebrowser_proxy_port] if enable_filebrowser | bool else []) + preview_ports }}"
 
     - name: Verify service and Preview ports
       ansible.builtin.assert:
@@ -49,12 +54,17 @@
     - nodejs
     - skill_installer
     - code_server
+    - filebrowser
     - deepseek_harness
     - nginx
     - managed_skills
   post_tasks:
     - name: Apply pending service handlers before health checks
       ansible.builtin.meta: flush_handlers
+
+    - name: Reload Nginx before health checks
+      ansible.builtin.command: nginx -s reload
+      changed_when: false
 
     - name: Wait for the DeepSeek Harness loopback service
       ansible.builtin.uri:
@@ -76,6 +86,20 @@
         status_code: [302, 401]
         follow_redirects: none
       when: enable_code_server | bool
+
+    - name: Verify the FileBrowser loopback service
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ filebrowser_port }}/"
+        status_code: [200, 302]
+        follow_redirects: none
+      when: enable_filebrowser | bool
+
+    - name: Verify the FileBrowser Nginx proxy boundary
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ filebrowser_proxy_port }}/"
+        status_code: [200, 302]
+        follow_redirects: none
+      when: enable_filebrowser | bool
 
     - name: Remove superseded managed Node.js toolchains after health checks
       ansible.builtin.include_role:

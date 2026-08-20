@@ -22,6 +22,18 @@ code_server_releases:
     archive: "code-server-{{ code_server_version }}-linux-arm64.tar.gz"
     sha256: ade569a677d1c04ee66ef153382b7e15bf261f955407663c7ddc6b87f9ee29fc
 code_server_port: 3083
+filebrowser_version: 1.5.2-stable
+filebrowser_port: 3085
+filebrowser_source_name: dsh-home
+filebrowser_state_dir: "{{ dsh_home }}/.filebrowser"
+filebrowser_token_path: "{{ filebrowser_state_dir }}/agent-api-token"
+filebrowser_release:
+  x86_64:
+    asset: linux-amd64-filebrowser
+    sha256: 2cc7c2e39fc24831578fdb4da02c5dfeb39669203fc8c6d6bfbbfa35577f5173
+  aarch64:
+    asset: linux-arm64-filebrowser
+    sha256: 19d386b2ca721cacbe3c685edb8d049d040f8eaef9b168b5ea705d8f2666a011
 dsh_skills:
   - name: find-skills
     source: https://github.com/vercel-labs/skills

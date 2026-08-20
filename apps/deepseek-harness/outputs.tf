@@ -8,6 +8,11 @@ output "code_server_public_url" {
   value       = var.enable_code_server ? "https://${module.infrastructure.code_server_public_authority}" : null
 }
 
+output "filebrowser_public_url" {
+  description = "启用 FileBrowser Quantum 时的 HTTPS 地址；禁用时为 null。"
+  value       = var.enable_filebrowser ? "https://${module.infrastructure.filebrowser_public_authority}" : null
+}
+
 output "dsh_web_username" {
   description = "Web Basic Auth 用户名。"
   value       = local.dsh_web_username

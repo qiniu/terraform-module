@@ -1,0 +1,209 @@
+---
+- name: Check whether FileBrowser service unit exists
+  ansible.builtin.stat:
+    path: /etc/systemd/system/filebrowser.service
+  register: filebrowser_service_unit
+  when: not (enable_filebrowser | bool)
+
+- name: Disable existing FileBrowser service
+  ansible.builtin.systemd_service:
+    name: filebrowser.service
+    daemon_reload: true
+    enabled: false
+    state: stopped
+  when:
+    - not (enable_filebrowser | bool)
+    - filebrowser_service_unit.stat.exists
+
+- name: Skip FileBrowser installation when disabled
+  ansible.builtin.meta: end_role
+  when: not (enable_filebrowser | bool)
+
+- name: Validate required FileBrowser inputs
+  ansible.builtin.assert:
+    that:
+      - filebrowser_username | default('') | length > 0
+      - filebrowser_password | default('') | length > 0
+      - filebrowser_public_authority | default('') | length > 0
+      - filebrowser_port is defined
+      - filebrowser_port | int >= 1
+      - filebrowser_port | int <= 65535
+    fail_msg: FileBrowser requires credentials, a public authority, and a valid loopback port.
+
+- name: Select the FileBrowser release for this architecture
+  ansible.builtin.set_fact:
+    filebrowser_release_info: "{{ filebrowser_release[ansible_facts['architecture']] | default({}) }}"
+
+- name: Verify supported FileBrowser architecture
+  ansible.builtin.assert:
+    that: filebrowser_release_info | length > 0
+    fail_msg: "Unsupported architecture for FileBrowser: {{ ansible_facts['architecture'] }}"
+
+- name: Check the pinned FileBrowser installation
+  ansible.builtin.stat:
+    path: "{{ filebrowser_prefix }}/filebrowser"
+  register: filebrowser_binary
+
+- name: Check the FileBrowser installation prefix
+  ansible.builtin.stat:
+    path: "{{ filebrowser_prefix }}"
+    follow: false
+  register: filebrowser_prefix_path
+
+- name: Check the FileBrowser managed marker
+  ansible.builtin.stat:
+    path: "{{ filebrowser_prefix }}/{{ filebrowser_managed_marker }}"
+  register: filebrowser_managed_marker_path
+
+- name: Determine whether FileBrowser installation is current
+  ansible.builtin.set_fact:
+    filebrowser_needs_install: "{{ not filebrowser_binary.stat.exists or not filebrowser_managed_marker_path.stat.exists }}"
+
+- name: Verify the existing FileBrowser installation is managed
+  ansible.builtin.assert:
+    that:
+      - >-
+        not (filebrowser_prefix_path.stat.exists or filebrowser_prefix_path.stat.islnk | default(false))
+        or (
+          not (filebrowser_prefix_path.stat.islnk | default(false))
+          and filebrowser_managed_marker_path.stat.exists
+        )
+    fail_msg: "Refusing to replace unmanaged FileBrowser prefix: {{ filebrowser_prefix }}"
+
+- name: Create FileBrowser download directory
+  ansible.builtin.file:
+    path: "{{ dsh_download_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Download the pinned FileBrowser binary
+  ansible.builtin.get_url:
+    url: "https://github.com/gtsteffaniak/filebrowser/releases/download/v{{ filebrowser_version }}/{{ filebrowser_release_info.asset }}"
+    dest: "{{ dsh_download_dir }}/{{ filebrowser_release_info.asset }}"
+    checksum: "sha256:{{ filebrowser_release_info.sha256 }}"
+    mode: '0755'
+  when: filebrowser_needs_install
+
+- name: Create the FileBrowser installation prefix
+  ansible.builtin.file:
+    path: "{{ filebrowser_prefix }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: filebrowser_needs_install
+
+- name: Publish the FileBrowser binary
+  ansible.builtin.copy:
+    src: "{{ dsh_download_dir }}/{{ filebrowser_release_info.asset }}"
+    dest: "{{ filebrowser_prefix }}/filebrowser"
+    remote_src: true
+    owner: root
+    group: root
+    mode: '0755'
+  when: filebrowser_needs_install
+  notify: restart filebrowser
+
+- name: Mark the managed FileBrowser installation
+  ansible.builtin.copy:
+    content: "filebrowser:{{ filebrowser_version }}\n"
+    dest: "{{ filebrowser_prefix }}/{{ filebrowser_managed_marker }}"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Create the FileBrowser state directory
+  ansible.builtin.file:
+    path: "{{ filebrowser_state_dir }}"
+    state: directory
+    owner: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    mode: '0700'
+
+- name: Render FileBrowser configuration
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: "{{ filebrowser_config_path }}"
+    owner: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    mode: '0600'
+  no_log: true
+  notify: restart filebrowser
+
+- name: Render FileBrowser service
+  ansible.builtin.template:
+    src: filebrowser.service.j2
+    dest: /etc/systemd/system/filebrowser.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart filebrowser
+
+- name: Enable and start FileBrowser
+  ansible.builtin.systemd_service:
+    name: filebrowser.service
+    enabled: true
+    state: started
+
+- name: Apply FileBrowser handlers before API setup
+  ansible.builtin.meta: flush_handlers
+
+- name: Wait for the FileBrowser loopback service
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ filebrowser_port }}/"
+    status_code: [200, 302]
+    follow_redirects: none
+  register: filebrowser_health
+  retries: 60
+  delay: 1
+  until: filebrowser_health.status in [200, 302]
+
+- name: Log in to FileBrowser for token management
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ filebrowser_port }}/api/auth/login?username={{ filebrowser_username | urlencode }}"
+    method: POST
+    headers:
+      X-Password: "{{ filebrowser_password | urlencode }}"
+    status_code: 200
+    return_content: true
+  register: filebrowser_login
+  no_log: true
+
+- name: List existing FileBrowser API tokens
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ filebrowser_port }}/api/auth/token/list"
+    headers:
+      Authorization: "Bearer {{ filebrowser_login.content }}"
+    status_code: [200, 404]
+    return_content: true
+  register: filebrowser_token_list
+  no_log: true
+
+- name: Select the existing long-lived FileBrowser token
+  ansible.builtin.set_fact:
+    filebrowser_existing_token: >-
+      {{ (filebrowser_token_list.json | default([]) | selectattr('name', 'equalto', filebrowser_token_name) | map(attribute='token') | list | first) | default('') }}
+  no_log: true
+
+- name: Create the long-lived FileBrowser agent token
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ filebrowser_port }}/api/auth/token?name={{ filebrowser_token_name | urlencode }}&days={{ filebrowser_token_days }}&permissions=api,share"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ filebrowser_login.content }}"
+    status_code: 200
+    return_content: true
+  register: filebrowser_token_create
+  when: filebrowser_existing_token | length == 0
+  no_log: true
+
+- name: Persist the FileBrowser agent token
+  ansible.builtin.copy:
+    content: "{{ (filebrowser_existing_token | length > 0) | ternary(filebrowser_existing_token, filebrowser_token_create.json.token) }}\n"
+    dest: "{{ filebrowser_token_path }}"
+    owner: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    mode: '0600'
+  no_log: true

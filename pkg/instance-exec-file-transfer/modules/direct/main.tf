@@ -11,7 +11,7 @@ locals {
   marker_content = "${var.content_sha256} ${var.file_mode} ${var.target_path}"
 
   # 目标已存在时，仅当 marker 与目标 SHA 严格匹配（受管文件）才允许覆盖
-  target_cover_guard = "if [ -e \"$T\" ]||[ -L \"$T\" ];then [ -f \"$D/marker\" ]||exit 1;[ \"$(cat \"$D/marker\")\" = '${local.marker_content}' ]||exit 1;printf '%s  %s\\n' '${var.content_sha256}' \"$T\"|sha256sum -c - >/dev/null 2>&1||exit 1;fi"
+  target_cover_guard = "if [ -e \"$T\" ]||[ -L \"$T\" ];then target_sha=\"$(sha256sum \"$T\"|awk '{print $1}')\";managed=0;for marker in \"$R\"/*/marker;do [ -f \"$marker\" ]||continue;if grep -Fq \" $T\" \"$marker\"&&grep -Fq \"$target_sha \" \"$marker\";then managed=1;break;fi;done;[ \"$managed\" = 1 ]||exit 1;fi"
 
   publish_command = templatefile("${path.module}/templates/publish.sh.tftpl", {
     staging_dir    = local.staging_dir

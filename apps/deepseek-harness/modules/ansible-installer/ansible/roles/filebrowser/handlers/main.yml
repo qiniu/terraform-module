@@ -1,0 +1,6 @@
+---
+- name: restart filebrowser
+  ansible.builtin.systemd_service:
+    name: filebrowser.service
+    daemon_reload: true
+    state: restarted

@@ -26,6 +26,12 @@ variable "enable_code_server" {
   default     = true
 }
 
+variable "enable_filebrowser" {
+  type        = bool
+  description = "是否安装并公开 FileBrowser Quantum。"
+  default     = true
+}
+
 variable "system_disk_size" {
   type        = number
   description = "ECS 系统盘大小（GiB）。"

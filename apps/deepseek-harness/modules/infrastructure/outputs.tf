@@ -51,6 +51,15 @@ output "code_server_proxy_port" {
   value = local.code_server_proxy_port
 }
 
+output "filebrowser_public_authority" {
+  description = "FileBrowser Quantum HTTPProxy 公网 authority（不含 scheme）。"
+  value       = var.enable_filebrowser ? qiniu_compute_instance_public_access.filebrowser[0].endpoint : null
+}
+
+output "filebrowser_proxy_port" {
+  value = local.filebrowser_proxy_port
+}
+
 output "ssh_endpoints" {
   value = var.enable_ssh_port_forward ? [for item in qiniu_compute_instance_public_access.ssh[0].endpoints : item.endpoint] : []
 }

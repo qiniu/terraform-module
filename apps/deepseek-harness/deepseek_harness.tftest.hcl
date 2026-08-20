@@ -25,6 +25,8 @@ override_module {
     preview_public_authorities      = ["preview.example.test"]
     code_server_public_authority    = "code.example.test"
     code_server_proxy_port          = 3084
+    filebrowser_public_authority    = "filebrowser.example.test"
+    filebrowser_proxy_port          = 3086
     ssh_endpoints                   = []
   }
 }
@@ -49,7 +51,8 @@ run "uses_fixed_versions_and_installer_contract" {
       module.infrastructure.dsh_web_proxy_port == 3081 &&
       module.infrastructure.static_preview_proxy_port == 3082 &&
       module.infrastructure.preview_ports == [30080] &&
-      module.infrastructure.code_server_proxy_port == 3084
+      module.infrastructure.code_server_proxy_port == 3084 &&
+      module.infrastructure.filebrowser_proxy_port == 3086
     )
     error_message = "infrastructure 必须固定 DSH Web、Static Preview、Preview 和 code-server 代理端口。"
   }
@@ -115,6 +118,27 @@ run "disables_code_server" {
   assert {
     condition     = output.code_server_public_url == null
     error_message = "禁用 code-server 时不应输出公网地址。"
+  }
+}
+
+run "exposes_filebrowser_url_by_default" {
+  command = plan
+
+  assert {
+    condition     = output.filebrowser_public_url == "https://filebrowser.example.test"
+    error_message = "默认必须公开 FileBrowser HTTPS 地址。"
+  }
+}
+
+run "disables_filebrowser" {
+  command = plan
+  variables {
+    enable_filebrowser = false
+  }
+
+  assert {
+    condition     = output.filebrowser_public_url == null
+    error_message = "禁用 FileBrowser 时不应输出公网地址。"
   }
 }
 
@@ -239,6 +263,8 @@ run "outputs_ssh_command_when_enabled" {
       preview_public_authorities      = ["preview.example.test"]
       code_server_public_authority    = "code.example.test"
       code_server_proxy_port          = 3084
+      filebrowser_public_authority    = "filebrowser.example.test"
+      filebrowser_proxy_port          = 3086
       ssh_endpoints                   = ["203.0.113.10:2222"]
     }
   }
@@ -276,6 +302,7 @@ run "outputs_public_contract" {
     condition = (
       output.dsh_web_public_url == "https://dsh.example.test" &&
       output.code_server_public_url == "https://code.example.test" &&
+      output.filebrowser_public_url == "https://filebrowser.example.test" &&
       !issensitive(output.code_server_public_url) &&
       output.dsh_web_username == "admin" &&
       output.dsh_web_password == sensitive(random_password.dsh_web[0].result) &&
@@ -331,6 +358,8 @@ run "supports_zero_preview_slots" {
       preview_public_authorities      = []
       code_server_public_authority    = "code.example.test"
       code_server_proxy_port          = 3084
+      filebrowser_public_authority    = "filebrowser.example.test"
+      filebrowser_proxy_port          = 3086
       ssh_endpoints                   = []
     }
   }

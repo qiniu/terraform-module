@@ -33,6 +33,11 @@ variable "enable_code_server" {
   type        = bool
 }
 
+variable "enable_filebrowser" {
+  description = "是否安装并公开 FileBrowser Quantum。"
+  type        = bool
+}
+
 variable "code_server_proxy_port" {
   description = "code-server 的 HTTPProxy/Nginx 代理端口。"
   type        = number
@@ -41,6 +46,17 @@ variable "code_server_proxy_port" {
   validation {
     condition     = !var.enable_code_server || (var.code_server_proxy_port >= 1 && var.code_server_proxy_port <= 65535 && floor(var.code_server_proxy_port) == var.code_server_proxy_port)
     error_message = "code_server_proxy_port 必须是 1 到 65535 之间的整数。"
+  }
+}
+
+variable "filebrowser_proxy_port" {
+  description = "FileBrowser Quantum 的 HTTPProxy/Nginx 代理端口。"
+  type        = number
+  default     = null
+
+  validation {
+    condition     = !var.enable_filebrowser || (var.filebrowser_proxy_port >= 1 && var.filebrowser_proxy_port <= 65535 && floor(var.filebrowser_proxy_port) == var.filebrowser_proxy_port)
+    error_message = "filebrowser_proxy_port 必须是 1 到 65535 之间的整数。"
   }
 }
 
@@ -124,6 +140,20 @@ variable "code_server_public_authority" {
   }
 }
 
+variable "filebrowser_public_authority" {
+  description = "FileBrowser Quantum 的外部 Host。"
+  type        = string
+  default     = null
+
+  validation {
+    condition = !var.enable_filebrowser || (
+      can(regex("^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*(:[0-9]{1,5})?$", var.filebrowser_public_authority)) &&
+      length(element(split(":", var.filebrowser_public_authority), 0)) <= 253
+    )
+    error_message = "filebrowser_public_authority 必须是主机部分不超过 253 字节的有效 authority。"
+  }
+}
+
 variable "dsh_web_username" {
   description = "Nginx Basic Auth 用户名。"
   type        = string
@@ -155,5 +185,34 @@ variable "code_server_password" {
       can(regex("[^A-Za-z0-9]", var.code_server_password))
     )
     error_message = "code_server_password 必须为 8 到 30 位且同时包含字母、数字和特殊符号的密码。"
+  }
+}
+
+variable "filebrowser_username" {
+  description = "FileBrowser Quantum 管理员用户名。"
+  type        = string
+  default     = null
+
+  validation {
+    condition     = !var.enable_filebrowser || can(regex("^[A-Za-z0-9._-]{1,64}$", var.filebrowser_username))
+    error_message = "filebrowser_username 只能包含字母、数字、点、下划线和连字符，长度为 1 到 64。"
+  }
+}
+
+variable "filebrowser_password" {
+  description = "FileBrowser Quantum 管理员密码。"
+  type        = string
+  sensitive   = true
+  default     = null
+
+  validation {
+    condition = !var.enable_filebrowser || (
+      length(var.filebrowser_password) >= 8 &&
+      length(var.filebrowser_password) <= 30 &&
+      can(regex("[A-Za-z]", var.filebrowser_password)) &&
+      can(regex("[0-9]", var.filebrowser_password)) &&
+      can(regex("[^A-Za-z0-9]", var.filebrowser_password))
+    )
+    error_message = "filebrowser_password 必须为 8 到 30 位且同时包含字母、数字和特殊符号的密码。"
   }
 }

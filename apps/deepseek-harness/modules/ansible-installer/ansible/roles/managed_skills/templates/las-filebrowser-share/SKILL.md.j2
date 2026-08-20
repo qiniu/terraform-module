@@ -1,0 +1,25 @@
+---
+name: las-filebrowser-share
+description: 使用 FileBrowser Quantum 分享、查看和撤销文件或目录分享。
+---
+
+# FileBrowser 分享
+
+使用 `scripts/filebrowser-share.sh`。
+
+## 命令
+
+```text
+filebrowser-share.sh share PATH DAYS [normal|upload]
+filebrowser-share.sh list [PATH]
+filebrowser-share.sh revoke HASH
+```
+
+- `PATH` 使用 FileBrowser source 内的路径，例如 `/workspace/report.pdf`，不要使用服务器本地绝对路径。
+- `DAYS` 为正整数，表示分享有效天数。
+- `normal` 用于普通浏览和下载分享，也是默认类型。
+- `upload` 用于上传投递，通常指向目录；它不是安全收件箱。
+- 分享页面默认不显示隐藏文件。
+- `share` 返回 `shareURL`、`downloadURL`、`hash` 和 `expire` 等信息；`hash` 可用于 `revoke`。
+- `list` 查看分享记录，`revoke` 撤销分享。
+- 输出为结构化 JSON。凭据由部署管理，不要输出或复制；也不要分享密码、令牌、私钥或其他敏感文件。

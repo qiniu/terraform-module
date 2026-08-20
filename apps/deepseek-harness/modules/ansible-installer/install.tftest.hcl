@@ -1,5 +1,6 @@
 variables {
   enable_code_server              = true
+  enable_filebrowser              = true
   dsh_web_proxy_port              = 3081
   preview_ports                   = [30080]
   dsh_web_public_authority        = "dsh.example.test"
@@ -11,9 +12,26 @@ variables {
   preview_public_authorities      = ["preview.example.test"]
   code_server_proxy_port          = 3084
   code_server_public_authority    = "code.example.test"
+  filebrowser_proxy_port          = 3086
+  filebrowser_public_authority    = "filebrowser.example.test"
   dsh_web_username                = "admin"
   dsh_web_password                = "web-password-must-not-appear"
   code_server_password            = "Code-server-safe-1234"
+  filebrowser_username            = "admin"
+  filebrowser_password            = "Filebrowser-safe-1234"
+}
+
+run "includes_filebrowser_settings_when_enabled" {
+  command = plan
+
+  assert {
+    condition = (
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).enable_filebrowser == true &&
+      tonumber(jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).filebrowser_proxy_port) == 3086 &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).filebrowser_public_authority == "filebrowser.example.test"
+    )
+    error_message = "启用 FileBrowser 时 bootstrap 参数必须包含开关和公网端点。"
+  }
 }
 
 run "omits_code_server_settings_when_disabled" {
@@ -31,6 +49,73 @@ run "omits_code_server_settings_when_disabled" {
       !contains(keys(jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0]))), "code_server_password")
     )
     error_message = "禁用 code-server 时 bootstrap 参数不得包含其端点或密码。"
+  }
+}
+
+run "omits_filebrowser_settings_when_disabled" {
+  command = plan
+
+  variables {
+    enable_filebrowser = false
+  }
+
+  assert {
+    condition = (
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).enable_filebrowser == false &&
+      !contains(keys(jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0]))), "filebrowser_proxy_port") &&
+      !contains(keys(jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0]))), "filebrowser_public_authority") &&
+      !contains(keys(jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0]))), "filebrowser_username") &&
+      !contains(keys(jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0]))), "filebrowser_password")
+    )
+    error_message = "禁用 FileBrowser 时 bootstrap 参数不得包含其端点或凭据。"
+  }
+}
+
+run "filebrowser_role_disables_existing_service_when_disabled" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/tasks/main.yml"])),
+        "Disable existing FileBrowser service",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/tasks/main.yml"])),
+        "Skip FileBrowser installation when disabled",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/tasks/main.yml"])),
+        "X-Password:",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/tasks/main.yml"])),
+        "&password=",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/playbooks/site.yml"])),
+        "Disable existing FileBrowser service",
+      )
+    )
+    error_message = "FileBrowser 的停用逻辑必须封装在 filebrowser role 内。"
+  }
+}
+
+run "guards_early_deepseek_harness_handler_on_fresh_hosts" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/handlers/main.yml"])),
+        "Check whether the DeepSeek Harness service unit exists before restart",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/handlers/main.yml"])),
+        "when: deepseek_harness_service_unit.stat.exists",
+      )
+    )
+    error_message = "DeepSeek Harness handler 必须兼容 fresh host 上 service unit 尚未创建的情况。"
   }
 }
 
@@ -76,6 +161,14 @@ run "playbook_requires_code_server_feature_flag" {
       strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/playbooks/site.yml"])),
         "enable_code_server is boolean",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/playbooks/site.yml"])),
+        "enable_filebrowser is defined",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/playbooks/site.yml"])),
+        "enable_filebrowser is boolean",
       )
     )
     error_message = "playbook 必须要求 enable_code_server 作为布尔部署输入。"
@@ -94,6 +187,10 @@ run "templates_do_not_default_code_server_feature_flag" {
       !strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-dsh-environment/SKILL.md.j2"])),
         "enable_code_server | default(true)",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/nginx/templates/deepseek-harness.conf.j2"])),
+        "enable_filebrowser | default(true)",
       )
     )
     error_message = "code-server 模板不得为必填开关提供默认值。"
@@ -391,6 +488,14 @@ run "publishes_complete_managed_toolchains" {
       strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/code_server/tasks/main.yml"])),
         "Make the code-server prefix traversable",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/tasks/main.yml"])),
+        "Verify the existing FileBrowser installation is managed",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/tasks/main.yml"])),
+        "checksum: \"sha256:{{ filebrowser_release_info.sha256 }}\"",
       )
     )
     error_message = "Node.js 和 code-server 必须仅替换受管前缀，并经临时目录完整发布。"
@@ -429,6 +534,18 @@ run "publishes_managed_skill_templates" {
       contains(
         keys(output.file_contents),
         "/opt/las-dsh-installer/project/roles/managed_skills/templates/las-preview-ports/manage-preview-port.sh.j2",
+      ) &&
+      contains(
+        keys(output.file_contents),
+        "/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2",
+      ) &&
+      contains(
+        keys(output.file_contents),
+        "/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/filebrowser-share.sh.j2",
+      ) &&
+      contains(
+        keys(output.file_contents),
+        "/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py",
       ) &&
       length(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-dsh-environment/SKILL.md.j2"]))) > 0
     )
@@ -471,6 +588,97 @@ run "installs_configured_skills" {
       )
     )
     error_message = "skill_installer 必须根据 dsh_skills 清单以 dsh 用户通过 Skills CLI 幂等安装 skill。"
+  }
+}
+
+run "filebrowser_share_skill_enforces_issue_68_safety_contract" {
+  command = plan
+
+  assert {
+    condition = (
+      !strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/filebrowser-share.sh.j2"])), "python3 - <<") &&
+      !strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/filebrowser-share.sh.j2"])), "python3 -c") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "/api/share") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "/api/share/list") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "api(\"DELETE\"") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "shareType") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "expires") &&
+      !strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "managed-shares.json") &&
+      !strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "os.walk") &&
+      !strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "sha256") &&
+      !strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), " archive ") &&
+      !strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), " inbox ") &&
+      !strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), " search ") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "filebrowser-share.sh share PATH DAYS [normal|upload]") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "filebrowser-share.sh list [PATH]") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "filebrowser-share.sh revoke HASH") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "普通浏览和下载") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "上传投递") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "`DAYS` 为正整数") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "分享页面默认不显示隐藏文件") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "shareURL")
+    )
+    error_message = "FileBrowser Skill 只能保留原生 share/list/revoke API 的薄包装。"
+  }
+}
+
+run "escapes_filebrowser_yaml_credentials" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/templates/config.yaml.j2"])),
+        "adminUsername: {{ filebrowser_username | to_json }}",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/templates/config.yaml.j2"])),
+        "adminPassword: {{ filebrowser_password | to_json }}",
+      )
+    )
+    error_message = "FileBrowser 用户名和密码必须通过 JSON 转义后写入 YAML。"
+  }
+}
+
+run "keeps_filebrowser_role_private_settings_in_role_defaults" {
+  command = plan
+
+  assert {
+    condition = (
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+        "filebrowser_config_path:",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+        "filebrowser_database_path:",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+        "filebrowser_token_name:",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+        "filebrowser_token_days:",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/defaults/main.yml"])),
+        "filebrowser_config_path:",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/defaults/main.yml"])),
+        "filebrowser_database_path:",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/defaults/main.yml"])),
+        "filebrowser_token_name:",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/defaults/main.yml"])),
+        "filebrowser_token_days:",
+      )
+    )
+    error_message = "FileBrowser role 私有的配置路径和 token 设置必须下沉到 role defaults。"
   }
 }
 

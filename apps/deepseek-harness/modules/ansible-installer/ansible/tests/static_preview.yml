@@ -15,6 +15,10 @@
     code_server_port: 3083
     code_server_public_authority: code.example.test
     enable_code_server: true
+    enable_filebrowser: true
+    filebrowser_proxy_port: 3086
+    filebrowser_port: 3085
+    filebrowser_public_authority: filebrowser.example.test
     static_preview_public_authority: static-preview.example.test
     static_preview_proxy_port: 3082
   tasks:
@@ -71,6 +75,19 @@
           ansible.builtin.assert:
             that:
               - "'listen 0.0.0.0:3084;' not in nginx_without_code_server"
+
+        - name: Render Nginx without FileBrowser
+          ansible.builtin.set_fact:
+            nginx_without_filebrowser: "{{ lookup('ansible.builtin.template', nginx_template_path) }}"
+          vars:
+            static_preview_dir: "{{ static_preview_test_root.path }}/.las-static-preview"
+            enable_filebrowser: false
+
+        - name: Verify FileBrowser Nginx endpoint is absent when disabled
+          ansible.builtin.assert:
+            that:
+              - "'listen 0.0.0.0:3086;' not in nginx_without_filebrowser"
+              - "'auth_basic' not in nginx_without_filebrowser.split('server {')[-1]"
 
         - name: Create a static site source directory
           ansible.builtin.file:

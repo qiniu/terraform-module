@@ -7,6 +7,7 @@
     - las_dsh_environment
     - las_static_preview
     - las_preview_ports
+    - las_filebrowser_share
 
 - name: Create managed Skill directories
   ansible.builtin.file:
@@ -19,6 +20,7 @@
     - las-dsh-environment
     - las-static-preview
     - las-preview-ports
+    - las-filebrowser-share
 
 - name: Render the LAS deployment environment Skill
   ansible.builtin.template:
@@ -72,6 +74,30 @@
   ansible.builtin.template:
     src: las-preview-ports/manage-preview-port.sh.j2
     dest: "{{ dsh_home }}/.agents/skills/las-preview-ports/scripts/manage-preview-port.sh"
+    owner: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    mode: '0700'
+
+- name: Render the FileBrowser sharing Skill
+  ansible.builtin.template:
+    src: las-filebrowser-share/SKILL.md.j2
+    dest: "{{ dsh_home }}/.agents/skills/las-filebrowser-share/SKILL.md"
+    owner: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    mode: '0600'
+
+- name: Render the FileBrowser sharing helper
+  ansible.builtin.template:
+    src: las-filebrowser-share/filebrowser-share.sh.j2
+    dest: "{{ dsh_home }}/.agents/skills/las-filebrowser-share/scripts/filebrowser-share.sh"
+    owner: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    mode: '0700'
+
+- name: Install the FileBrowser sharing Python implementation
+  ansible.builtin.copy:
+    src: las-filebrowser-share/filebrowser-share.py
+    dest: "{{ dsh_home }}/.agents/skills/las-filebrowser-share/scripts/filebrowser-share.py"
     owner: "{{ dsh_user }}"
     group: "{{ dsh_group }}"
     mode: '0700'
