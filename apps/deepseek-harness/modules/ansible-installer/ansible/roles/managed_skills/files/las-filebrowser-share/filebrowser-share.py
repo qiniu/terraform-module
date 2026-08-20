@@ -31,7 +31,6 @@ SOURCE = required_env("LAS_FILEBROWSER_SOURCE")
 TOKEN_FILE = Path(required_env("LAS_FILEBROWSER_TOKEN_FILE"))
 STATE_DIR = Path(required_env("LAS_FILEBROWSER_STATE_DIR"))
 REGISTRY = STATE_DIR / "managed-shares.json"
-EXPORTS_DIR = WORKSPACE / "filebrowser-exports"
 INBOX_ROOT = WORKSPACE / ".filebrowser-inbox"
 PROTECTED = {".filebrowser", ".config", ".ssh"}
 
@@ -198,8 +197,7 @@ def checksum(path):
 def archive(paths, days):
     days = require_positive("days", days)
     remote_paths = [api_path(resolve_path(path)) for path in paths]
-    EXPORTS_DIR.mkdir(mode=0o700, parents=True, exist_ok=True)
-    archive_remote_path = f"{api_path(EXPORTS_DIR)}/archive-{secrets.token_hex(8)}.tar.gz"
+    archive_remote_path = f"{api_path(WORKSPACE)}/filebrowser-archive-{secrets.token_hex(8)}.tar.gz"
     body = {"fromSource": SOURCE, "toSource": SOURCE, "paths": remote_paths, "destination": archive_remote_path, "format": "tar.gz", "deleteAfter": False}
     try:
         api("POST", "/api/resources/archive", body)
@@ -223,10 +221,9 @@ def revoke(share_hash):
     if entry.get("kind") == "direct":
         path = entry.get("path", "")
         if isinstance(path, str) and path.startswith("/"):
-            staging_dir = (ROOT / path.lstrip("/")).resolve()
-            export_root = EXPORTS_DIR.resolve()
-            if str(staging_dir).startswith(str(export_root) + "/direct.") and staging_dir.is_dir():
-                shutil.rmtree(staging_dir)
+            staging_file = (ROOT / path.lstrip("/")).resolve()
+            if staging_file.parent == WORKSPACE.resolve() and staging_file.name.startswith("filebrowser-direct-") and staging_file.is_file():
+                staging_file.unlink()
     print('{"revoked":true}')
 
 
@@ -248,15 +245,13 @@ def main(argv):
         path = resolve_path(args[0])
         if not path.is_file(): fail("direct requires a file")
         minutes = require_positive("minutes", args[1])
-        EXPORTS_DIR.mkdir(mode=0o700, parents=True, exist_ok=True)
-        staging_dir = Path(tempfile.mkdtemp(prefix="direct.", dir=EXPORTS_DIR))
-        staging_file = staging_dir / path.name
+        staging_file = WORKSPACE / f"filebrowser-direct-{secrets.token_hex(8)}-{path.name}"
         shutil.copy2(path, staging_file)
         staging_file.chmod(0o600)
         try:
-            response = api("POST", "/api/share", {"path": api_path(staging_dir), "source": SOURCE, "shareType": "normal", "expires": args[1], "unit": "minutes", "showHidden": False, "disableAnonymous": False, "allowCreate": False, "allowModify": False, "allowDelete": False, "allowReplacements": False, "disableDownload": False, "disableFileViewer": False})
+            response = api("POST", "/api/share", {"path": api_path(staging_file), "source": SOURCE, "shareType": "normal", "expires": args[1], "unit": "minutes", "showHidden": False, "disableAnonymous": False, "allowCreate": False, "allowModify": False, "allowDelete": False, "allowReplacements": False, "disableDownload": False, "disableFileViewer": False})
         except RuntimeError:
-            shutil.rmtree(staging_dir, ignore_errors=True)
+            staging_file.unlink(missing_ok=True)
             fail("FileBrowser direct link creation failed")
         response["status"] = "200"
         response["url"] = response.get("downloadURL", "") + "&file=" + quote(path.name)
