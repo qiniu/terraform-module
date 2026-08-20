@@ -123,7 +123,7 @@ def emit(response, kind):
 
 
 def share_path(remote_path, share_type, duration, unit="days"):
-    body = {"path": remote_path, "source": SOURCE, "shareType": share_type, "expires": duration, "unit": unit, "showHidden": False, "disableAnonymous": False, "allowCreate": share_type == "upload", "allowModify": False, "allowDelete": False, "allowReplacements": False, "disableDownload": share_type == "upload", "disableFileViewer": share_type == "upload"}
+    body = {"path": remote_path, "source": SOURCE, "shareType": share_type, "expires": str(duration), "unit": unit, "showHidden": False, "disableAnonymous": False, "allowCreate": share_type == "upload", "allowModify": False, "allowDelete": False, "allowReplacements": False, "disableDownload": share_type == "upload", "disableFileViewer": share_type == "upload"}
     try:
         response = api("POST", "/api/share", body)
     except RuntimeError:
@@ -246,7 +246,7 @@ def main(argv):
         shutil.copy2(path, staging_file)
         staging_file.chmod(0o600)
         try:
-            response = api("POST", "/api/share", {"path": api_path(staging_dir), "source": SOURCE, "shareType": "normal", "expires": minutes, "unit": "minutes", "showHidden": False, "disableAnonymous": False, "allowCreate": False, "allowModify": False, "allowDelete": False, "allowReplacements": False, "disableDownload": False, "disableFileViewer": False})
+            response = api("POST", "/api/share", {"path": api_path(staging_dir), "source": SOURCE, "shareType": "normal", "expires": args[1], "unit": "minutes", "showHidden": False, "disableAnonymous": False, "allowCreate": False, "allowModify": False, "allowDelete": False, "allowReplacements": False, "disableDownload": False, "disableFileViewer": False})
         except RuntimeError:
             shutil.rmtree(staging_dir, ignore_errors=True)
             fail("FileBrowser direct link creation failed")
@@ -255,13 +255,13 @@ def main(argv):
         emit(response, "direct")
     elif action == "share":
         if len(args) != 2: fail("share requires PATH DAYS")
-        require_positive("days", args[1]); share_path(api_path(resolve_path(args[0])), "normal", int(args[1]))
+        require_positive("days", args[1]); share_path(api_path(resolve_path(args[0])), "normal", args[1])
     elif action == "inbox":
         if len(args) != 1: fail("inbox requires DAYS")
         days = require_positive("days", args[0])
         INBOX_ROOT.mkdir(mode=0o700, parents=True, exist_ok=True)
         inbox = Path(tempfile.mkdtemp(prefix="inbox.", dir=INBOX_ROOT))
-        share_path(api_path(inbox), "upload", days)
+        share_path(api_path(inbox), "upload", args[0])
     elif action == "archive":
         if len(args) < 3: fail("archive requires PATH [PATH ...] --days DAYS")
         if "--days" not in args: fail("archive requires DAYS")
