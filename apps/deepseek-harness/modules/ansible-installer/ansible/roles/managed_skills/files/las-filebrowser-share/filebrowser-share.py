@@ -197,13 +197,15 @@ def checksum(path):
 def archive(paths, days):
     days = require_positive("days", days)
     remote_paths = [api_path(resolve_path(path)) for path in paths]
-    archive_remote_path = f"{api_path(WORKSPACE)}/filebrowser-archive-{secrets.token_hex(8)}.tar.gz"
+    archive_dir = WORKSPACE / f"filebrowser-archive-{secrets.token_hex(8)}"
+    archive_dir.mkdir(mode=0o700)
+    archive_remote_path = f"{api_path(archive_dir)}/archive.tar.gz"
     body = {"fromSource": SOURCE, "toSource": SOURCE, "paths": remote_paths, "destination": archive_remote_path, "format": "tar.gz", "deleteAfter": False}
     try:
         api("POST", "/api/resources/archive", body)
     except RuntimeError:
         fail("FileBrowser archive creation failed")
-    share_path(archive_remote_path, "normal", days)
+    share_path(api_path(archive_dir), "normal", days)
 
 
 def revoke(share_hash):
@@ -221,9 +223,9 @@ def revoke(share_hash):
     if entry.get("kind") == "direct":
         path = entry.get("path", "")
         if isinstance(path, str) and path.startswith("/"):
-            staging_file = (ROOT / path.lstrip("/")).resolve()
-            if staging_file.parent == WORKSPACE.resolve() and staging_file.name.startswith("filebrowser-direct-") and staging_file.is_file():
-                staging_file.unlink()
+            staging_dir = (ROOT / path.lstrip("/")).resolve()
+            if staging_dir.parent == WORKSPACE.resolve() and staging_dir.name.startswith("filebrowser-direct-") and staging_dir.is_dir():
+                shutil.rmtree(staging_dir)
     print('{"revoked":true}')
 
 
@@ -245,13 +247,14 @@ def main(argv):
         path = resolve_path(args[0])
         if not path.is_file(): fail("direct requires a file")
         minutes = require_positive("minutes", args[1])
-        staging_file = WORKSPACE / f"filebrowser-direct-{secrets.token_hex(8)}-{path.name}"
+        staging_dir = Path(tempfile.mkdtemp(prefix="filebrowser-direct-", dir=WORKSPACE))
+        staging_file = staging_dir / path.name
         shutil.copy2(path, staging_file)
         staging_file.chmod(0o600)
         try:
-            response = api("POST", "/api/share", {"path": api_path(staging_file), "source": SOURCE, "shareType": "normal", "expires": args[1], "unit": "minutes", "showHidden": False, "disableAnonymous": False, "allowCreate": False, "allowModify": False, "allowDelete": False, "allowReplacements": False, "disableDownload": False, "disableFileViewer": False})
+            response = api("POST", "/api/share", {"path": api_path(staging_dir), "source": SOURCE, "shareType": "normal", "expires": args[1], "unit": "minutes", "showHidden": False, "disableAnonymous": False, "allowCreate": False, "allowModify": False, "allowDelete": False, "allowReplacements": False, "disableDownload": False, "disableFileViewer": False})
         except RuntimeError:
-            staging_file.unlink(missing_ok=True)
+            shutil.rmtree(staging_dir, ignore_errors=True)
             fail("FileBrowser direct link creation failed")
         response["status"] = "200"
         response["url"] = response.get("downloadURL", "") + "&file=" + quote(path.name)

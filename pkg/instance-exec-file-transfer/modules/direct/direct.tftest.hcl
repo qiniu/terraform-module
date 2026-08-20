@@ -77,7 +77,7 @@ run "publish_command_has_security_guards" {
   }
 
   assert {
-    condition     = strcontains(qiniu_compute_instance_exec.publish.command, "$D/marker")
+    condition     = strcontains(qiniu_compute_instance_exec.publish.command, "grep -Fq")
     error_message = "直传命令必须校验受管 marker"
   }
 
@@ -94,6 +94,11 @@ run "publish_command_has_security_guards" {
   assert {
     condition     = strcontains(qiniu_compute_instance_exec.publish.command, "-L \"$R\"")
     error_message = "直传命令必须拒绝 staging root 为 symlink"
+  }
+
+  assert {
+    condition     = strcontains(qiniu_compute_instance_exec.publish.command, "for marker in \"$R\"/*/marker")
+    error_message = "直传命令必须通过旧 marker 支持受管文件的内容更新"
   }
 }
 
