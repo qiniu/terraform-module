@@ -556,27 +556,27 @@ run "filebrowser_share_skill_enforces_issue_68_safety_contract" {
     condition = (
       !strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/filebrowser-share.sh.j2"])), "python3 - <<") &&
       !strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/filebrowser-share.sh.j2"])), "python3 -c") &&
-      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "/api/resources/archive") &&
-      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "paths") &&
-      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "filebrowser-direct-") &&
-      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "tempfile.mkdtemp") &&
-      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "api_path(staging_dir)") &&
-      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "archive_dir") &&
-      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), ".filebrowser-inbox") &&
-      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "allowCreate") &&
-      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "disableDownload") &&
-      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "disableFileViewer") &&
-      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "managed-shares.json") &&
-      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "search_files") &&
-      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "require_positive") &&
-      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "path is protected from sharing") &&
-      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "PROTECTED") &&
-      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "filebrowser-share.sh archive PATH [PATH ...] --days DAYS") &&
-      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "filebrowser-share.sh inbox DAYS") &&
-      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "filebrowser-share.sh search QUERY [LIMIT]") &&
-      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "仅查询/撤销由当前受管 token 创建的分享")
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "/api/share") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "/api/share/list") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "api(\"DELETE\"") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "shareType") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "expires") &&
+      !strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "managed-shares.json") &&
+      !strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "os.walk") &&
+      !strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "sha256") &&
+      !strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), " archive ") &&
+      !strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), " inbox ") &&
+      !strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), " search ") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "filebrowser-share.sh share PATH DAYS [normal|upload]") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "filebrowser-share.sh list [PATH]") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "filebrowser-share.sh revoke HASH") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "普通浏览和下载") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "上传投递") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "`DAYS` 为正整数") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "分享页面默认不显示隐藏文件") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "shareURL")
     )
-    error_message = "FileBrowser Skill 必须满足 issue #68 的归档、收件箱、检索、受管分享和有效期安全契约。"
+    error_message = "FileBrowser Skill 只能保留原生 share/list/revoke API 的薄包装。"
   }
 }
 

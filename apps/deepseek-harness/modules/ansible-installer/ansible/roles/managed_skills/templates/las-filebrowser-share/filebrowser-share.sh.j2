@@ -4,9 +4,6 @@ umask 077
 
 script_dir="$(cd -- "$(dirname -- "$(readlink -f -- "${BASH_SOURCE[0]}")")" && pwd)"
 export LAS_FILEBROWSER_API_BASE='http://127.0.0.1:{{ filebrowser_port }}'
-export LAS_FILEBROWSER_ROOT='{{ dsh_home }}'
-export LAS_FILEBROWSER_WORKSPACE='{{ dsh_workspace_dir }}'
 export LAS_FILEBROWSER_SOURCE='{{ filebrowser_source_name }}'
 export LAS_FILEBROWSER_TOKEN_FILE='{{ filebrowser_token_path }}'
-export LAS_FILEBROWSER_STATE_DIR='{{ filebrowser_state_dir }}'
 exec python3 "$script_dir/filebrowser-share.py" "$@"
