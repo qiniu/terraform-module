@@ -590,6 +590,48 @@ run "escapes_filebrowser_yaml_credentials" {
   }
 }
 
+run "keeps_filebrowser_role_private_settings_in_role_defaults" {
+  command = plan
+
+  assert {
+    condition = (
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+        "filebrowser_config_path:",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+        "filebrowser_database_path:",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+        "filebrowser_token_name:",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+        "filebrowser_token_days:",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/defaults/main.yml"])),
+        "filebrowser_config_path:",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/defaults/main.yml"])),
+        "filebrowser_database_path:",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/defaults/main.yml"])),
+        "filebrowser_token_name:",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/defaults/main.yml"])),
+        "filebrowser_token_days:",
+      )
+    )
+    error_message = "FileBrowser role 私有的配置路径和 token 设置必须下沉到 role defaults。"
+  }
+}
+
 run "keeps_code_server_releases_with_version" {
   command = plan
 

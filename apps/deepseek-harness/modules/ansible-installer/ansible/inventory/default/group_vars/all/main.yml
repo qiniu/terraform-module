@@ -23,11 +23,7 @@ filebrowser_version: 1.5.2-stable
 filebrowser_port: 3085
 filebrowser_source_name: dsh-home
 filebrowser_state_dir: "{{ dsh_home }}/.filebrowser"
-filebrowser_config_path: "{{ filebrowser_state_dir }}/config.yaml"
-filebrowser_database_path: "{{ filebrowser_state_dir }}/database.db"
 filebrowser_token_path: "{{ filebrowser_state_dir }}/agent-api-token"
-filebrowser_token_name: las-filebrowser-agent
-filebrowser_token_days: 3652
 filebrowser_release:
   x86_64:
     asset: linux-amd64-filebrowser
