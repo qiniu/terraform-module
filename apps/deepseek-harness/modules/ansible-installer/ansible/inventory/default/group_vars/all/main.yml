@@ -11,6 +11,7 @@ dsh_web_plugins:
   - dsh-better-sidebar
 static_preview_dir: "{{ dsh_home }}/.las-static-preview"
 dsh_download_dir: /var/cache/deepseek-harness
+dsh_npm_cache_dir: /var/cache/deepseek-harness/npm
 nodejs_version: 24.19.0
 pnpm_version: 11.22.0
 code_server_version: 4.132.0

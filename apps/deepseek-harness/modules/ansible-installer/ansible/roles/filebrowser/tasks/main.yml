@@ -70,13 +70,22 @@
         )
     fail_msg: "Refusing to replace unmanaged FileBrowser prefix: {{ filebrowser_prefix }}"
 
-- name: Create FileBrowser download directory
-  ansible.builtin.file:
+- name: Check the FileBrowser download directory
+  ansible.builtin.stat:
     path: "{{ dsh_download_dir }}"
-    state: directory
-    owner: root
-    group: root
-    mode: '0700'
+    follow: false
+  register: filebrowser_download_dir_path
+
+- name: Verify the root-owned FileBrowser download directory
+  ansible.builtin.assert:
+    that:
+      - filebrowser_download_dir_path.stat.exists
+      - filebrowser_download_dir_path.stat.isdir
+      - not filebrowser_download_dir_path.stat.islnk | default(false)
+      - filebrowser_download_dir_path.stat.pw_name == 'root'
+      - filebrowser_download_dir_path.stat.gr_name == 'root'
+      - filebrowser_download_dir_path.stat.mode == '0700'
+    fail_msg: "FileBrowser download directory must be a root-owned, non-symlink directory with mode 0700."
 
 - name: Download the pinned FileBrowser binary
   ansible.builtin.get_url:
