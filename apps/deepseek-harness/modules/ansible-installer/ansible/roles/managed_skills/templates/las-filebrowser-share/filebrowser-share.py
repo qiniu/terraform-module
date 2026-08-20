@@ -11,21 +11,29 @@ from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 
-API_BASE = os.environ.get("LAS_FILEBROWSER_API_BASE", "http://127.0.0.1:{{ filebrowser_port }}")
-ROOT = Path(os.environ.get("LAS_FILEBROWSER_ROOT", {{ dsh_home | to_json }}))
-WORKSPACE = Path(os.environ.get("LAS_FILEBROWSER_WORKSPACE", {{ dsh_workspace_dir | to_json }}))
-SOURCE = os.environ.get("LAS_FILEBROWSER_SOURCE", {{ filebrowser_source_name | to_json }})
-TOKEN_FILE = Path(os.environ.get("LAS_FILEBROWSER_TOKEN_FILE", {{ filebrowser_token_path | to_json }}))
-STATE_DIR = Path(os.environ.get("LAS_FILEBROWSER_STATE_DIR", {{ filebrowser_state_dir | to_json }}))
-REGISTRY = STATE_DIR / "managed-shares.json"
-EXPORTS_DIR = WORKSPACE / ".filebrowser-exports"
-INBOX_ROOT = WORKSPACE / ".filebrowser-inbox"
-PROTECTED = {".filebrowser", ".config", ".ssh"}
-
 
 def fail(message):
     print(json.dumps({"error": message}, ensure_ascii=True), file=sys.stderr)
     raise SystemExit(2)
+
+
+def required_env(name):
+    value = os.environ.get(name)
+    if not value:
+        fail(f"missing required environment variable: {name}")
+    return value
+
+
+API_BASE = required_env("LAS_FILEBROWSER_API_BASE")
+ROOT = Path(required_env("LAS_FILEBROWSER_ROOT"))
+WORKSPACE = Path(required_env("LAS_FILEBROWSER_WORKSPACE"))
+SOURCE = required_env("LAS_FILEBROWSER_SOURCE")
+TOKEN_FILE = Path(required_env("LAS_FILEBROWSER_TOKEN_FILE"))
+STATE_DIR = Path(required_env("LAS_FILEBROWSER_STATE_DIR"))
+REGISTRY = STATE_DIR / "managed-shares.json"
+EXPORTS_DIR = WORKSPACE / ".filebrowser-exports"
+INBOX_ROOT = WORKSPACE / ".filebrowser-inbox"
+PROTECTED = {".filebrowser", ".config", ".ssh"}
 
 
 def read_token():
