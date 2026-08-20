@@ -118,11 +118,12 @@ variable "instance_password" {
     condition = (
       length(var.instance_password) >= 8 &&
       length(var.instance_password) <= 30 &&
+      can(regex("^[A-Za-z0-9._~-]+$", var.instance_password)) &&
       can(regex("[A-Za-z]", var.instance_password)) &&
       can(regex("[0-9]", var.instance_password)) &&
-      can(regex("[^A-Za-z0-9]", var.instance_password))
+      can(regex("[._~-]", var.instance_password))
     )
-    error_message = "密码必须为 8 到 30 位，且同时包含字母、数字和特殊符号。"
+    error_message = "密码必须为 8 到 30 位，只能包含字母、数字及 -._~，且至少包含一种特殊字符。"
   }
 }
 
@@ -137,10 +138,11 @@ variable "dsh_web_password" {
     condition = var.dsh_web_password == "" || (
       length(var.dsh_web_password) >= 8 &&
       length(var.dsh_web_password) <= 30 &&
+      can(regex("^[A-Za-z0-9._~-]+$", var.dsh_web_password)) &&
       can(regex("[A-Za-z]", var.dsh_web_password)) &&
       can(regex("[0-9]", var.dsh_web_password)) &&
-      can(regex("[^A-Za-z0-9]", var.dsh_web_password))
+      can(regex("[._~-]", var.dsh_web_password))
     )
-    error_message = "dsh_web_password 必须为空字符串，或为 8 到 30 位且同时包含字母、数字和特殊符号的密码。"
+    error_message = "dsh_web_password 必须为空字符串，或为 8 到 30 位、只含字母数字及 -._~ 且至少包含一种特殊字符的密码。"
   }
 }

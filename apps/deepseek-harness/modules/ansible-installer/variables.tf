@@ -209,10 +209,11 @@ variable "filebrowser_password" {
     condition = !var.enable_filebrowser || (
       length(var.filebrowser_password) >= 8 &&
       length(var.filebrowser_password) <= 30 &&
+      can(regex("^[A-Za-z0-9._~-]+$", var.filebrowser_password)) &&
       can(regex("[A-Za-z]", var.filebrowser_password)) &&
       can(regex("[0-9]", var.filebrowser_password)) &&
-      can(regex("[^A-Za-z0-9]", var.filebrowser_password))
+      can(regex("[._~-]", var.filebrowser_password))
     )
-    error_message = "filebrowser_password 必须为 8 到 30 位且同时包含字母、数字和特殊符号的密码。"
+    error_message = "filebrowser_password 必须为 8 到 30 位、只含字母数字及 -._~ 且至少包含一种特殊字符的密码。"
   }
 }

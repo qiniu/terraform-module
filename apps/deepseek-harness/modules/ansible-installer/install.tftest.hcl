@@ -34,6 +34,26 @@ run "includes_filebrowser_settings_when_enabled" {
   }
 }
 
+run "rejects_comma_in_filebrowser_password" {
+  command = plan
+
+  variables {
+    filebrowser_password = "Comma,password-123"
+  }
+
+  expect_failures = [var.filebrowser_password]
+}
+
+run "rejects_unsupported_special_character_in_filebrowser_password" {
+  command = plan
+
+  variables {
+    filebrowser_password = "Filebrowser!123"
+  }
+
+  expect_failures = [var.filebrowser_password]
+}
+
 run "omits_code_server_settings_when_disabled" {
   command = plan
 
