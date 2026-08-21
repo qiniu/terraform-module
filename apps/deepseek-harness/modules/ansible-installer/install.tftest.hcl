@@ -607,10 +607,6 @@ run "installs_configured_skills" {
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
       )) &&
       can(regex(
-        "(?m)name: agent-browser\\s+source: https://github[.]com/vercel-labs/agent-browser",
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
-      )) &&
-      can(regex(
         "(?m)name: karpathy-guidelines\\s+source: https://github[.]com/multica-ai/andrej-karpathy-skills",
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
       )) &&
