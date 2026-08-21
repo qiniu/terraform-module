@@ -1,9 +1,11 @@
-server:
+http:
   port: {{ filebrowser_port }}
   listen: "127.0.0.1"
   baseURL: "/"
   externalUrl: {{ ("https://" ~ filebrowser_public_authority) | to_json }}
-  database: {{ filebrowser_database_path | to_json }}
+server:
+  database:
+    path: {{ filebrowser_database_path | to_json }}
   disableUpdateCheck: true
   sources:
     - name: {{ filebrowser_source_name | to_json }}
@@ -26,9 +28,5 @@ userDefaults:
     permissions:
       api: true
       admin: true
-      modify: true
       share: true
       realtime: true
-      delete: true
-      create: true
-      download: true

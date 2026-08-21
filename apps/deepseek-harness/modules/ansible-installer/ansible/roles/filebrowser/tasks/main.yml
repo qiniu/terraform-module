@@ -89,7 +89,7 @@
 
 - name: Download the pinned FileBrowser binary
   ansible.builtin.get_url:
-    url: "https://github.com/gtsteffaniak/filebrowser/releases/download/v{{ filebrowser_version }}/{{ filebrowser_release_info.asset }}"
+    url: "https://github.com/zhangzqs/filebrowser/releases/download/v{{ filebrowser_version }}/{{ filebrowser_release_info.asset }}"
     dest: "{{ dsh_download_dir }}/{{ filebrowser_release_info.asset }}"
     checksum: "sha256:{{ filebrowser_release_info.sha256 }}"
     mode: '0755'
