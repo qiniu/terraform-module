@@ -75,6 +75,17 @@
               - "'sub_filter ' in static_preview_nginx_config"
               - "'connection.isLoopback ? \"host\" : \"memory\"' in static_preview_nginx_config"
 
+        - name: Verify the Harness restart route is proxied as a trusted local request
+          ansible.builtin.assert:
+            that:
+              - "'location = /dsh-market/restart {' in static_preview_nginx_config"
+              - "'auth_basic \"DeepSeek Harness\";' in static_preview_nginx_config.split('location = /dsh-market/restart {')[1].split('location / {')[0]"
+              - "'proxy_set_header Host dsh.example.test;' in static_preview_nginx_config.split('location = /dsh-market/restart {')[1].split('location / {')[0]"
+              - "'proxy_set_header Origin \"https://dsh.example.test\";' in static_preview_nginx_config.split('location = /dsh-market/restart {')[1].split('location / {')[0]"
+              - "'proxy_set_header X-Forwarded-For \"\";' in static_preview_nginx_config.split('location = /dsh-market/restart {')[1].split('location / {')[0]"
+              - "'proxy_set_header X-Real-IP \"\";' in static_preview_nginx_config.split('location = /dsh-market/restart {')[1].split('location / {')[0]"
+              - "'proxy_set_header Forwarded \"\";' in static_preview_nginx_config.split('location = /dsh-market/restart {')[1].split('location / {')[0]"
+
         - name: Render Nginx without code-server
           ansible.builtin.set_fact:
             nginx_without_code_server: "{{ lookup('ansible.builtin.template', nginx_template_path) }}"

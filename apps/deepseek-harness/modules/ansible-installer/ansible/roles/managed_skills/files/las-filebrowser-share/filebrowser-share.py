@@ -51,7 +51,10 @@ def api(method, path, body=None, query=None):
     try:
         with urlopen(request) as response:
             raw = response.read()
-    except (HTTPError, URLError, OSError) as exc:
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace").strip()
+        fail(f"FileBrowser API request failed: HTTP {exc.code}: {detail[:500]}")
+    except (URLError, OSError) as exc:
         fail(f"FileBrowser API request failed: {exc}")
     if not raw:
         return {}
@@ -71,15 +74,37 @@ def positive_integer(value):
     return value
 
 
+def positive_number(value):
+    return int(positive_integer(value))
+
+
 def share(args):
-    emit(api("POST", "/api/share", {
+    payload = {
         "path": args.path,
         "source": SOURCE,
         "shareType": args.share_type,
         "expires": args.expires,
         "unit": args.unit,
         "showHidden": False,
-    }))
+    }
+    if args.downloads_limit is not None:
+        payload["downloadsLimit"] = args.downloads_limit
+    if args.max_bandwidth is not None:
+        payload["maxBandwidth"] = args.max_bandwidth
+    if args.disable_anonymous_access:
+        payload["disableAnonymousAccess"] = True
+    if args.keep_after_expiration:
+        payload["keepAfterExpiration"] = True
+    if args.password_stdin:
+        payload["password"] = sys.stdin.read().rstrip("\r\n")
+    elif args.password_file:
+        try:
+            payload["password"] = Path(args.password_file).read_text(encoding="utf-8").rstrip("\r\n")
+        except OSError as exc:
+            fail(f"unable to read password file: {exc}")
+    if "password" in payload and not payload["password"]:
+        fail("password must not be empty")
+    emit(api("POST", "/api/share", payload))
 
 
 def list_shares(args):
@@ -102,6 +127,13 @@ def parser():
     share_parser.add_argument("--expires", type=positive_integer, default="2")
     share_parser.add_argument("--unit", choices=("minutes", "hours", "days"), default="hours")
     share_parser.add_argument("--share-type", choices=("normal", "upload"), default="normal")
+    share_parser.add_argument("--downloads-limit", type=positive_number)
+    share_parser.add_argument("--max-bandwidth", type=positive_number)
+    share_parser.add_argument("--disable-anonymous-access", action="store_true")
+    share_parser.add_argument("--keep-after-expiration", action="store_true")
+    password_group = share_parser.add_mutually_exclusive_group()
+    password_group.add_argument("--password-stdin", action="store_true")
+    password_group.add_argument("--password-file")
     share_parser.set_defaults(handler=share)
 
     list_parser = commands.add_parser("list")

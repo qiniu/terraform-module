@@ -413,6 +413,10 @@ run "uses_pnpm_for_dsh_prewarm_and_offline_service" {
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/templates/deepseek-harness.service.j2"])),
         "ExecStart=/usr/local/bin/pnpm dlx --allow-build=node-pty @deepseek-ai/dsh@{{ dsh_version }}",
       ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/templates/deepseek-harness.service.j2"])),
+        "Restart=always",
+      ) &&
       !strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/templates/deepseek-harness.service.j2"])),
         "/usr/local/bin/npx",
@@ -623,6 +627,11 @@ run "filebrowser_share_skill_enforces_issue_68_safety_contract" {
       strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "api(\"DELETE\"") &&
       strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "shareType") &&
       strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "expires") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "downloadsLimit") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "maxBandwidth") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "disableAnonymousAccess") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "keepAfterExpiration") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "password-stdin") &&
       !strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "managed-shares.json") &&
       !strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "os.walk") &&
       !strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/files/las-filebrowser-share/filebrowser-share.py"])), "sha256") &&
