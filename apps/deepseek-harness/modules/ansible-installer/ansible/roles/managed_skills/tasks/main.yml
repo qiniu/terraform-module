@@ -9,6 +9,12 @@
     - las_preview_ports
     - las_filebrowser_share
 
+- name: Remove the FileBrowser sharing Skill when FileBrowser is disabled
+  ansible.builtin.file:
+    path: "{{ dsh_home }}/.agents/skills/las-filebrowser-share"
+    state: absent
+  when: not (enable_filebrowser | bool)
+
 - name: Create managed Skill directories
   ansible.builtin.file:
     path: "{{ dsh_home }}/.agents/skills/{{ item }}/scripts"
@@ -20,7 +26,15 @@
     - las-dsh-environment
     - las-static-preview
     - las-preview-ports
-    - las-filebrowser-share
+
+- name: Create the FileBrowser sharing Skill directory
+  ansible.builtin.file:
+    path: "{{ dsh_home }}/.agents/skills/las-filebrowser-share/scripts"
+    state: directory
+    owner: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    mode: '0700'
+  when: enable_filebrowser | bool
 
 - name: Render the LAS deployment environment Skill
   ansible.builtin.template:
@@ -85,6 +99,7 @@
     owner: "{{ dsh_user }}"
     group: "{{ dsh_group }}"
     mode: '0600'
+  when: enable_filebrowser | bool
 
 - name: Render the FileBrowser sharing helper
   ansible.builtin.template:
@@ -93,6 +108,7 @@
     owner: "{{ dsh_user }}"
     group: "{{ dsh_group }}"
     mode: '0700'
+  when: enable_filebrowser | bool
 
 - name: Install the FileBrowser sharing Python implementation
   ansible.builtin.copy:
@@ -101,3 +117,4 @@
     owner: "{{ dsh_user }}"
     group: "{{ dsh_group }}"
     mode: '0700'
+  when: enable_filebrowser | bool

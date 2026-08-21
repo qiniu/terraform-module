@@ -69,7 +69,7 @@ Preview 数量通过 `preview_count` 配置，支持 `0..4` 个。用户网页�
 
 它会告知 Harness 网页开发时应使用的工作目录、监听地址和预览地址。`las-dsh-environment` 是用户级 skill，项目级同名 skill 的优先级更高，会遮蔽它；如需覆盖，请明确使用项目级同名名称。skill 正文更新后，需在新会话中使用，或再次加载该 skill 才能看到新内容；已加载旧正文的会话不会被主动改写。
 
-FileBrowser 同时安装 `las-filebrowser-share` skill，用于创建临时下载链接、分享文件或目录、查询或撤销分享、打包目录、创建上传收件箱、安全检索以及计算 SHA-256。它通过 `/home/dsh/.filebrowser/agent-api-token` 中权限为 `0600` 的 10 年 token 调用本机 API；token 不会进入 Terraform output、日志或 skill 正文。
+启用 FileBrowser 时同时安装 `las-filebrowser-share` skill，用于创建临时下载链接、分享文件或目录、查询或撤销分享、打包目录、创建上传收件箱、安全检索以及计算 SHA-256。它通过 `/home/dsh/.filebrowser/agent-api-token` 中权限为 `0600` 的 10 年 token 调用本机 API；token 不会进入 Terraform output、日志或 skill 正文。禁用 FileBrowser 时不会安装该 Skill，并会清理已存在的 Skill 目录。
 
 ## 网络与 SSH
 
