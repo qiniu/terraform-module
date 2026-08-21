@@ -32,6 +32,28 @@ server {
         proxy_set_header Sec-Fetch-Site "same-origin";
     }
 
+    # 未配对设备的心跳会正常返回业务态 401，不能再被外层 Basic Auth
+    # 转换为浏览器密码提示；接口本身只刷新配对设备状态，不暴露受保护数据。
+    # 当安装了插件 @linxin666/dsh-web-ui-all 时，会导致401请求频繁弹出auth对话框
+    location = /api/pair/heartbeat {
+        if ($dsh_origin_allowed = 0) { return 403; }
+        if ($dsh_fetch_site_allowed = 0) { return 403; }
+
+        auth_basic off;
+        proxy_pass http://127.0.0.1:{{ dsh_port }};
+        proxy_http_version 1.1;
+        proxy_set_header Authorization "";
+        proxy_set_header Host 127.0.0.1:{{ dsh_port }};
+        proxy_set_header Origin "http://127.0.0.1:{{ dsh_port }}";
+        proxy_set_header Sec-Fetch-Site "same-origin";
+        proxy_intercept_errors on;
+        error_page 401 =204 @dsh_pair_heartbeat_unpaired;
+    }
+
+    location @dsh_pair_heartbeat_unpaired {
+        return 204;
+    }
+
     # dshmarket 只接受直接来自回环地址且不带代理转发链的重启请求。
     # 公网访问仍受本部署的 Basic Auth 和上述同源校验保护。
     location = /dsh-market/restart {

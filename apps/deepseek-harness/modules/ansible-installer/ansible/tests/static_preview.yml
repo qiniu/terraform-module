@@ -86,6 +86,15 @@
               - "'proxy_set_header X-Real-IP \"\";' in static_preview_nginx_config.split('location = /dsh-market/restart {')[1].split('location / {')[0]"
               - "'proxy_set_header Forwarded \"\";' in static_preview_nginx_config.split('location = /dsh-market/restart {')[1].split('location / {')[0]"
 
+        - name: Verify the unpaired heartbeat cannot trigger a Basic Auth prompt
+          ansible.builtin.assert:
+            that:
+              - "'location = /api/pair/heartbeat {' in static_preview_nginx_config"
+              - "'auth_basic off;' in static_preview_nginx_config.split('location = /api/pair/heartbeat {')[1].split('location = /dsh-market/restart {')[0]"
+              - "'proxy_set_header Authorization \"\";' in static_preview_nginx_config.split('location = /api/pair/heartbeat {')[1].split('location = /dsh-market/restart {')[0]"
+              - "'proxy_intercept_errors on;' in static_preview_nginx_config.split('location = /api/pair/heartbeat {')[1].split('location = /dsh-market/restart {')[0]"
+              - "'error_page 401 =204 @dsh_pair_heartbeat_unpaired;' in static_preview_nginx_config.split('location = /api/pair/heartbeat {')[1].split('location = /dsh-market/restart {')[0]"
+
         - name: Render Nginx without code-server
           ansible.builtin.set_fact:
             nginx_without_code_server: "{{ lookup('ansible.builtin.template', nginx_template_path) }}"
