@@ -36,5 +36,21 @@ filebrowser_release:
     asset: linux-arm64-filebrowser
     sha256: e4a300ece6d1c336ba9e110a2a75fa557644dac0cdcd17c9e94b28cbd7501a5c
 dsh_skills:
+  # 发现、检索并选择适合当前任务的 Agent Skill
   - name: find-skills
     source: https://github.com/vercel-labs/skills
+  # 创建、评估和改进 Agent Skill
+  - name: skill-creator
+    source: https://github.com/anthropics/skills
+  # 设计具有明确视觉方向的高质量前端界面
+  - name: frontend-design
+    source: https://github.com/anthropics/skills
+  # 获取最新的库文档、API 参考与代码示例
+  - name: context7-cli
+    source: https://github.com/upstash/context7
+  # 查询和理解公开 GitHub 仓库的文档与源码
+  - name: mcp-deepwiki
+    source: https://github.com/aahl/skills
+  # 以简洁、谨慎和可验证为原则编写与审查代码
+  - name: karpathy-guidelines
+    source: https://github.com/multica-ai/andrej-karpathy-skills
