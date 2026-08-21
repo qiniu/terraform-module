@@ -32,9 +32,8 @@ server {
         proxy_set_header Sec-Fetch-Site "same-origin";
     }
 
-    # dshmarket accepts restart requests only from a direct loopback peer with
-    # no proxy forwarding chain. Public access is still bounded by this
-    # deployment's Basic Auth and same-origin checks above.
+    # dshmarket 只接受直接来自回环地址且不带代理转发链的重启请求。
+    # 公网访问仍受本部署的 Basic Auth 和上述同源校验保护。
     location = /dsh-market/restart {
         if ($dsh_origin_allowed = 0) { return 403; }
         if ($dsh_fetch_site_allowed = 0) { return 403; }
