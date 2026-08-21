@@ -48,7 +48,7 @@
               - "'inspect-session.sh <session-id>' in static_preview_skill"
               - "'.las-static-preview.json' in static_preview_skill"
               - "'公开入口' in static_preview_skill"
-              - "'禁止从当前 VM 内对公网站点 URL 执行' in static_preview_skill"
+              - "'禁止从当前 VM 内探测本部署的任何公网域名' in static_preview_skill"
 
         - name: Render the Static Preview Nginx server
           ansible.builtin.set_fact:
