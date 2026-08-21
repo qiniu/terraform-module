@@ -586,14 +586,34 @@ run "installs_configured_skills" {
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
         "dsh_skills:",
       ) &&
-      strcontains(
+      can(regex(
+        "(?m)name: find-skills\\s+source: https://github[.]com/vercel-labs/skills",
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
-        "https://github.com/vercel-labs/skills",
-      ) &&
-      strcontains(
+      )) &&
+      can(regex(
+        "(?m)name: skill-creator\\s+source: https://github[.]com/anthropics/skills",
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
-        "name: find-skills",
-      ) &&
+      )) &&
+      can(regex(
+        "(?m)name: frontend-design\\s+source: https://github[.]com/anthropics/skills",
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+      )) &&
+      can(regex(
+        "(?m)name: context7-cli\\s+source: https://github[.]com/upstash/context7",
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+      )) &&
+      can(regex(
+        "(?m)name: mcp-deepwiki\\s+source: https://github[.]com/aahl/skills",
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+      )) &&
+      can(regex(
+        "(?m)name: agent-browser\\s+source: https://github[.]com/vercel-labs/agent-browser",
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+      )) &&
+      can(regex(
+        "(?m)name: karpathy-guidelines\\s+source: https://github[.]com/multica-ai/andrej-karpathy-skills",
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+      )) &&
       strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/skill_installer/tasks/main.yml"])),
         "/usr/local/bin/npx",
