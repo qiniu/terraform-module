@@ -629,12 +629,12 @@ run "filebrowser_share_skill_enforces_issue_68_safety_contract" {
       !strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), " archive ") &&
       !strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), " inbox ") &&
       !strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), " search ") &&
-      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "filebrowser-share.sh share PATH [HOURS] [normal|upload]") &&
-      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "filebrowser-share.sh list [PATH]") &&
-      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "filebrowser-share.sh revoke HASH") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "filebrowser-share.sh share --path PATH") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "filebrowser-share.sh list [--path PATH]") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "filebrowser-share.sh revoke --hash HASH") &&
       strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "普通浏览和下载") &&
       strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "上传投递") &&
-      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "`HOURS` 为正整数") &&
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "`--expires` 是正整数") &&
       strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "分享页面默认不显示隐藏文件") &&
       strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "shareURL")
     )

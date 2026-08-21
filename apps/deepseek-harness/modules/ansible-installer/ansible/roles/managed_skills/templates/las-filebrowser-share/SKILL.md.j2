@@ -10,13 +10,14 @@ description: 使用 FileBrowser Quantum 分享、查看和撤销文件或目录�
 ## 命令
 
 ```text
-filebrowser-share.sh share PATH [HOURS] [normal|upload]
-filebrowser-share.sh list [PATH]
-filebrowser-share.sh revoke HASH
+filebrowser-share.sh share --path PATH [--expires HOURS] [--unit minutes|hours|days] [--share-type normal|upload]
+filebrowser-share.sh list [--path PATH]
+filebrowser-share.sh revoke --hash HASH
 ```
 
 - `PATH` 使用 FileBrowser source 内的路径，例如 `/workspace/report.pdf`，不要使用服务器本地绝对路径。
-- `HOURS` 为正整数，表示分享有效小时数；省略时默认为 2 小时。FileBrowser 支持小时粒度。
+- `--expires` 是正整数，默认值为 `2`；`--unit` 默认值为 `hours`，也支持 `minutes` 和 `days`。
+- 参数名称与 FileBrowser API 的 `expires`、`unit`、`shareType` 字段保持一致，避免依赖位置顺序。
 - `normal` 用于普通浏览和下载分享，也是默认类型。
 - `upload` 用于上传投递，通常指向目录；它不是安全收件箱。
 - 分享页面默认不显示隐藏文件。

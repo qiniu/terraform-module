@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import json
 import os
 import sys
@@ -64,60 +65,58 @@ def emit(response):
     print(json.dumps(response, separators=(",", ":")))
 
 
+def positive_integer(value):
+    if not value.isdigit() or int(value) <= 0:
+        raise argparse.ArgumentTypeError("must be a positive integer")
+    return value
+
+
 def share(args):
-    if len(args) > 3 or not args:
-        fail("share requires PATH [HOURS] [normal|upload]")
-    hours = "2"
-    share_type = "normal"
-    if len(args) >= 2:
-        if args[1] in {"normal", "upload"}:
-            if len(args) != 2:
-                fail("share type cannot be followed by another argument")
-            share_type = args[1]
-        else:
-            hours = args[1]
-            share_type = args[2] if len(args) == 3 else "normal"
-    if share_type not in {"normal", "upload"}:
-        fail("share type must be normal or upload")
-    if not hours.isdigit() or int(hours) <= 0:
-        fail("hours must be a positive integer")
     emit(api("POST", "/api/share", {
-        "path": args[0],
+        "path": args.path,
         "source": SOURCE,
-        "shareType": share_type,
-        "expires": hours,
-        "unit": "hours",
+        "shareType": args.share_type,
+        "expires": args.expires,
+        "unit": args.unit,
         "showHidden": False,
     }))
 
 
 def list_shares(args):
-    if len(args) > 1:
-        fail("list accepts optional PATH")
-    if args:
-        emit(api("GET", "/api/share", query={"source": SOURCE, "path": args[0]}))
+    if args.path:
+        emit(api("GET", "/api/share", query={"source": SOURCE, "path": args.path}))
     else:
         emit(api("GET", "/api/share/list"))
 
 
 def revoke(args):
-    if len(args) != 1 or not args[0]:
-        fail("revoke requires HASH")
-    emit(api("DELETE", "/api/share", query={"hash": args[0]}))
+    emit(api("DELETE", "/api/share", query={"hash": args.hash}))
+
+
+def parser():
+    command_parser = argparse.ArgumentParser(description="FileBrowser share API client")
+    commands = command_parser.add_subparsers(dest="command", required=True)
+
+    share_parser = commands.add_parser("share")
+    share_parser.add_argument("--path", required=True)
+    share_parser.add_argument("--expires", type=positive_integer, default="2")
+    share_parser.add_argument("--unit", choices=("minutes", "hours", "days"), default="hours")
+    share_parser.add_argument("--share-type", choices=("normal", "upload"), default="normal")
+    share_parser.set_defaults(handler=share)
+
+    list_parser = commands.add_parser("list")
+    list_parser.add_argument("--path")
+    list_parser.set_defaults(handler=list_shares)
+
+    revoke_parser = commands.add_parser("revoke")
+    revoke_parser.add_argument("--hash", required=True)
+    revoke_parser.set_defaults(handler=revoke)
+    return command_parser
 
 
 def main(argv):
-    if not argv:
-        fail("missing operation")
-    action, args = argv[0], argv[1:]
-    if action == "share":
-        share(args)
-    elif action == "list":
-        list_shares(args)
-    elif action == "revoke":
-        revoke(args)
-    else:
-        fail("unsupported operation; use share, list, or revoke")
+    args = parser().parse_args(argv)
+    args.handler(args)
 
 
 if __name__ == "__main__":
