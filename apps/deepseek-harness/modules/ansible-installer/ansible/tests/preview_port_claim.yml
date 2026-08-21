@@ -35,6 +35,7 @@
               - "'inspect-session.sh <session-id>' in preview_ports_skill"
               - "'/home/dsh/.las-preview-ports/<port>.json' in preview_ports_skill"
               - "'NAT 回环' in preview_ports_skill"
+              - "'禁止从当前 VM 内执行' in preview_ports_skill"
 
         - name: Create a Preview project directory
           ansible.builtin.file:

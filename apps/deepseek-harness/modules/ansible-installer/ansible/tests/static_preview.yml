@@ -48,6 +48,7 @@
               - "'inspect-session.sh <session-id>' in static_preview_skill"
               - "'.las-static-preview.json' in static_preview_skill"
               - "'公开入口' in static_preview_skill"
+              - "'禁止从当前 VM 内对公网站点 URL 执行' in static_preview_skill"
 
         - name: Render the Static Preview Nginx server
           ansible.builtin.set_fact:
@@ -63,6 +64,16 @@
               - "'location ~ (^|/)\\. {' in static_preview_nginx_config"
               - "'disable_symlinks on;' in static_preview_nginx_config"
               - "'auth_basic' not in static_preview_nginx_config.split('server {')[2].split('server {')[0]"
+
+        - name: Verify the Harness manifest is public and proxied
+          ansible.builtin.assert:
+            that:
+              - "'location = /manifest.webmanifest {' in static_preview_nginx_config"
+              - "'auth_basic off;' in static_preview_nginx_config.split('location = /manifest.webmanifest {')[1].split('location / {')[0]"
+              - "'proxy_pass http://127.0.0.1:3080;' in static_preview_nginx_config.split('location = /manifest.webmanifest {')[1].split('location / {')[0]"
+              - "'sub_filter_types application/javascript text/javascript;' in static_preview_nginx_config"
+              - "'sub_filter ' in static_preview_nginx_config"
+              - "'connection.isLoopback ? \"host\" : \"memory\"' in static_preview_nginx_config"
 
         - name: Render Nginx without code-server
           ansible.builtin.set_fact:

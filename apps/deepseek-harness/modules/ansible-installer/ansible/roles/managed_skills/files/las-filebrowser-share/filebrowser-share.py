@@ -65,19 +65,26 @@ def emit(response):
 
 
 def share(args):
-    if len(args) not in (2, 3):
-        fail("share requires PATH DAYS [normal|upload]")
-    share_type = args[2] if len(args) == 3 else "normal"
+    if len(args) > 3 or not args:
+        fail("share requires PATH [HOURS] [normal|upload]")
+    hours = "2"
+    share_type = "normal"
+    if len(args) >= 2:
+        if args[1] in {"normal", "upload"}:
+            share_type = args[1]
+        else:
+            hours = args[1]
+            share_type = args[2] if len(args) == 3 else "normal"
     if share_type not in {"normal", "upload"}:
         fail("share type must be normal or upload")
-    if not args[1].isdigit() or int(args[1]) <= 0:
-        fail("days must be a positive integer")
+    if not hours.isdigit() or int(hours) <= 0:
+        fail("hours must be a positive integer")
     emit(api("POST", "/api/share", {
         "path": args[0],
         "source": SOURCE,
         "shareType": share_type,
-        "expires": args[1],
-        "unit": "days",
+        "expires": hours,
+        "unit": "hours",
         "showHidden": False,
     }))
 

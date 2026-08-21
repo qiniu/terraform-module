@@ -46,6 +46,8 @@
 - Preview 是绕过 Harness Basic Auth 的公开入口，页面、运行命令和日志中不得出现秘密。
 - Golden image 不得包含 DSH 用户状态、Basic Auth 文件、code-server 凭据、部署密钥、临时 exec 文件或含凭据日志。
 - SSH PortForward 默认关闭；仅在明确的临时调试中配合强密码开启，结束后恢复关闭。
+- SSH PortForward 开启时，可通过 `./scripts/ssh.sh` 以 root 身份只读检查 `/root/.qiniu` 下的异步任务文件和执行日志；不得读取或输出其中的凭据。
+- `env.sh` 约定保存全局 Provider 鉴权变量。只有在明确需要执行 Terraform `apply` 时，才可在一次性子 shell 中 source 既有文件并立即执行该命令；不得读取、显示或持久化其内容。
 
 ## 验证策略
 

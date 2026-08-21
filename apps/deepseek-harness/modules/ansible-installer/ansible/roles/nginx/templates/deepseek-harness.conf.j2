@@ -20,6 +20,18 @@ server {
     listen 0.0.0.0:{{ dsh_web_proxy_port }};
     server_name _;
 
+    location = /manifest.webmanifest {
+        auth_basic off;
+        proxy_pass http://127.0.0.1:{{ dsh_port }};
+        proxy_http_version 1.1;
+        proxy_set_header Host 127.0.0.1:{{ dsh_port }};
+        proxy_set_header X-Forwarded-Host $http_x_forwarded_host;
+        proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Origin "http://127.0.0.1:{{ dsh_port }}";
+        proxy_set_header Sec-Fetch-Site "same-origin";
+    }
+
     location / {
         if ($dsh_origin_allowed = 0) { return 403; }
         if ($dsh_fetch_site_allowed = 0) { return 403; }
@@ -39,6 +51,12 @@ server {
         proxy_buffering off;
         proxy_read_timeout 3600s;
         proxy_send_timeout 3600s;
+
+        # DSH走公网鉴权，DSH限制了公网环境阻止了某些DSH的前端能力，这里需要拦截篡改一些内容
+        proxy_set_header Accept-Encoding ""; # 阻止上游返回压缩内容
+        sub_filter_types application/javascript text/javascript; # 只对js代码做替换
+        sub_filter 'connection.isLoopback ? "host" : "memory"' '"host"'; # 把这个判断强制替换成"host"
+        sub_filter_once off; # 表示每个响应中所有匹配项都替换，而不是只替换第一个
     }
 }
 
