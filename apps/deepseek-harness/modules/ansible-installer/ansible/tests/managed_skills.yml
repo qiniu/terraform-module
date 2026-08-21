@@ -1,0 +1,89 @@
+---
+- name: Verify managed FileBrowser Skill lifecycle
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  vars:
+    dsh_group: "{{ ansible_facts['user_id'] }}"
+    dsh_home: "{{ managed_skills_test_root.path }}/home"
+    dsh_user: "{{ ansible_facts['user_id'] }}"
+    dsh_state_dir: "{{ dsh_home }}/.dsh"
+    dsh_workspace_dir: "{{ dsh_home }}/workspace"
+    static_preview_dir: "{{ dsh_home }}/.las-static-preview"
+    static_preview_public_authority: static-preview.example.test
+    dsh_web_public_authority: dsh.example.test
+    dsh_web_proxy_port: 3081
+    dsh_port: 3080
+    dsh_ansible_venv_dir: /opt/las-dsh-installer/venv
+    las_instance_id: test-instance
+    las_region_id: ap-southeast-1
+    las_region_name: Singapore
+    nodejs_version: 24.19.0
+    uv_version: 0.12.5
+    dsh_skills: []
+    enable_code_server: false
+    enable_filebrowser: false
+    filebrowser_port: 3085
+    filebrowser_public_authority: filebrowser.example.test
+    filebrowser_source_name: dsh-home
+    filebrowser_token_path: "{{ dsh_home }}/.filebrowser/agent-api-token"
+    preview_ports: []
+    preview_public_authorities: []
+  tasks:
+    - name: Create a temporary managed skills workspace
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: las-dsh-managed-skills-
+      register: managed_skills_test_root
+
+    - name: Verify FileBrowser Skill lifecycle
+      block:
+        - name: Create a stale FileBrowser Skill directory
+          ansible.builtin.file:
+            path: "{{ dsh_home }}/.agents/skills/las-filebrowser-share/scripts"
+            state: directory
+            mode: '0700'
+
+        - name: Run managed skills with FileBrowser disabled
+          ansible.builtin.include_role:
+            name: managed_skills
+
+        - name: Check the disabled FileBrowser Skill directory
+          ansible.builtin.stat:
+            path: "{{ dsh_home }}/.agents/skills/las-filebrowser-share"
+          register: disabled_filebrowser_skill
+
+        - name: Verify disabled FileBrowser removes stale Skill files
+          ansible.builtin.assert:
+            that:
+              - not disabled_filebrowser_skill.stat.exists
+
+        - name: Enable FileBrowser for the installation pass
+          ansible.builtin.set_fact:
+            enable_filebrowser: true
+
+        - name: Run managed skills with FileBrowser enabled
+          ansible.builtin.include_role:
+            name: managed_skills
+
+        - name: Check the enabled FileBrowser Skill files
+          ansible.builtin.stat:
+            path: "{{ item }}"
+          loop:
+            - "{{ dsh_home }}/.agents/skills/las-filebrowser-share/SKILL.md"
+            - "{{ dsh_home }}/.agents/skills/las-filebrowser-share/scripts/filebrowser-share.sh"
+            - "{{ dsh_home }}/.agents/skills/las-filebrowser-share/scripts/filebrowser-share.py"
+          register: enabled_filebrowser_skill_files
+
+        - name: Verify enabled FileBrowser renders all Skill files
+          ansible.builtin.assert:
+            that:
+              - item.stat.exists
+          loop: "{{ enabled_filebrowser_skill_files.results }}"
+          loop_control:
+            label: "{{ item.item }}"
+      always:
+        - name: Remove the temporary managed skills workspace
+          ansible.builtin.file:
+            path: "{{ managed_skills_test_root.path }}"
+            state: absent

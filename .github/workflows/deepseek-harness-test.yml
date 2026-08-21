@@ -59,6 +59,7 @@ jobs:
           export ANSIBLE_STRATEGY_PLUGINS="$(uv run --locked python -c 'import pathlib, ansible_mitogen; print(pathlib.Path(ansible_mitogen.__file__).parent / "plugins" / "strategy")')"
           uv run --locked ansible-playbook --syntax-check -i inventory/default playbooks/site.yml
           uv run --locked ansible-playbook -i localhost, tests/render_las_dsh_environment.yml
+          uv run --locked ansible-playbook -i localhost, tests/managed_skills.yml
           uv run --locked ansible-playbook -i localhost, tests/static_preview.yml
           uv run --locked ansible-playbook -i localhost, tests/preview_port_claim.yml
           uv run --locked ansible-playbook -i localhost, tests/web_plugins.yml
