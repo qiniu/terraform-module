@@ -74,6 +74,7 @@
               - "'sub_filter_types application/javascript text/javascript;' in static_preview_nginx_config"
               - "'sub_filter ' in static_preview_nginx_config"
               - "'connection.isLoopback ? \"host\" : \"memory\"' in static_preview_nginx_config"
+              - "\"sub_filter 'if (!isLoopback) return' 'if (false) return';\" in static_preview_nginx_config"
 
         - name: Verify the Harness restart route is proxied as a trusted local request
           ansible.builtin.assert:
