@@ -21,7 +21,7 @@ scripts/publish.sh <slug> <source-dir> [session-id]
 
 `slug` 只能包含小写字母、数字和中间连字符。可选 `session-id` 仅在当前会话明确提供时填写，不得猜测或编造。脚本会拒绝符号链接，替换同名站点，并记录来源目录、发布时间和会话标识。
 
-发布脚本成功返回即视为部署完成。禁止从当前 VM 内对公网站点 URL 执行 `curl`、浏览器或其他可联网探测；云网络可能不支持 NAT 回环，失败结果没有诊断价值。发布后直接向用户报告站点 URL。只有用户明确要求验证公网链路时，才允许从外部网络执行检查。
+发布脚本成功返回即视为部署完成。禁止从当前 VM 内探测本部署的任何公网域名，包括 DeepSeek Harness、code-server、FileBrowser、Preview、Static Preview 和文件分享链接；不得使用 `curl`、浏览器或其他网络请求。云网络可能不支持 NAT 回环，失败结果没有诊断价值。发布后直接向用户报告站点 URL；仅在用户明确要求验证公网链路时，才可从外部网络执行检查。
 
 同名站点已存在或用户要求说明其归属时，先读取该站点的 `.las-static-preview.json`。其中 `agent_session_id` 非空时，运行 `{{ dsh_home }}/.agents/skills/las-dsh-environment/scripts/inspect-session.sh <session-id>` 查询摘要，再向用户说明关联的会话任务；不得默认读取完整会话历史。没有会话标识时应说明无法关联。
 

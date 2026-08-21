@@ -651,6 +651,20 @@ run "filebrowser_share_skill_enforces_issue_68_safety_contract" {
   }
 }
 
+run "managed_skills_do_not_probe_deployment_public_addresses" {
+  command = plan
+
+  assert {
+    condition = alltrue([
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-dsh-environment/SKILL.md.j2"])), "禁止从当前 VM 内探测本部署的任何公网域名"),
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-preview-ports/SKILL.md.j2"])), "禁止从当前 VM 内探测本部署的任何公网域名"),
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-static-preview/SKILL.md.j2"])), "禁止从当前 VM 内探测本部署的任何公网域名"),
+      strcontains(base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/managed_skills/templates/las-filebrowser-share/SKILL.md.j2"])), "禁止从当前 VM 内探测本部署的任何公网域名"),
+    ])
+    error_message = "所有暴露本部署公网地址的内置 Skill 都必须禁止在 VM 内探测该地址。"
+  }
+}
+
 run "escapes_filebrowser_yaml_credentials" {
   command = plan
 
