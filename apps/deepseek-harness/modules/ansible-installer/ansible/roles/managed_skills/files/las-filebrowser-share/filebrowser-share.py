@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import json
 import os
 import sys
@@ -50,7 +51,10 @@ def api(method, path, body=None, query=None):
     try:
         with urlopen(request) as response:
             raw = response.read()
-    except (HTTPError, URLError, OSError) as exc:
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace").strip()
+        fail(f"FileBrowser API request failed: HTTP {exc.code}: {detail[:500]}")
+    except (URLError, OSError) as exc:
         fail(f"FileBrowser API request failed: {exc}")
     if not raw:
         return {}
@@ -64,51 +68,87 @@ def emit(response):
     print(json.dumps(response, separators=(",", ":")))
 
 
+def positive_integer(value):
+    if not value.isdigit() or int(value) <= 0:
+        raise argparse.ArgumentTypeError("must be a positive integer")
+    return value
+
+
+def positive_number(value):
+    return int(positive_integer(value))
+
+
 def share(args):
-    if len(args) not in (2, 3):
-        fail("share requires PATH DAYS [normal|upload]")
-    share_type = args[2] if len(args) == 3 else "normal"
-    if share_type not in {"normal", "upload"}:
-        fail("share type must be normal or upload")
-    if not args[1].isdigit() or int(args[1]) <= 0:
-        fail("days must be a positive integer")
-    emit(api("POST", "/api/share", {
-        "path": args[0],
+    payload = {
+        "path": args.path,
         "source": SOURCE,
-        "shareType": share_type,
-        "expires": args[1],
-        "unit": "days",
+        "shareType": args.share_type,
+        "expires": args.expires,
+        "unit": args.unit,
         "showHidden": False,
-    }))
+    }
+    if args.downloads_limit is not None:
+        payload["downloadsLimit"] = args.downloads_limit
+    if args.max_bandwidth is not None:
+        payload["maxBandwidth"] = args.max_bandwidth
+    if args.disable_anonymous_access:
+        payload["disableAnonymousAccess"] = True
+    if args.keep_after_expiration:
+        payload["keepAfterExpiration"] = True
+    if args.password_stdin:
+        payload["password"] = sys.stdin.read().rstrip("\r\n")
+    elif args.password_file:
+        try:
+            payload["password"] = Path(args.password_file).read_text(encoding="utf-8").rstrip("\r\n")
+        except OSError as exc:
+            fail(f"unable to read password file: {exc}")
+    if "password" in payload and not payload["password"]:
+        fail("password must not be empty")
+    emit(api("POST", "/api/share", payload))
 
 
 def list_shares(args):
-    if len(args) > 1:
-        fail("list accepts optional PATH")
-    if args:
-        emit(api("GET", "/api/share", query={"source": SOURCE, "path": args[0]}))
+    if args.path:
+        emit(api("GET", "/api/share", query={"source": SOURCE, "path": args.path}))
     else:
         emit(api("GET", "/api/share/list"))
 
 
 def revoke(args):
-    if len(args) != 1 or not args[0]:
-        fail("revoke requires HASH")
-    emit(api("DELETE", "/api/share", query={"hash": args[0]}))
+    emit(api("DELETE", "/api/share", query={"hash": args.hash}))
+
+
+def parser():
+    command_parser = argparse.ArgumentParser(description="FileBrowser share API client")
+    commands = command_parser.add_subparsers(dest="command", required=True)
+
+    share_parser = commands.add_parser("share")
+    share_parser.add_argument("--path", required=True)
+    share_parser.add_argument("--expires", type=positive_integer, default="2")
+    share_parser.add_argument("--unit", choices=("minutes", "hours", "days"), default="hours")
+    share_parser.add_argument("--share-type", choices=("normal", "upload"), default="normal")
+    share_parser.add_argument("--downloads-limit", type=positive_number)
+    share_parser.add_argument("--max-bandwidth", type=positive_number)
+    share_parser.add_argument("--disable-anonymous-access", action="store_true")
+    share_parser.add_argument("--keep-after-expiration", action="store_true")
+    password_group = share_parser.add_mutually_exclusive_group()
+    password_group.add_argument("--password-stdin", action="store_true")
+    password_group.add_argument("--password-file")
+    share_parser.set_defaults(handler=share)
+
+    list_parser = commands.add_parser("list")
+    list_parser.add_argument("--path")
+    list_parser.set_defaults(handler=list_shares)
+
+    revoke_parser = commands.add_parser("revoke")
+    revoke_parser.add_argument("--hash", required=True)
+    revoke_parser.set_defaults(handler=revoke)
+    return command_parser
 
 
 def main(argv):
-    if not argv:
-        fail("missing operation")
-    action, args = argv[0], argv[1:]
-    if action == "share":
-        share(args)
-    elif action == "list":
-        list_shares(args)
-    elif action == "revoke":
-        revoke(args)
-    else:
-        fail("unsupported operation; use share, list, or revoke")
+    args = parser().parse_args(argv)
+    args.handler(args)
 
 
 if __name__ == "__main__":

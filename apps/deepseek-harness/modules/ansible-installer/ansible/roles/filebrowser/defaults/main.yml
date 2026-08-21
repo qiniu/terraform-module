@@ -2,6 +2,6 @@
 filebrowser_prefix: "/opt/filebrowser-{{ filebrowser_version }}"
 filebrowser_managed_marker: .las-dsh-managed
 filebrowser_config_path: "{{ filebrowser_state_dir }}/config.yaml"
-filebrowser_database_path: "{{ filebrowser_state_dir }}/database.db"
+filebrowser_database_path: "{{ filebrowser_state_dir }}/database.sqlite"
 filebrowser_token_name: las-filebrowser-agent
 filebrowser_token_days: 3652

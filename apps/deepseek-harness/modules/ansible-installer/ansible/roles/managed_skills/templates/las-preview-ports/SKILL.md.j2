@@ -27,13 +27,15 @@ scripts/manage-preview-port.sh claim <port> <project-dir> [session-id]
 
 启动服务后，必须再次用 `ss -H -ltnp '( sport = :<port> )'`、`ps -fp <pid>` 和 `readlink -f /proc/<pid>/cwd` 确认监听地址、PID 和工作目录。监听地址必须是 `0.0.0.0:<port>`，然后用 `curl http://127.0.0.1:<port>` 验证本机响应，最后再向用户提供对应公网 URL。
 
+禁止从当前 VM 内探测本部署的任何公网域名，包括 Harness、文件服务、Preview、Static Preview 和文件分享链接；不得使用 `curl`、浏览器或其他网络请求。云网络可能不支持 NAT 回环，失败结果没有诊断价值。发布成功后直接报告公网 URL；仅在用户明确要求验证公网链路时，才可从外部网络执行检查。
+
 停止服务后，仅由同一项目执行：
 
 ```bash
 scripts/manage-preview-port.sh release <port> <project-dir>
 ```
 
-脚本会拒绝释放仍有监听的端口或属于其他项目的记录。从 VM 内访问自身公网 Preview URL 不通时，可能是 NAT 回环限制；这是无害的环境特性，应以本机 `curl` 验证服务，由外部网络验证公网链路。
+脚本会拒绝释放仍有监听的端口或属于其他项目的记录。本机响应使用回环地址验证；公网链路仅可从外部网络验证。
 
 ## 清理端口 Preview
 

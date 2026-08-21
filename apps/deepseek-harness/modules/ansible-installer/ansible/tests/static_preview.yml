@@ -48,6 +48,7 @@
               - "'inspect-session.sh <session-id>' in static_preview_skill"
               - "'.las-static-preview.json' in static_preview_skill"
               - "'公开入口' in static_preview_skill"
+              - "'禁止从当前 VM 内探测本部署的任何公网域名' in static_preview_skill"
 
         - name: Render the Static Preview Nginx server
           ansible.builtin.set_fact:
@@ -63,6 +64,37 @@
               - "'location ~ (^|/)\\. {' in static_preview_nginx_config"
               - "'disable_symlinks on;' in static_preview_nginx_config"
               - "'auth_basic' not in static_preview_nginx_config.split('server {')[2].split('server {')[0]"
+
+        - name: Verify the Harness manifest is public and proxied
+          ansible.builtin.assert:
+            that:
+              - "'location = /manifest.webmanifest {' in static_preview_nginx_config"
+              - "'auth_basic off;' in static_preview_nginx_config.split('location = /manifest.webmanifest {')[1].split('location / {')[0]"
+              - "'proxy_pass http://127.0.0.1:3080;' in static_preview_nginx_config.split('location = /manifest.webmanifest {')[1].split('location / {')[0]"
+              - "'sub_filter_types application/javascript text/javascript;' in static_preview_nginx_config"
+              - "'sub_filter ' in static_preview_nginx_config"
+              - "'connection.isLoopback ? \"host\" : \"memory\"' in static_preview_nginx_config"
+              - "\"sub_filter 'if (!isLoopback) return' 'if (false) return';\" in static_preview_nginx_config"
+
+        - name: Verify the Harness restart route is proxied as a trusted local request
+          ansible.builtin.assert:
+            that:
+              - "'location = /dsh-market/restart {' in static_preview_nginx_config"
+              - "'auth_basic \"DeepSeek Harness\";' in static_preview_nginx_config.split('location = /dsh-market/restart {')[1].split('location / {')[0]"
+              - "'proxy_set_header Host dsh.example.test;' in static_preview_nginx_config.split('location = /dsh-market/restart {')[1].split('location / {')[0]"
+              - "'proxy_set_header Origin \"https://dsh.example.test\";' in static_preview_nginx_config.split('location = /dsh-market/restart {')[1].split('location / {')[0]"
+              - "'proxy_set_header X-Forwarded-For \"\";' in static_preview_nginx_config.split('location = /dsh-market/restart {')[1].split('location / {')[0]"
+              - "'proxy_set_header X-Real-IP \"\";' in static_preview_nginx_config.split('location = /dsh-market/restart {')[1].split('location / {')[0]"
+              - "'proxy_set_header Forwarded \"\";' in static_preview_nginx_config.split('location = /dsh-market/restart {')[1].split('location / {')[0]"
+
+        - name: Verify the unpaired heartbeat cannot trigger a Basic Auth prompt
+          ansible.builtin.assert:
+            that:
+              - "'location = /api/pair/heartbeat {' in static_preview_nginx_config"
+              - "'auth_basic off;' in static_preview_nginx_config.split('location = /api/pair/heartbeat {')[1].split('location = /dsh-market/restart {')[0]"
+              - "'proxy_set_header Authorization \"\";' in static_preview_nginx_config.split('location = /api/pair/heartbeat {')[1].split('location = /dsh-market/restart {')[0]"
+              - "'proxy_intercept_errors on;' in static_preview_nginx_config.split('location = /api/pair/heartbeat {')[1].split('location = /dsh-market/restart {')[0]"
+              - "'error_page 401 =204 @dsh_pair_heartbeat_unpaired;' in static_preview_nginx_config.split('location = /api/pair/heartbeat {')[1].split('location = /dsh-market/restart {')[0]"
 
         - name: Render Nginx without code-server
           ansible.builtin.set_fact:

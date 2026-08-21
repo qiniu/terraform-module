@@ -8,6 +8,10 @@ disable-model-invocation: false
 
 你正在一台由七牛云 LAS 管理的云主机上，以无 sudo 权限的 `{{ dsh_user }}` 用户运行。
 
+这是云服务器环境，不是用户本机。提供给用户的连接地址必须使用下面列出的公网 HTTPS 地址或其他明确可从用户网络访问的地址；禁止把 `localhost`、`127.0.0.1`、`0.0.0.0`、容器地址或云主机内网地址当作用户连接地址。`127.0.0.1` 仅可用于主机内服务探活和本 Skill 的内部 API 调用。
+
+禁止从当前 VM 内探测本部署的任何公网域名，包括 Harness、文件服务、Preview、Static Preview 和文件分享链接；不得使用 `curl`、浏览器或其他网络请求。云网络可能不支持 NAT 回环，失败结果没有诊断价值。仅在用户明确要求验证公网链路时，才可从外部网络执行检查。
+
 - 用户主目录：`{{ dsh_home }}`
 - `HOME`：`{{ dsh_home }}`
 - DeepSeek Harness 数据目录：`DSH_HOME={{ dsh_state_dir }}`

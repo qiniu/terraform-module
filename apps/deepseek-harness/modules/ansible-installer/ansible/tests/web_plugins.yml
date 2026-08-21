@@ -27,7 +27,7 @@
             dsh_web_plugins:
               - dshmarket
               - dsh-better-sidebar
-            dsh_version: 0.1.0-rc.6
+            dsh_version: 0.1.0-rc.7
             dsh_node_bin: node
             dsh_pnpm_bin: "{{ web_plugin_test_root.path }}/fake-pnpm"
 
@@ -100,7 +100,7 @@
         - name: Verify both plugins were installed with the expected command
           ansible.builtin.assert:
             that:
-              - "(first_plugin_install_log.content | b64decode).splitlines() == ['dlx --allow-build=node-pty @deepseek-ai/dsh@0.1.0-rc.6 plugin --profile web add dshmarket', 'dlx --allow-build=node-pty @deepseek-ai/dsh@0.1.0-rc.6 plugin --profile web add dsh-better-sidebar']"
+              - "(first_plugin_install_log.content | b64decode).splitlines() == ['dlx --allow-build=node-pty @deepseek-ai/dsh@0.1.0-rc.7 plugin --profile web add dshmarket', 'dlx --allow-build=node-pty @deepseek-ai/dsh@0.1.0-rc.7 plugin --profile web add dsh-better-sidebar']"
               - "'node-pty: true' in (pnpm_workspace.content | b64decode)"
 
         - name: Install the configured plugins for the second time

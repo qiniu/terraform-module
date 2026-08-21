@@ -10,16 +10,22 @@ description: 使用 FileBrowser Quantum 分享、查看和撤销文件或目录�
 ## 命令
 
 ```text
-filebrowser-share.sh share PATH DAYS [normal|upload]
-filebrowser-share.sh list [PATH]
-filebrowser-share.sh revoke HASH
+filebrowser-share.sh share --path PATH [--expires NUMBER] [--unit minutes|hours|days] [--share-type normal|upload] [--downloads-limit NUMBER] [--max-bandwidth KBPS] [--disable-anonymous-access] [--keep-after-expiration] [--password-stdin|--password-file FILE]
+filebrowser-share.sh list [--path PATH]
+filebrowser-share.sh revoke --hash HASH
 ```
 
 - `PATH` 使用 FileBrowser source 内的路径，例如 `/workspace/report.pdf`，不要使用服务器本地绝对路径。
-- `DAYS` 为正整数，表示分享有效天数。
+- `--expires` 是正整数，默认值为 `2`；`--unit` 默认值为 `hours`，也支持 `minutes` 和 `days`。
+- 参数名称与 FileBrowser API 的 `expires`、`unit`、`shareType` 字段保持一致，避免依赖位置顺序。
+- `--downloads-limit` 限制总下载次数；`--max-bandwidth` 限制下载带宽，单位为 KB/s。
+- `--disable-anonymous-access` 仅允许已登录用户访问；`--keep-after-expiration` 在过期后保留分享记录。
+- 密码只能通过 `--password-stdin`（从标准输入读取）或 `--password-file FILE`（从权限受控文件读取）传入，禁止直接写在命令行中。
 - `normal` 用于普通浏览和下载分享，也是默认类型。
+- 单文件分享会返回可直接下载文件内容的 `downloadURL`；交付单文件时优先使用该字段，目录分享则使用 `shareURL`。
 - `upload` 用于上传投递，通常指向目录；它不是安全收件箱。
 - 分享页面默认不显示隐藏文件。
 - `share` 返回 `shareURL`、`downloadURL`、`hash` 和 `expire` 等信息；`hash` 可用于 `revoke`。
 - `list` 查看分享记录，`revoke` 撤销分享。
 - 输出为结构化 JSON。凭据由部署管理，不要输出或复制；也不要分享密码、令牌、私钥或其他敏感文件。
+- 禁止从当前 VM 内探测本部署的任何公网域名，包括 Harness、文件服务、Preview、Static Preview 和文件分享链接；不得使用 `curl`、浏览器或其他网络请求。云网络可能不支持 NAT 回环，失败结果没有诊断价值。创建分享后直接向用户交付返回的链接；仅在用户明确要求验证公网链路时，才可从外部网络执行检查。

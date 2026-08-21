@@ -55,6 +55,8 @@
           ansible.builtin.assert:
             that:
               - "'七牛云 LAS 管理的云主机' in skill_with_preview"
+              - "'这是云服务器环境，不是用户本机' in skill_with_preview"
+              - "'禁止把 `localhost`、`127.0.0.1`、`0.0.0.0`' in skill_with_preview"
               - "'find-skills' in skill_with_preview"
               - "'https://github.com/vercel-labs/skills' in skill_with_preview"
               - "'test-instance' in skill_with_preview"
