@@ -71,6 +71,8 @@ def share(args):
     share_type = "normal"
     if len(args) >= 2:
         if args[1] in {"normal", "upload"}:
+            if len(args) != 2:
+                fail("share type cannot be followed by another argument")
             share_type = args[1]
         else:
             hours = args[1]
