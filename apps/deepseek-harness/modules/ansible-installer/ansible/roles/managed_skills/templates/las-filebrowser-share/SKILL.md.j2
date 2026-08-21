@@ -22,6 +22,7 @@ filebrowser-share.sh revoke --hash HASH
 - `--disable-anonymous-access` 仅允许已登录用户访问；`--keep-after-expiration` 在过期后保留分享记录。
 - 密码只能通过 `--password-stdin`（从标准输入读取）或 `--password-file FILE`（从权限受控文件读取）传入，禁止直接写在命令行中。
 - `normal` 用于普通浏览和下载分享，也是默认类型。
+- 单文件分享会返回可直接下载文件内容的 `downloadURL`；交付单文件时优先使用该字段，目录分享则使用 `shareURL`。
 - `upload` 用于上传投递，通常指向目录；它不是安全收件箱。
 - 分享页面默认不显示隐藏文件。
 - `share` 返回 `shareURL`、`downloadURL`、`hash` 和 `expire` 等信息；`hash` 可用于 `revoke`。
