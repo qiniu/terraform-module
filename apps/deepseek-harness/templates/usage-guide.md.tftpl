@@ -1,0 +1,19 @@
+# DeepSeek Harness 使用说明
+
+## 访问地址
+
+- [DeepSeek Harness](${dsh_web_url})
+%{ if enable_code_server ~}
+- [code-server](${code_server_url})
+%{ endif ~}
+%{ if enable_filebrowser ~}
+- [FileBrowser](${filebrowser_url})
+%{ endif ~}
+
+## 登录方式
+
+上述服务使用相同的 Basic Auth 凭据：用户名见“登录用户名”，密码见“登录密码”。
+
+## SSH
+
+仅当启用 SSH 端口转发时，才会生成“SSH 登录命令”。请直接复制该命令连接实例。
