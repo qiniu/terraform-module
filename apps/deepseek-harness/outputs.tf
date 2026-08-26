@@ -36,8 +36,8 @@ output "usage_guide" {
   description = "DeepSeek Harness 使用说明。"
   value = templatefile("${path.module}/templates/usage-guide.md.tftpl", {
     dsh_web_url        = "https://${module.infrastructure.dsh_web_public_authority}"
-    code_server_url    = "https://${module.infrastructure.code_server_public_authority}"
-    filebrowser_url    = "https://${module.infrastructure.filebrowser_public_authority}"
+    code_server_url    = var.enable_code_server ? "https://${module.infrastructure.code_server_public_authority}" : ""
+    filebrowser_url    = var.enable_filebrowser ? "https://${module.infrastructure.filebrowser_public_authority}" : ""
     enable_code_server = var.enable_code_server
     enable_filebrowser = var.enable_filebrowser
   })
