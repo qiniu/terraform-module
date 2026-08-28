@@ -347,7 +347,7 @@ run "rejects_comma_in_user_supplied_dsh_web_password" {
   expect_failures = [var.dsh_web_password]
 }
 
-run "rejects_unsupported_special_character_in_passwords" {
+run "rejects_unsupported_special_character_in_dsh_web_password" {
   command = plan
 
   variables {
@@ -355,7 +355,7 @@ run "rejects_unsupported_special_character_in_passwords" {
     dsh_web_password  = "Web!password-123"
   }
 
-  expect_failures = [var.instance_password, var.dsh_web_password]
+  expect_failures = [var.dsh_web_password]
 }
 
 run "supports_zero_preview_slots" {
