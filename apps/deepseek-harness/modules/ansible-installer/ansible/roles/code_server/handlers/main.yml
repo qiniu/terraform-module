@@ -1,7 +1,14 @@
 ---
+- name: Check whether the code-server service unit exists before restart
+  ansible.builtin.stat:
+    path: /etc/systemd/system/code-server.service
+  register: code_server_service_unit
+  listen: restart code server
+
 - name: restart code server service
   ansible.builtin.systemd_service:
     name: code-server.service
     daemon_reload: true
     state: restarted
+  when: enable_code_server | bool and code_server_service_unit.stat.exists
   listen: restart code server

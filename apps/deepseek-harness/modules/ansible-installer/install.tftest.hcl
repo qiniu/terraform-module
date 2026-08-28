@@ -169,6 +169,28 @@ run "code_server_role_disables_existing_service_when_disabled" {
   }
 }
 
+run "guards_code_server_handler_when_disabled_or_missing" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/code_server/handlers/main.yml"])),
+        "Check whether the code-server service unit exists before restart",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/code_server/handlers/main.yml"])),
+        "enable_code_server | bool",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/code_server/handlers/main.yml"])),
+        "code_server_service_unit.stat.exists",
+      )
+    )
+    error_message = "code-server handler 必须在功能禁用或 unit 不存在时跳过重启。"
+  }
+}
+
 run "playbook_requires_code_server_feature_flag" {
   command = plan
 
