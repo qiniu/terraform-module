@@ -269,9 +269,8 @@ run "installs_uv_with_official_installer" {
 
   assert {
     condition = (
-      strcontains(local.bootstrap_content, "UV_VERSION=\"$${uv_version}\"") &&
       strcontains(local.bootstrap_content, "UV_UNMANAGED_INSTALL=\"$${uv_bin_dir}\"") &&
-      strcontains(local.bootstrap_content, "https://astral.sh/uv/install.sh") &&
+      strcontains(local.bootstrap_content, "https://astral.sh/uv/$${uv_version}/install.sh") &&
       strcontains(local.bootstrap_content, "\"$${uv_bin_dir}/uv\" --version")
     )
     error_message = "uv 必须通过官方安装脚本安装到固定目录，并校验安装结果。"

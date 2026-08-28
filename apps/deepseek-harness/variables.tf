@@ -117,13 +117,11 @@ variable "instance_password" {
   validation {
     condition = (
       length(var.instance_password) >= 8 &&
-      length(var.instance_password) <= 30 &&
-      can(regex("^[A-Za-z0-9._~-]+$", var.instance_password)) &&
       can(regex("[A-Za-z]", var.instance_password)) &&
       can(regex("[0-9]", var.instance_password)) &&
-      can(regex("[._~-]", var.instance_password))
+      can(regex("[^A-Za-z0-9]", var.instance_password))
     )
-    error_message = "密码必须为 8 到 30 位，只能包含字母、数字及 -._~，且至少包含一种特殊字符。"
+    error_message = "密码必须不少于 8 位，且同时包含字母、数字和特殊符号。"
   }
 }
 

@@ -280,18 +280,17 @@ run "rejects_weak_instance_password" {
   expect_failures = [var.instance_password]
 }
 
-run "rejects_instance_password_longer_than_thirty" {
+run "accepts_instance_password_longer_than_thirty" {
   command = plan
   variables {
     instance_password = "Aa1!aaaaaaaaaaaaaaaaaaaaaaaaaaa"
   }
-  expect_failures = [var.instance_password]
 }
 
-run "accepts_thirty_character_instance_password" {
+run "accepts_instance_password_with_common_special_characters" {
   command = plan
   variables {
-    instance_password = "Aa1~aaaaaaaaaaaaaaaaaaaaaaaaaa"
+    instance_password = "Aa1!password,with=symbols"
   }
 }
 
