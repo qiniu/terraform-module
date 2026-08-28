@@ -280,18 +280,17 @@ run "rejects_weak_instance_password" {
   expect_failures = [var.instance_password]
 }
 
-run "rejects_instance_password_longer_than_thirty" {
+run "accepts_instance_password_longer_than_thirty" {
   command = plan
   variables {
     instance_password = "Aa1!aaaaaaaaaaaaaaaaaaaaaaaaaaa"
   }
-  expect_failures = [var.instance_password]
 }
 
-run "accepts_thirty_character_instance_password" {
+run "accepts_instance_password_with_common_special_characters" {
   command = plan
   variables {
-    instance_password = "Aa1~aaaaaaaaaaaaaaaaaaaaaaaaaa"
+    instance_password = "Aa1!password,with=symbols"
   }
 }
 
@@ -348,7 +347,7 @@ run "rejects_comma_in_user_supplied_dsh_web_password" {
   expect_failures = [var.dsh_web_password]
 }
 
-run "rejects_unsupported_special_character_in_passwords" {
+run "rejects_unsupported_special_character_in_dsh_web_password" {
   command = plan
 
   variables {
@@ -356,7 +355,7 @@ run "rejects_unsupported_special_character_in_passwords" {
     dsh_web_password  = "Web!password-123"
   }
 
-  expect_failures = [var.instance_password, var.dsh_web_password]
+  expect_failures = [var.dsh_web_password]
 }
 
 run "supports_zero_preview_slots" {

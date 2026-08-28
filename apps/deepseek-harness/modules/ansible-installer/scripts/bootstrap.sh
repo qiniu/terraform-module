@@ -64,9 +64,8 @@ run_install() {
   if [ ! -x "${uv_bin_dir}/uv" ] ||
     [ ! -x "${uv_bin_dir}/uvx" ] ||
     ! "${uv_bin_dir}/uv" --version | grep -Eq "^uv ${uv_version}( |$)"; then
-    export UV_VERSION="${uv_version}"
     export UV_UNMANAGED_INSTALL="${uv_bin_dir}"
-    curl --fail --location --retry 5 --retry-all-errors https://astral.sh/uv/install.sh | sh
+    curl --fail --location --retry 5 --retry-all-errors "https://astral.sh/uv/${uv_version}/install.sh" | sh
   fi
   "${uv_bin_dir}/uv" --version | grep -Eq "^uv ${uv_version}( |$)" || fail 'installed uv version does not match requested version'
   for executable in uv uvx; do
