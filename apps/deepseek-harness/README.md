@@ -45,6 +45,18 @@ terraform output -raw dsh_web_password
 
 打开 `dsh_web_public_url`，使用 `dsh_web_username`（默认 `admin`）和上述随机密码通过 HTTP Basic Auth 登录。模型 API Key 仅在登录后的 Web 设置中配置，保存在服务器上，不作为 Terraform 输入，也不会进入 Terraform state。
 
+也可以在 Terraform 中通过环境变量提供七牛 MaaS API Key。`qiniu_maas_api_key` 会渲染为 systemd 的 `QINIU_MAAS_API_KEY`；其他需要传给 Harness 的变量可通过 `dsh_environment` 设置：
+
+```hcl
+qiniu_maas_api_key = "<qiniu-api-key>"
+
+dsh_environment = {
+  NODE_OPTIONS = "--max-old-space-size=4096"
+}
+```
+
+这些变量写入 root-owned、权限为 `0600` 的 systemd 环境文件，不会写入 Ansible 日志或 Terraform output。
+
 启用 code-server 时，可运行 `terraform output -raw code_server_public_url` 获取地址，并使用与 Harness Web Basic Auth 相同的密码通过 code-server 自带密码认证登录。密码是 sensitive output，不要粘贴到日志、聊天或网页内容中。code-server 仅监听实例内的 `127.0.0.1:3083`，公网入口由独立 HTTPProxy 转发至 Nginx 的 `3084`。
 
 可通过 `enable_code_server = false` 跳过 code-server 的安装和公网入口创建；此时 `code_server_public_url` 为 `null`。已安装实例切换为关闭时会停止并禁用该服务，但保留已下载的文件和配置。

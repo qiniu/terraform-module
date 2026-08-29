@@ -170,6 +170,13 @@ variable "dsh_web_password" {
   sensitive   = true
 }
 
+variable "dsh_environment" {
+  description = "传递给 DeepSeek Harness systemd 服务的环境变量。"
+  type        = map(string)
+  sensitive   = true
+  default     = {}
+}
+
 variable "code_server_password" {
   description = "code-server 自带密码。"
   type        = string

@@ -426,6 +426,10 @@ run "uses_pnpm_for_dsh_prewarm_and_offline_service" {
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/templates/deepseek-harness.service.j2"])),
         "Environment=PNPM_OFFLINE=true",
       ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/templates/deepseek-harness.service.j2"])),
+        "EnvironmentFile=/etc/deepseek-harness/dsh.env",
+      ) &&
       !strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/templates/deepseek-harness.service.j2"])),
         "PNPM_CONFIG_OFFLINE",
@@ -441,6 +445,10 @@ run "uses_pnpm_for_dsh_prewarm_and_offline_service" {
       !strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/templates/deepseek-harness.service.j2"])),
         "/usr/local/bin/npx",
+      ) &&
+      contains(
+        keys(output.file_contents),
+        "/opt/las-dsh-installer/project/roles/deepseek_harness/templates/dsh.env.j2",
       )
     )
     error_message = "DeepSeek Harness 必须通过同一 pnpm store 预热，并使用 pnpm 强制离线启动。"
