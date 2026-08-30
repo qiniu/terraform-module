@@ -40,14 +40,20 @@ variables {
   cost_period_unit        = "Month"
   enable_ssh_port_forward = false
   instance_password       = "Safe-pass-123"
+  dsh_web_password        = ""
 }
 
 run "uses_fixed_versions_and_installer_contract" {
   command = plan
 
+  variables {
+    enable_code_server = true
+  }
+
   assert {
     condition = (
       var.preview_count == 1 &&
+      var.enable_dsh_qiniu_maas_plugin == true &&
       module.infrastructure.dsh_web_proxy_port == 3081 &&
       module.infrastructure.static_preview_proxy_port == 3082 &&
       module.infrastructure.preview_ports == [30080] &&
@@ -100,6 +106,88 @@ run "uses_fixed_versions_and_installer_contract" {
     )
     error_message = "Web 密码必须为 24 位并包含所有字符类别，特殊字符须对 URL、Basic Auth 与 shell 安全。"
   }
+}
+
+run "converts_dsh_environment_entries_to_map" {
+  command = plan
+
+  variables {
+    dsh_environment = [
+      {
+        name  = "NODE_OPTIONS"
+        value = "--max-old-space-size=4096"
+      },
+      {
+        name  = "OPTIONAL_FLAG"
+        value = ""
+      },
+    ]
+  }
+
+  assert {
+    condition = (
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(module.installer.install_command))[0])).dsh_environment.NODE_OPTIONS == "--max-old-space-size=4096" &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(module.installer.install_command))[0])).dsh_environment.OPTIONAL_FLAG == "" &&
+      contains(keys(jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(module.installer.install_command))[0])).dsh_environment), "QINIU_MAAS_API_KEY")
+    )
+    error_message = "dsh_environment 条目必须转换为传给 Ansible 的环境变量 map。"
+  }
+}
+
+run "rejects_duplicate_dsh_environment_names" {
+  command = plan
+
+  variables {
+    dsh_environment = [
+      { name = "NODE_OPTIONS", value = "--max-old-space-size=4096" },
+      { name = "NODE_OPTIONS", value = "--max-old-space-size=8192" },
+    ]
+  }
+
+  expect_failures = [var.dsh_environment]
+}
+
+run "defaults_omitted_dsh_environment_value_to_empty_string" {
+  command = plan
+
+  variables {
+    dsh_environment = [{ name = "OPTIONAL_FLAG" }]
+  }
+
+  assert {
+    condition     = jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(module.installer.install_command))[0])).dsh_environment.OPTIONAL_FLAG == ""
+    error_message = "省略 dsh_environment 条目的 value 时必须默认为空字符串。"
+  }
+}
+
+run "rejects_reserved_dsh_environment_name" {
+  command = plan
+
+  variables {
+    dsh_environment = [{ name = "PATH", value = "/tmp/bin" }]
+  }
+
+  expect_failures = [var.dsh_environment]
+}
+
+run "rejects_invalid_dsh_environment_name" {
+  command = plan
+
+  variables {
+    dsh_environment = [{ name = "INVALID-NAME", value = "value" }]
+  }
+
+  expect_failures = [var.dsh_environment]
+}
+
+run "rejects_dsh_environment_value_with_newline" {
+  command = plan
+
+  variables {
+    dsh_environment = [{ name = "MULTILINE", value = "first\nsecond" }]
+  }
+
+  expect_failures = [var.dsh_environment]
 }
 
 run "enables_ssh_port_forward" {
@@ -296,6 +384,10 @@ run "accepts_instance_password_with_common_special_characters" {
 
 run "outputs_public_contract" {
   command = plan
+
+  variables {
+    enable_code_server = true
+  }
 
   assert {
     condition = (

@@ -1,5 +1,6 @@
 variables {
   enable_code_server              = true
+  enable_dsh_qiniu_maas_plugin    = true
   enable_filebrowser              = true
   dsh_web_proxy_port              = 3081
   preview_ports                   = [30080]
@@ -19,6 +20,36 @@ variables {
   code_server_password            = "Code-server-safe-1234"
   filebrowser_username            = "admin"
   filebrowser_password            = "Filebrowser-safe-1234"
+}
+
+run "includes_maas_plugin_when_enabled" {
+  command = plan
+
+  assert {
+    condition = (
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).enable_dsh_qiniu_maas_plugin == true &&
+      contains(jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).dsh_web_plugins, "https://github.com/zhangzqs/dsh-qiniu-maas-plugin/releases/download/v0.1.6-rc.0/qiniu-dsh-qiniu-maas-plugin-0.1.6-rc.0.tgz") &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).dsh_web_plugins_to_remove == []
+    )
+    error_message = "启用 MaaS 插件时 bootstrap 参数必须包含 MaaS 插件。"
+  }
+}
+
+run "omits_maas_plugin_when_disabled" {
+  command = plan
+
+  variables {
+    enable_dsh_qiniu_maas_plugin = false
+  }
+
+  assert {
+    condition = (
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).enable_dsh_qiniu_maas_plugin == false &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).dsh_web_plugins == ["dshmarket", "dsh-better-sidebar"] &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).dsh_web_plugins_to_remove == ["@qiniu/dsh-qiniu-maas-plugin"]
+    )
+    error_message = "禁用 MaaS 插件时 bootstrap 参数不得包含 MaaS 插件。"
+  }
 }
 
 run "includes_filebrowser_settings_when_enabled" {
@@ -460,9 +491,9 @@ run "preinstalls_default_dsh_web_plugins" {
 
   assert {
     condition = (
-      strcontains(
+      !strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
-        "dsh_web_plugins:\n  - dshmarket\n  - dsh-better-sidebar",
+        "dsh_web_plugins:",
       ) &&
       strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/install_web_plugins.yml"])),
