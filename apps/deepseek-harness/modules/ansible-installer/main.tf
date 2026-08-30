@@ -19,6 +19,7 @@ locals {
       enable_filebrowser              = var.enable_filebrowser
       dsh_web_username                = var.dsh_web_username
       dsh_web_password                = var.dsh_web_password
+      dsh_environment                 = var.dsh_environment
       }, var.enable_code_server ? {
       code_server_proxy_port       = var.code_server_proxy_port
       code_server_public_authority = var.code_server_public_authority

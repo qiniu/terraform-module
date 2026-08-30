@@ -144,3 +144,27 @@ variable "dsh_web_password" {
     error_message = "dsh_web_password 必须为空字符串，或为 8 到 30 位、只含字母数字及 -._~ 且至少包含一种特殊字符的密码。"
   }
 }
+
+variable "qiniu_maas_api_key" {
+  type        = string
+  description = "七牛 MaaS API Key；通过 systemd 环境变量 QINIU_MAAS_API_KEY 提供给 DeepSeek Harness。"
+  default     = ""
+  nullable    = false
+  sensitive   = true
+}
+
+variable "dsh_environment" {
+  type        = map(string)
+  description = "传递给 DeepSeek Harness systemd 服务的自定义环境变量。"
+  default     = {}
+  sensitive   = true
+
+  validation {
+    condition = (
+      length(setintersection(keys(var.dsh_environment), ["QINIU_MAAS_API_KEY", "HOME", "DSH_HOME", "PATH", "PNPM_CONFIG_STORE_DIR", "PNPM_OFFLINE"])) == 0 &&
+      alltrue([for name in keys(var.dsh_environment) : can(regex("^[A-Za-z_][A-Za-z0-9_]*$", name))]) &&
+      alltrue([for value in values(var.dsh_environment) : !can(regex("[\\r\\n]", value))])
+    )
+    error_message = "dsh_environment 的变量名必须是有效 POSIX 环境变量名，不得包含保留变量，值不得包含换行。"
+  }
+}

@@ -1,6 +1,7 @@
 locals {
   dsh_web_username = "admin"
   dsh_web_password = nonsensitive(var.dsh_web_password) == "" ? random_password.dsh_web[0].result : var.dsh_web_password
+  dsh_environment  = merge(var.dsh_environment, nonsensitive(var.qiniu_maas_api_key) == "" ? {} : { QINIU_MAAS_API_KEY = var.qiniu_maas_api_key })
 }
 
 resource "random_password" "dsh_web" {
@@ -53,6 +54,7 @@ module "installer" {
   code_server_password            = var.enable_code_server ? local.dsh_web_password : null
   filebrowser_username            = var.enable_filebrowser ? local.dsh_web_username : null
   filebrowser_password            = var.enable_filebrowser ? local.dsh_web_password : null
+  dsh_environment                 = local.dsh_environment
 }
 
 module "ansible_runtime_transfer" {

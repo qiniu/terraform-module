@@ -1,5 +1,9 @@
 ---
 - name: Install configured DeepSeek Harness Web Profile plugins
+  ansible.builtin.include_tasks: uninstall_web_plugins.yml
+  when: dsh_web_plugins | length > 0 or dsh_web_plugins_to_remove | length > 0
+
+- name: Install configured DeepSeek Harness Web Profile plugins
   ansible.builtin.include_tasks: install_web_plugins.yml
   when: dsh_web_plugins | length > 0
 
@@ -76,6 +80,24 @@
     group: "{{ dsh_group }}"
     mode: '0600'
   when: dsh_needs_prewarm
+
+- name: Create the DeepSeek Harness configuration directory
+  ansible.builtin.file:
+    path: /etc/deepseek-harness
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Render the DeepSeek Harness environment file
+  ansible.builtin.template:
+    src: dsh.env.j2
+    dest: /etc/deepseek-harness/dsh.env
+    owner: root
+    group: root
+    mode: '0600'
+  no_log: true
+  notify: restart deepseek harness
 
 - name: Render the DeepSeek Harness service
   ansible.builtin.template:

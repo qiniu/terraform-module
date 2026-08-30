@@ -1,5 +1,5 @@
 ---
-- name: Create the DeepSeek Harness Web Profile directory
+- name: Create the DeepSeek Harness Web Profile directory for plugin removal
   ansible.builtin.file:
     path: "{{ dsh_state_dir }}/profiles/web"
     state: directory
@@ -8,23 +8,7 @@
     mode: '0700'
   become_user: "{{ dsh_user }}"
 
-- name: Prepare the DeepSeek Harness Web Profile pnpm build policy
-  ansible.builtin.copy:
-    content: |
-      packages:
-        - .
-
-      nodeLinker: hoisted
-      autoInstallPeers: false
-      allowBuilds:
-        node-pty: true
-    dest: "{{ dsh_state_dir }}/profiles/web/pnpm-workspace.yaml"
-    owner: "{{ dsh_user }}"
-    group: "{{ dsh_group }}"
-    mode: '0600'
-  become_user: "{{ dsh_user }}"
-
-- name: Check installed DeepSeek Harness Web Profile plugins
+- name: Check requested DeepSeek Harness Web Profile plugin removals
   ansible.builtin.command:
     argv:
       - "{{ dsh_node_bin | default('/usr/local/bin/node') }}"
@@ -35,14 +19,7 @@
         const packageName = process.argv[2];
         if (!fs.existsSync(manifestPath)) process.exit(1);
         const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-        const dependencies = manifest.dependencies ?? {};
-        const bundles = manifest.dsh?.profile?.bundles ?? [];
-        const installed = Object.entries(dependencies).some(
-          ([name, specifier]) => (name === packageName || specifier === packageName) && bundles.includes(name),
-        );
-        process.exit(
-          installed ? 0 : 1,
-        );
+        process.exit(Object.prototype.hasOwnProperty.call(manifest.dependencies ?? {}, packageName) ? 0 : 1);
       - "{{ dsh_state_dir }}/profiles/web/package.json"
       - "{{ item }}"
   args:
@@ -52,14 +29,14 @@
     DSH_HOME: "{{ dsh_state_dir }}"
     PNPM_CONFIG_STORE_DIR: "{{ dsh_pnpm_store_dir }}"
   become_user: "{{ dsh_user }}"
-  loop: "{{ dsh_web_plugins }}"
+  loop: "{{ dsh_web_plugins_to_remove | default([]) }}"
   loop_control:
     label: "{{ item }}"
-  register: dsh_web_plugin_state
+  register: dsh_web_plugin_removal_state
   changed_when: false
   failed_when: false
 
-- name: Install missing DeepSeek Harness Web Profile plugins
+- name: Remove requested DeepSeek Harness Web Profile plugins
   ansible.builtin.command:
     argv:
       - "{{ dsh_pnpm_bin | default('/usr/local/bin/pnpm') }}"
@@ -69,8 +46,8 @@
       - plugin
       - --profile
       - web
-      - add
-      - "{{ item.item }}"
+      - remove
+      - "{{ dsh_web_plugin_to_remove }}"
   args:
     chdir: "{{ dsh_workspace_dir }}"
   environment:
@@ -78,8 +55,10 @@
     DSH_HOME: "{{ dsh_state_dir }}"
     PNPM_CONFIG_STORE_DIR: "{{ dsh_pnpm_store_dir }}"
   become_user: "{{ dsh_user }}"
-  loop: "{{ dsh_web_plugin_state.results }}"
+  loop: "{{ dsh_web_plugin_removal_state.results }}"
   loop_control:
     label: "{{ item.item }}"
-  when: item.rc != 0
+  when: item.rc == 0
+  vars:
+    dsh_web_plugin_to_remove: "{{ item.item }}"
   notify: restart deepseek harness

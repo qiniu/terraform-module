@@ -30,6 +30,7 @@
           - preview_public_authorities | select('string') | list | length == preview_ports | length
           - preview_public_authorities | map('trim') | reject('equalto', '') | list | length == preview_ports | length
           - dsh_web_password | default('') | length > 0
+          - dsh_environment is mapping
           - not (enable_code_server | bool) or code_server_password | default('') | length > 0
           - not (enable_filebrowser | bool) or filebrowser_public_authority | default('') | length > 0
           - not (enable_filebrowser | bool) or filebrowser_username | default('') | length > 0
