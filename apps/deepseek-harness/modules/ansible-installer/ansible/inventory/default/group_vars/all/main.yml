@@ -11,7 +11,7 @@ dsh_web_plugins_to_remove:
 dsh_web_plugins:
   - dshmarket
   - dsh-better-sidebar
-  # - https://github.com/zhangzqs/dsh-qiniu-maas-plugin/releases/download/v0.1.3/qiniu-dsh-qiniu-maas-plugin-0.1.3.tgz
+  - https://github.com/zhangzqs/dsh-qiniu-maas-plugin/releases/download/v0.1.6-rc.0/qiniu-dsh-qiniu-maas-plugin-0.1.6-rc.0.tgz
 static_preview_dir: "{{ dsh_home }}/.las-static-preview"
 dsh_download_dir: /var/cache/deepseek-harness
 dsh_npm_cache_dir: /var/cache/deepseek-harness/npm
@@ -26,7 +26,7 @@ code_server_releases:
     archive: "code-server-{{ code_server_version }}-linux-arm64.tar.gz"
     sha256: ade569a677d1c04ee66ef153382b7e15bf261f955407663c7ddc6b87f9ee29fc
 code_server_port: 3083
-filebrowser_version: 2.0.2-direct-download
+filebrowser_version: v2.0.3-beta
 filebrowser_port: 3085
 filebrowser_source_name: dsh-home
 filebrowser_state_dir: "{{ dsh_home }}/.filebrowser"
@@ -34,10 +34,10 @@ filebrowser_token_path: "{{ filebrowser_state_dir }}/agent-api-token"
 filebrowser_release:
   x86_64:
     asset: linux-amd64-filebrowser
-    sha256: e06e7da121ca702b086b5cecbd5679649c784af7520b5f74f2acca0e66dcdd1a
+    sha256: fb6b4719cb0b16520e981eb963db48bc9f4f2d6df84571b5395eca3ea3102c9a
   aarch64:
     asset: linux-arm64-filebrowser
-    sha256: e4a300ece6d1c336ba9e110a2a75fa557644dac0cdcd17c9e94b28cbd7501a5c
+    sha256: 08585786bfcf248aa8d13531ee9acc8bd9168556546d2aecdc460cde728d9adc
 dsh_skills:
   # 发现、检索并选择适合当前任务的 Agent Skill
   - name: find-skills
