@@ -109,7 +109,7 @@ enable_ssh_port_forward = true
 
 ## 升级与离线缓存验证
 
-Harness 固定为 `@deepseek-ai/dsh@0.1.0-rc.7`，Node.js 固定为 `24.19.0`。升级时修改 `modules/ansible-installer/ansible/roles/deepseek_harness/defaults/main.yml` 中的固定版本，审阅 plan 后应用：
+Harness 固定为 `@deepseek-ai/dsh@v0.1.1-rc.2`，Node.js 固定为 `24.19.0`。升级时修改 `modules/ansible-installer/ansible/roles/deepseek_harness/defaults/main.yml` 中的固定版本，审阅 plan 后应用：
 
 ```bash
 terraform plan
