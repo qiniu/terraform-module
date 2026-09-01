@@ -39,7 +39,6 @@ variables {
   cost_period             = null
   cost_period_unit        = "Month"
   enable_ssh_port_forward = false
-  instance_password       = "Safe-pass-123"
   dsh_web_password        = ""
 }
 
@@ -331,6 +330,19 @@ run "rejects_blank_instance_password" {
     instance_password = "   "
   }
   expect_failures = [var.instance_password]
+}
+
+run "allows_omitted_instance_password" {
+  command = plan
+
+  variables {
+    instance_password = ""
+  }
+
+  assert {
+    condition     = nonsensitive(var.instance_password) == ""
+    error_message = "instance_password 省略时应默认为空字符串。"
+  }
 }
 
 run "outputs_ssh_command_when_enabled" {

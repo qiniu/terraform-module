@@ -117,17 +117,18 @@ variable "cost_period_unit" {
 variable "instance_password" {
   type        = string
   description = "ECS root 登录密码。"
+  default     = ""
   nullable    = false
   sensitive   = true
 
   validation {
-    condition = (
+    condition = var.instance_password == "" || (
       length(var.instance_password) >= 8 &&
       can(regex("[A-Za-z]", var.instance_password)) &&
       can(regex("[0-9]", var.instance_password)) &&
       can(regex("[^A-Za-z0-9]", var.instance_password))
     )
-    error_message = "密码必须不少于 8 位，且同时包含字母、数字和特殊符号。"
+    error_message = "instance_password 必须为空字符串，或为不少于 8 位且同时包含字母、数字和特殊符号的密码。"
   }
 }
 

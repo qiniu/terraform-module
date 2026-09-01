@@ -39,7 +39,7 @@ module "infrastructure" {
   cost_charge_type        = var.cost_charge_type
   cost_period             = var.cost_period
   cost_period_unit        = var.cost_period_unit
-  instance_password       = var.instance_password
+  instance_password       = var.instance_password == "" ? null : var.instance_password
 }
 
 module "installer" {
