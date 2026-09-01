@@ -2,7 +2,7 @@ locals {
   bootstrap_content             = file("${path.module}/scripts/bootstrap.sh")
   bootstrap_target_path         = "/opt/las-dsh-installer/bootstrap/bootstrap.sh"
   dsh_qiniu_maas_plugin_package = "@qiniu/dsh-qiniu-maas-plugin"
-  dsh_qiniu_maas_version        = "0.1.8-rc.2"
+  dsh_qiniu_maas_version        = "0.1.8"
   dsh_qiniu_maas_plugin_url     = "https://github.com/zhangzqs/dsh-qiniu-maas-plugin/releases/download/v${local.dsh_qiniu_maas_version}/qiniu-dsh-qiniu-maas-plugin-${local.dsh_qiniu_maas_version}.tgz"
   dsh_web_plugins = concat(
     [

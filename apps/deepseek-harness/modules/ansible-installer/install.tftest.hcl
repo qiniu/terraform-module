@@ -28,7 +28,7 @@ run "includes_maas_plugin_when_enabled" {
   assert {
     condition = (
       jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).enable_dsh_qiniu_maas_plugin == true &&
-      contains(jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).dsh_web_plugins, "https://github.com/zhangzqs/dsh-qiniu-maas-plugin/releases/download/v0.1.8-rc.2/qiniu-dsh-qiniu-maas-plugin-0.1.8-rc.2.tgz") &&
+      contains(jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).dsh_web_plugins, "https://github.com/zhangzqs/dsh-qiniu-maas-plugin/releases/download/v0.1.8/qiniu-dsh-qiniu-maas-plugin-0.1.8.tgz") &&
       jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).dsh_web_plugins_to_remove == []
     )
     error_message = "启用 MaaS 插件时 bootstrap 参数必须包含 MaaS 插件。"
