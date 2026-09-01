@@ -102,6 +102,10 @@ run "uses_fixed_versions_and_installer_contract" {
       random_password.dsh_web[0].lower &&
       random_password.dsh_web[0].numeric &&
       random_password.dsh_web[0].special &&
+      random_password.dsh_web[0].min_upper == 1 &&
+      random_password.dsh_web[0].min_lower == 1 &&
+      random_password.dsh_web[0].min_numeric == 1 &&
+      random_password.dsh_web[0].min_special == 1 &&
       random_password.dsh_web[0].override_special == "-._~"
     )
     error_message = "Web 密码必须为 24 位并包含所有字符类别，特殊字符须对 URL、Basic Auth 与 shell 安全。"
