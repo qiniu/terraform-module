@@ -1,14 +1,4 @@
 mock_provider "qiniu" {
-  mock_data "qiniu_compute_images" {
-    defaults = {
-      items = [{
-        id              = "ubuntu-2404"
-        os_distribution = "Ubuntu"
-        os_version      = "24.04 LTS"
-      }]
-    }
-  }
-
   mock_data "qiniu_compute_region" {
     defaults = {
       region = {
@@ -24,6 +14,7 @@ mock_provider "qiniu" {
 mock_provider "random" {}
 
 variables {
+  image_id                = "ubuntu-2404"
   preview_count           = 0
   enable_code_server      = false
   enable_filebrowser      = false
