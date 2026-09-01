@@ -115,6 +115,7 @@ run "converts_dsh_environment_entries_to_map" {
   command = plan
 
   variables {
+    qiniu_maas_api_key = "test-qiniu-maas-api-key"
     dsh_environment = [
       {
         name  = "NODE_OPTIONS"
