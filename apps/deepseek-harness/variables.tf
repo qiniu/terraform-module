@@ -38,6 +38,12 @@ variable "enable_filebrowser" {
   default     = true
 }
 
+variable "enable_agent_browser" {
+  type        = bool
+  description = "是否预装 agent-browser Skill 及无头 Chrome 浏览器依赖。"
+  default     = false
+}
+
 variable "system_disk_size" {
   type        = number
   description = "ECS 系统盘大小（GiB）。"
