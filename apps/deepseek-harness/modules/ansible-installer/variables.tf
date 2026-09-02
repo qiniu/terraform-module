@@ -43,6 +43,11 @@ variable "enable_filebrowser" {
   type        = bool
 }
 
+variable "enable_agent_browser" {
+  description = "是否预装 agent-browser Skill 及无头 Chrome 浏览器依赖。"
+  type        = bool
+}
+
 variable "code_server_proxy_port" {
   description = "code-server 的 HTTPProxy/Nginx 代理端口。"
   type        = number

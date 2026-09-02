@@ -20,6 +20,8 @@
           - enable_code_server is boolean
           - enable_filebrowser is defined
           - enable_filebrowser is boolean
+          - enable_agent_browser is defined
+          - enable_agent_browser is boolean
           - dsh_web_public_authority | default('') | length > 0
           - static_preview_public_authority | default('') | length > 0
           - not (enable_code_server | bool) or code_server_public_authority | default('') | length > 0
@@ -54,6 +56,7 @@
     - base
     - nodejs
     - skill_installer
+    - agent_browser
     - code_server
     - filebrowser
     - deepseek_harness

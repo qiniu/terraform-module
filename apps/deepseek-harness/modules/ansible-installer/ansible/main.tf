@@ -48,6 +48,8 @@ locals {
     "roles/nodejs/tasks/cleanup.yml",
     "roles/nodejs/tasks/main.yml",
     "roles/skill_installer/tasks/main.yml",
+    "roles/agent_browser/defaults/main.yml",
+    "roles/agent_browser/tasks/main.yml",
   ]
 }
 
