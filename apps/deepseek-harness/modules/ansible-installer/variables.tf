@@ -33,6 +33,11 @@ variable "enable_code_server" {
   type        = bool
 }
 
+variable "enable_dsh_qiniu_maas_plugin" {
+  description = "是否安装 DeepSeek Harness 的七牛 MaaS Web 插件。"
+  type        = bool
+}
+
 variable "enable_filebrowser" {
   description = "是否安装并公开 FileBrowser Quantum。"
   type        = bool

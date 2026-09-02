@@ -6,9 +6,12 @@ map $http_origin $dsh_origin_allowed {
     "https://{{ dsh_web_public_authority }}" 1;
 }
 
-map $http_sec_fetch_site $dsh_fetch_site_allowed {
+# 跨站实例 output 链接属于浏览器发起的文档导航，需要继续进入
+# Basic Auth 以返回 401；其他跨站请求仍在认证前拒绝，避免放宽 API 边界。
+map "$http_sec_fetch_site:$http_sec_fetch_mode:$http_sec_fetch_dest:$request_method" $dsh_fetch_site_allowed {
     default 1;
-    "cross-site" 0;
+    "cross-site:navigate:document:GET" 1;
+    ~^cross-site: 0;
 }
 
 map $http_upgrade $connection_upgrade {

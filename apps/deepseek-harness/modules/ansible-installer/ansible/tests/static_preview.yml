@@ -65,6 +65,14 @@
               - "'disable_symlinks on;' in static_preview_nginx_config"
               - "'auth_basic' not in static_preview_nginx_config.split('server {')[2].split('server {')[0]"
 
+        - name: Verify cross-site document navigation reaches Basic Auth
+          ansible.builtin.assert:
+            that:
+              - "'map \"$http_sec_fetch_site:$http_sec_fetch_mode:$http_sec_fetch_dest:$request_method\" $dsh_fetch_site_allowed {' in static_preview_nginx_config"
+              - "'cross-site:navigate:document:GET' in static_preview_nginx_config"
+              - "'~^cross-site: 0' in static_preview_nginx_config"
+            fail_msg: "跨站文档导航必须通过 Fetch Metadata 校验后进入 Basic Auth，返回真实的 401。"
+
         - name: Verify the Harness manifest is public and proxied
           ansible.builtin.assert:
             that:

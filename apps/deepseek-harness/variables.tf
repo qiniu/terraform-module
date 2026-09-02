@@ -23,6 +23,12 @@ variable "preview_count" {
 variable "enable_code_server" {
   type        = bool
   description = "是否安装并公开 code-server。"
+  default     = false
+}
+
+variable "enable_dsh_qiniu_maas_plugin" {
+  type        = bool
+  description = "是否安装 DeepSeek Harness 的七牛 MaaS Web 插件。"
   default     = true
 }
 
@@ -111,17 +117,18 @@ variable "cost_period_unit" {
 variable "instance_password" {
   type        = string
   description = "ECS root 登录密码。"
+  default     = ""
   nullable    = false
   sensitive   = true
 
   validation {
-    condition = (
+    condition = var.instance_password == "" || (
       length(var.instance_password) >= 8 &&
       can(regex("[A-Za-z]", var.instance_password)) &&
       can(regex("[0-9]", var.instance_password)) &&
       can(regex("[^A-Za-z0-9]", var.instance_password))
     )
-    error_message = "密码必须不少于 8 位，且同时包含字母、数字和特殊符号。"
+    error_message = "instance_password 必须为空字符串，或为不少于 8 位且同时包含字母、数字和特殊符号的密码。"
   }
 }
 
@@ -154,17 +161,38 @@ variable "qiniu_maas_api_key" {
 }
 
 variable "dsh_environment" {
-  type        = map(string)
+  type = list(object({
+    name  = string
+    value = optional(string, "")
+  }))
   description = "传递给 DeepSeek Harness systemd 服务的自定义环境变量。"
-  default     = {}
+  default     = []
   sensitive   = true
 
   validation {
     condition = (
-      length(setintersection(keys(var.dsh_environment), ["QINIU_MAAS_API_KEY", "HOME", "DSH_HOME", "PATH", "PNPM_CONFIG_STORE_DIR", "PNPM_OFFLINE"])) == 0 &&
-      alltrue([for name in keys(var.dsh_environment) : can(regex("^[A-Za-z_][A-Za-z0-9_]*$", name))]) &&
-      alltrue([for value in values(var.dsh_environment) : !can(regex("[\\r\\n]", value))])
+      # 变量名必须唯一，避免同名项的值被静默覆盖
+      length(distinct([for item in var.dsh_environment : item.name])) == length(var.dsh_environment) &&
+      # 禁止设置保留环境变量
+      length(setintersection(toset([for item in var.dsh_environment : item.name]), toset([
+        "QINIU_MAAS_API_KEY",
+        "HOME",
+        "DSH_HOME",
+        "PATH",
+        "PNPM_CONFIG_STORE_DIR",
+        "PNPM_OFFLINE",
+      ]))) == 0 &&
+      # name 必须是有效 POSIX 环境变量名
+      alltrue([
+        for item in var.dsh_environment :
+        can(regex("^[A-Za-z_][A-Za-z0-9_]*$", item.name))
+      ]) &&
+      # value 必须不包含换行符
+      alltrue([
+        for item in var.dsh_environment :
+        !can(regex("[\\r\\n]", item.value))
+      ])
     )
-    error_message = "dsh_environment 的变量名必须是有效 POSIX 环境变量名，不得包含保留变量，值不得包含换行。"
+    error_message = "dsh_environment 的变量名必须唯一且为有效 POSIX 环境变量名，不得包含保留变量，值不得包含换行。"
   }
 }

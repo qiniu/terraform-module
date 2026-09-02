@@ -1,7 +1,14 @@
 locals {
   dsh_web_username = "admin"
   dsh_web_password = nonsensitive(var.dsh_web_password) == "" ? random_password.dsh_web[0].result : var.dsh_web_password
-  dsh_environment  = merge(var.dsh_environment, nonsensitive(var.qiniu_maas_api_key) == "" ? {} : { QINIU_MAAS_API_KEY = var.qiniu_maas_api_key })
+  dsh_environment = merge(
+    {
+      for item in var.dsh_environment : item.name => item.value
+    },
+    nonsensitive(var.qiniu_maas_api_key) == "" ? {} : {
+      QINIU_MAAS_API_KEY = var.qiniu_maas_api_key
+    },
+  )
 }
 
 resource "random_password" "dsh_web" {
@@ -12,6 +19,10 @@ resource "random_password" "dsh_web" {
   lower            = true
   numeric          = true
   special          = true
+  min_upper        = 1
+  min_lower        = 1
+  min_numeric      = 1
+  min_special      = 1
   override_special = "-._~"
 }
 
@@ -28,7 +39,7 @@ module "infrastructure" {
   cost_charge_type        = var.cost_charge_type
   cost_period             = var.cost_period
   cost_period_unit        = var.cost_period_unit
-  instance_password       = var.instance_password
+  instance_password       = var.instance_password == "" ? null : var.instance_password
 }
 
 module "installer" {
@@ -54,6 +65,7 @@ module "installer" {
   code_server_password            = var.enable_code_server ? local.dsh_web_password : null
   filebrowser_username            = var.enable_filebrowser ? local.dsh_web_username : null
   filebrowser_password            = var.enable_filebrowser ? local.dsh_web_password : null
+  enable_dsh_qiniu_maas_plugin    = var.enable_dsh_qiniu_maas_plugin
   dsh_environment                 = local.dsh_environment
 }
 

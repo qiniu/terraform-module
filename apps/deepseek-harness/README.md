@@ -50,14 +50,20 @@ terraform output -raw dsh_web_password
 ```hcl
 qiniu_maas_api_key = "<qiniu-api-key>"
 
-dsh_environment = {
-  NODE_OPTIONS = "--max-old-space-size=4096"
-}
+# 默认启用；设为 false 可跳过七牛 MaaS Web 插件安装
+enable_dsh_qiniu_maas_plugin = true
+
+dsh_environment = [
+  {
+    name  = "NODE_OPTIONS"
+    value = "--max-old-space-size=4096"
+  },
+]
 ```
 
 这些变量写入 root-owned、权限为 `0600` 的 systemd 环境文件，不会写入 Ansible 日志或 Terraform output。
 
-启用 code-server 时，可运行 `terraform output -raw code_server_public_url` 获取地址，并使用与 Harness Web Basic Auth 相同的密码通过 code-server 自带密码认证登录。密码是 sensitive output，不要粘贴到日志、聊天或网页内容中。code-server 仅监听实例内的 `127.0.0.1:3083`，公网入口由独立 HTTPProxy 转发至 Nginx 的 `3084`。
+启用 code-server 时，可运行 `terraform output -raw code_server_public_url` 获取地址，并使用与 Harness Web Basic Auth 相同的密码通过 code-server 自带密码认证登录。密码是 sensitive output，不要粘贴到日志、聊天或网页内容中。code-server 默认关闭，可通过 `enable_code_server = true` 开启；它仅监听实例内的 `127.0.0.1:3083`，公网入口由独立 HTTPProxy 转发至 Nginx 的 `3084`。
 
 可通过 `enable_code_server = false` 跳过 code-server 的安装和公网入口创建；此时 `code_server_public_url` 为 `null`。已安装实例切换为关闭时会停止并禁用该服务，但保留已下载的文件和配置。
 
@@ -103,7 +109,7 @@ enable_ssh_port_forward = true
 
 ## 升级与离线缓存验证
 
-Harness 固定为 `@deepseek-ai/dsh@0.1.0-rc.7`，Node.js 固定为 `24.19.0`。升级时修改 `modules/ansible-installer/ansible/roles/deepseek_harness/defaults/main.yml` 中的固定版本，审阅 plan 后应用：
+Harness 固定为 `@deepseek-ai/dsh@v0.1.1-rc.2`，Node.js 固定为 `24.19.0`。升级时修改 `modules/ansible-installer/ansible/roles/deepseek_harness/defaults/main.yml` 中的固定版本，审阅 plan 后应用：
 
 ```bash
 terraform plan
