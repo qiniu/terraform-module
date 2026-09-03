@@ -1,4 +1,10 @@
 ---
+- name: Remove the agent-browser Skill when disabled
+  ansible.builtin.file:
+    path: "{{ dsh_home }}/.agents/skills/agent-browser"
+    state: absent
+  when: not (enable_agent_browser | bool)
+
 - name: Install configured skills
   ansible.builtin.command:
     argv:
@@ -23,3 +29,4 @@
   loop: "{{ dsh_skills }}"
   loop_control:
     label: "{{ item.name }}"
+  when: item.name != 'agent-browser' or (enable_agent_browser | bool)

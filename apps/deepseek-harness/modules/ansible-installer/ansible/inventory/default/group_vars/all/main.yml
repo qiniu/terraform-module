@@ -11,6 +11,7 @@ dsh_download_dir: /var/cache/deepseek-harness
 dsh_npm_cache_dir: /var/cache/deepseek-harness/npm
 nodejs_version: 24.19.0
 pnpm_version: 11.22.0
+agent_browser_version: 0.36.0
 code_server_version: 4.132.0
 code_server_releases:
   x86_64:
@@ -51,3 +52,5 @@ dsh_skills:
   # 以简洁、谨慎和可验证为原则编写与审查代码
   - name: karpathy-guidelines
     source: https://github.com/multica-ai/andrej-karpathy-skills
+  - name: agent-browser
+    source: https://github.com/vercel-labs/agent-browser

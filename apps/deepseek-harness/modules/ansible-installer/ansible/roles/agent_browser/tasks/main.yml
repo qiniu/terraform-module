@@ -1,0 +1,96 @@
+---
+- name: Verify agent-browser architecture
+  ansible.builtin.assert:
+    that: ansible_facts['architecture'] == 'x86_64'
+    fail_msg: "agent-browser 目前仅支持 x86_64 主机下载 Chrome for Testing。"
+  when: enable_agent_browser | bool
+
+- name: Check the agent-browser executable
+  ansible.builtin.command:
+    argv:
+      - "{{ nodejs_prefix }}/bin/agent-browser"
+      - --version
+  register: agent_browser_installed
+  changed_when: false
+  failed_when: false
+  when: enable_agent_browser | bool
+
+- name: Install the pinned agent-browser package
+  ansible.builtin.command:
+    argv:
+      - /usr/local/bin/npm
+      - install
+      - --global
+      - --no-audit
+      - --no-fund
+      - "{{ agent_browser_package }}"
+  environment:
+    PATH: "{{ nodejs_prefix }}/bin:{{ ansible_env.PATH }}"
+    npm_config_cache: "{{ dsh_npm_cache_dir }}"
+  when: >-
+    enable_agent_browser | bool and
+    (agent_browser_installed.rc | default(1) != 0 or
+    agent_browser_version not in (agent_browser_installed.stdout | default('') | trim))
+  register: agent_browser_install
+  retries: 5
+  delay: 3
+  until: agent_browser_install.rc == 0
+
+- name: Publish the agent-browser executable wrapper
+  ansible.builtin.copy:
+    content: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      export AGENT_BROWSER_ARGS="--no-sandbox"
+      exec "{{ nodejs_prefix }}/bin/agent-browser" "$@"
+    dest: /usr/local/bin/agent-browser
+    owner: root
+    group: root
+    mode: '0755'
+  when: enable_agent_browser | bool
+
+- name: Check the installed Chrome for Testing binary
+  ansible.builtin.command:
+    argv:
+      - find
+      - "{{ agent_browser_cache_dir }}/browsers"
+      - -type
+      - f
+      - -name
+      - chrome
+      - -print
+      - -quit
+  register: agent_browser_browsers_dir
+  changed_when: false
+  failed_when: false
+  when: enable_agent_browser | bool
+
+- name: Install Chrome for Testing and Linux browser dependencies
+  ansible.builtin.command:
+    argv:
+      - /usr/local/bin/agent-browser
+      - install
+      - --with-deps
+  environment:
+    HOME: "{{ agent_browser_home }}"
+    XDG_CACHE_HOME: "{{ dsh_home }}/.cache"
+  when: enable_agent_browser | bool and agent_browser_browsers_dir.stdout | trim == ''
+  register: agent_browser_browser_install
+  retries: 3
+  delay: 5
+  until: agent_browser_browser_install.rc == 0
+
+- name: Ensure agent-browser cache belongs to dsh
+  ansible.builtin.file:
+    path: "{{ agent_browser_cache_dir }}"
+    state: directory
+    owner: "{{ dsh_user }}"
+    group: "{{ dsh_group }}"
+    mode: '0700'
+  when: enable_agent_browser | bool
+
+- name: Remove the agent-browser cache when disabled
+  ansible.builtin.file:
+    path: "{{ agent_browser_cache_dir }}"
+    state: absent
+  when: not (enable_agent_browser | bool)

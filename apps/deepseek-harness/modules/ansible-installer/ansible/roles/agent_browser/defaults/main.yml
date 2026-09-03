@@ -1,0 +1,4 @@
+---
+agent_browser_package: "agent-browser@{{ agent_browser_version }}"
+agent_browser_home: "{{ dsh_home }}"
+agent_browser_cache_dir: "{{ dsh_home }}/.agent-browser"
