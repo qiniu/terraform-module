@@ -3,7 +3,7 @@ variable "image_id" {
   default = null
 
   validation {
-    condition     = var.image_id == null || trimspace(var.image_id) != ""
+    condition     = var.image_id == null ? true : trimspace(var.image_id) != ""
     error_message = "image_id 不能是空字符串。"
   }
 }

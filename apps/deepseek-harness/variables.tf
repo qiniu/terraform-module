@@ -5,7 +5,7 @@ variable "instance_type" {
 
   validation {
     condition = (
-      (var.cost_discount_activity_id != null && trimspace(var.cost_discount_activity_id) != "") ||
+      (var.cost_discount_activity_id == null ? false : trimspace(var.cost_discount_activity_id) != "") ||
       can(regex("^ecs\\.[0-9A-Za-z]+(\\.[0-9A-Za-z]+)+$", var.instance_type))
     )
     error_message = "非活动规格的 instance_type 必须是以 ecs. 开头的有效 ECS 实例规格。"
@@ -122,7 +122,7 @@ variable "cost_period" {
     error_message = "PrePaid 模式下必须设置 cost_period。"
   }
   validation {
-    condition = var.cost_period == null || (
+    condition = var.cost_period == null ? true : (
       var.cost_period >= 1 &&
       floor(var.cost_period) == var.cost_period &&
       (
@@ -151,7 +151,7 @@ variable "cost_discount_activity_id" {
   default     = null
 
   validation {
-    condition     = var.cost_discount_activity_id == null || trimspace(var.cost_discount_activity_id) != ""
+    condition     = var.cost_discount_activity_id == null ? true : trimspace(var.cost_discount_activity_id) != ""
     error_message = "cost_discount_activity_id 不能是空字符串。"
   }
 
