@@ -2,6 +2,7 @@ variables {
   enable_code_server              = true
   enable_dsh_qiniu_maas_plugin    = true
   enable_filebrowser              = true
+  enable_agent_browser            = true
   dsh_web_proxy_port              = 3081
   preview_ports                   = [30080]
   dsh_web_public_authority        = "dsh.example.test"
@@ -32,6 +33,64 @@ run "includes_maas_plugin_when_enabled" {
       jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).dsh_web_plugins_to_remove == []
     )
     error_message = "启用 MaaS 插件时 bootstrap 参数必须包含 MaaS 插件。"
+  }
+}
+
+run "includes_agent_browser_settings_when_enabled" {
+  command = plan
+
+  assert {
+    condition = (
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).enable_agent_browser == true &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+        "name: agent-browser",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/agent_browser/tasks/main.yml"])),
+        "agent-browser",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/agent_browser/tasks/main.yml"])),
+        "--with-deps",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/agent_browser/tasks/main.yml"])),
+        "dest: /usr/local/bin/agent-browser",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/agent_browser/tasks/main.yml"])),
+        "AGENT_BROWSER_ARGS",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/base/defaults/main.yml"])),
+        "sudo",
+      )
+    )
+    error_message = "启用 agent-browser 时必须传递开关、Skill 清单和无头浏览器安装任务。"
+  }
+}
+
+run "omits_agent_browser_when_disabled" {
+  command = plan
+
+  variables {
+    enable_agent_browser = false
+  }
+
+  assert {
+    condition = (
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).enable_agent_browser == false &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/skill_installer/tasks/main.yml"])),
+        "item.name != 'agent-browser'",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/skill_installer/tasks/main.yml"])),
+        "Remove the agent-browser Skill when disabled",
+      )
+    )
+    error_message = "禁用 agent-browser 时不得安装对应 Skill。"
   }
 }
 

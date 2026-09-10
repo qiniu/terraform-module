@@ -46,7 +46,8 @@ run "uses_fixed_versions_and_installer_contract" {
   command = plan
 
   variables {
-    enable_code_server = true
+    enable_code_server   = true
+    enable_agent_browser = true
   }
 
   assert {
@@ -70,6 +71,11 @@ run "uses_fixed_versions_and_installer_contract" {
       length(nonsensitive(qiniu_compute_instance_exec.install_dsh.command)) <= 8192
     )
     error_message = "installer 必须固定版本，并以短命令调用已传输的 Ansible bootstrap。"
+  }
+
+  assert {
+    condition     = jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(module.installer.install_command))[0])).enable_agent_browser == true
+    error_message = "根模块必须将 agent-browser 开关传递给安装器。"
   }
 
   assert {

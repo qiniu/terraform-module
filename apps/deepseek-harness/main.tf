@@ -58,6 +58,7 @@ module "installer" {
   code_server_proxy_port          = var.enable_code_server ? module.infrastructure.code_server_proxy_port : null
   code_server_public_authority    = var.enable_code_server ? module.infrastructure.code_server_public_authority : null
   enable_filebrowser              = var.enable_filebrowser
+  enable_agent_browser            = var.enable_agent_browser
   filebrowser_proxy_port          = var.enable_filebrowser ? module.infrastructure.filebrowser_proxy_port : null
   filebrowser_public_authority    = var.enable_filebrowser ? module.infrastructure.filebrowser_public_authority : null
   dsh_web_username                = local.dsh_web_username

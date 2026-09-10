@@ -75,6 +75,8 @@ dsh_environment = [
 
 ## 网页预览与运行环境 skill
 
+可通过 `enable_agent_browser = true` 预装 `agent-browser` Skill、固定版本的 `agent-browser` CLI、Chrome for Testing 及其 Linux 无头运行依赖。该选项默认关闭，仅支持 x86_64 实例；关闭后不会安装或下载浏览器。由于 LAS Ubuntu VM 禁用了 unprivileged user namespaces，安装器会通过受管 wrapper 为 CLI 注入 `--no-sandbox`，仅适用于该隔离部署环境。
+
 网页预览入口是独立的公开 HTTPS 地址：任何知道地址的人都可以访问，且不需要 Harness 的 Basic Auth。请只在确认可以公开的页面上使用它们；不要在页面或日志中写入密码、令牌、私钥或其他敏感信息。
 
 Preview 数量通过 `preview_count` 配置，支持 `0..4` 个。用户网页开发服务应按槽位监听 `0.0.0.0:30080` 到 `0.0.0.0:30083`，不要自行暴露其他端口。Preview 地址由 HTTPProxy 直接转发到对应应用，不经过 Nginx；尚未启动开发服务时返回 5xx（通常为 `502`，HTTPProxy 也可能返回 `503`）属于正常状态。
