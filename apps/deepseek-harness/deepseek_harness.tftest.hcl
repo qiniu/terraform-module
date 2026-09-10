@@ -246,10 +246,70 @@ run "rejects_invalid_instance_type" {
   expect_failures = [var.instance_type]
 }
 
+run "accepts_discount_activity_instance_type" {
+  command = plan
+
+  variables {
+    instance_type             = "69c5fce89e43138e3e10sq1a"
+    cost_charge_type          = "PrePaid"
+    cost_period               = 1
+    cost_discount_activity_id = "2026_user_acquisition"
+    internet_public_ip_type   = "Shared"
+  }
+}
+
+run "rejects_postpaid_discount_activity" {
+  command = plan
+
+  variables {
+    cost_discount_activity_id = "2026_user_acquisition"
+  }
+
+  expect_failures = [var.cost_discount_activity_id]
+}
+
+run "rejects_blank_discount_activity" {
+  command = plan
+
+  variables {
+    cost_charge_type          = "PrePaid"
+    cost_period               = 1
+    cost_discount_activity_id = "   "
+  }
+
+  expect_failures = [var.cost_discount_activity_id]
+}
+
+run "rejects_invalid_public_ip_type" {
+  command = plan
+
+  variables {
+    internet_public_ip_type = "Invalid"
+  }
+
+  expect_failures = [var.internet_public_ip_type]
+}
+
+run "rejects_dedicated_public_ip_type" {
+  command = plan
+
+  variables {
+    internet_public_ip_type = "Dedicated"
+  }
+
+  expect_failures = [var.internet_public_ip_type]
+}
+
 run "rejects_invalid_disk_size" {
   command = plan
   variables { system_disk_size = 45 }
   expect_failures = [var.system_disk_size]
+}
+
+run "rejects_invalid_system_disk_type" {
+  command = plan
+  variables { system_disk_type = "Invalid" }
+  expect_failures = [var.system_disk_type]
 }
 
 run "rejects_invalid_bandwidth" {

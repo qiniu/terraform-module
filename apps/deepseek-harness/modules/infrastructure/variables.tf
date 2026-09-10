@@ -3,7 +3,7 @@ variable "image_id" {
   default = null
 
   validation {
-    condition     = var.image_id == null || trimspace(var.image_id) != ""
+    condition     = var.image_id == null ? true : trimspace(var.image_id) != ""
     error_message = "image_id 不能是空字符串。"
   }
 }
@@ -29,12 +29,21 @@ variable "instance_type" {
   type = string
 }
 
+variable "system_disk_type" {
+  type = string
+}
+
 variable "system_disk_size" {
   type = number
 }
 
 variable "internet_max_bandwidth" {
   type = number
+}
+
+variable "internet_public_ip_type" {
+  type     = string
+  nullable = true
 }
 
 variable "enable_ssh_port_forward" {
@@ -53,6 +62,11 @@ variable "cost_period" {
 variable "cost_period_unit" {
   type    = string
   default = "Month"
+}
+
+variable "cost_discount_activity_id" {
+  type     = string
+  nullable = true
 }
 
 variable "instance_password" {

@@ -17,7 +17,7 @@
 | [`apps/ci-runner/single`](apps/ci-runner/single) | 单 ECS 部署 Qiniu CI Runner，包含 GitHub App 配置、runnerd 安装和可选 SSH 调试 | [`README.md`](apps/ci-runner/single/README.md) | `>= 1.6.0` |
 | [`apps/codeagent/standard`](apps/codeagent/standard) | 单 ECS 部署 CodeAgent Standard Edition | [`README.md`](apps/codeagent/standard/README.md)、[`terraform.tfvars.example`](apps/codeagent/standard/terraform.tfvars.example) | `>= 0.13.0` |
 | [`apps/codeagent/codeagent_and_gitlab`](apps/codeagent/codeagent_and_gitlab) | 创建 GitLab 和 CodeAgent 两台 ECS，并配置 webhook | [`terraform.tfvars.example`](apps/codeagent/codeagent_and_gitlab/terraform.tfvars.example) | `>= 0.13.0` |
-| [`apps/deepseek-harness`](apps/deepseek-harness) | 单机部署 DeepSeek Harness、Nginx、code-server 和预览环境 | [`README.md`](apps/deepseek-harness/README.md) | `>= 1.6` |
+| [`apps/deepseek-harness`](apps/deepseek-harness) | 单机部署 DeepSeek Harness、Nginx、code-server 和预览环境 | [`README.md`](apps/deepseek-harness/README.md) | `>= 1.9` |
 | [`apps/mysql/standalone`](apps/mysql/standalone) | 创建 Ubuntu 24.04 单实例 MySQL | [查看目录](apps/mysql/standalone) | `> 0.12.0` |
 | [`apps/mysql/replication`](apps/mysql/replication) | 创建 MySQL 主从复制集群 | [查看目录](apps/mysql/replication) | `> 0.12.0` |
 | [`apps/openclaw`](apps/openclaw) | 在七牛云部署 OpenClaw 个人 AI 助手 | [`terraform.tfvars.example`](apps/openclaw/terraform.tfvars.example) | `>= 0.13.0` |

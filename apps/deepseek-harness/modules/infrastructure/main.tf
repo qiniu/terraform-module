@@ -56,16 +56,20 @@ resource "qiniu_compute_instance" "deepseek_harness" {
   ]), "")
 
   system_disk_size = var.system_disk_size
-  system_disk_type = data.qiniu_compute_region.current.region.features.ebs.supported ? "cloud.ssd" : "local.ssd"
+  system_disk_type = var.system_disk_type == "auto" ? (
+    data.qiniu_compute_region.current.region.features.ebs.supported ? "cloud.ssd" : "local.ssd"
+  ) : var.system_disk_type
 
-  internet_max_bandwidth = var.internet_max_bandwidth
-  internet_charge_type   = "PeakBandwidth"
-  cost_charge_type       = var.cost_charge_type
-  cost_period            = var.cost_charge_type == "PrePaid" ? var.cost_period : null
-  cost_period_unit       = var.cost_charge_type == "PrePaid" ? var.cost_period_unit : null
-  disable_public_ip      = true
-  key_pair_id            = qiniu_compute_key_pair.deployment.id
-  password               = var.instance_password
+  internet_max_bandwidth    = var.internet_max_bandwidth
+  internet_charge_type      = "PeakBandwidth"
+  internet_public_ip_type   = var.internet_public_ip_type
+  cost_charge_type          = var.cost_charge_type
+  cost_period               = var.cost_charge_type == "PrePaid" ? var.cost_period : null
+  cost_period_unit          = var.cost_charge_type == "PrePaid" ? var.cost_period_unit : null
+  cost_discount_activity_id = var.cost_discount_activity_id
+  disable_public_ip         = true
+  key_pair_id               = qiniu_compute_key_pair.deployment.id
+  password                  = var.instance_password
 
   timeouts {
     create = "30m"
