@@ -34,3 +34,23 @@ run "omits_instance_password_when_null" {
     error_message = "instance_password 为 null 时，云实例密码必须为 null。"
   }
 }
+
+run "forwards_discount_activity_configuration" {
+  command = plan
+
+  variables {
+    instance_type             = "69c5fce89e43138e3e10sq1a"
+    cost_charge_type          = "PrePaid"
+    cost_period               = 1
+    cost_discount_activity_id = "2026_user_acquisition"
+    internet_public_ip_type   = "Shared"
+  }
+
+  assert {
+    condition = (
+      qiniu_compute_instance.deepseek_harness.cost_discount_activity_id == "2026_user_acquisition" &&
+      qiniu_compute_instance.deepseek_harness.internet_public_ip_type == "Shared"
+    )
+    error_message = "活动 ID 和共享公网 IP 类型必须传给云实例。"
+  }
+}

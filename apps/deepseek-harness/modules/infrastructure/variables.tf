@@ -37,6 +37,11 @@ variable "internet_max_bandwidth" {
   type = number
 }
 
+variable "internet_public_ip_type" {
+  type    = string
+  default = null
+}
+
 variable "enable_ssh_port_forward" {
   type = bool
 }
@@ -53,6 +58,11 @@ variable "cost_period" {
 variable "cost_period_unit" {
   type    = string
   default = "Month"
+}
+
+variable "cost_discount_activity_id" {
+  type    = string
+  default = null
 }
 
 variable "instance_password" {

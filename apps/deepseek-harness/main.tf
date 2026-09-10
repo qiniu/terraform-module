@@ -29,17 +29,19 @@ resource "random_password" "dsh_web" {
 module "infrastructure" {
   source = "./modules/infrastructure"
 
-  preview_count           = var.preview_count
-  enable_code_server      = var.enable_code_server
-  enable_filebrowser      = var.enable_filebrowser
-  instance_type           = var.instance_type
-  system_disk_size        = var.system_disk_size
-  internet_max_bandwidth  = var.internet_max_bandwidth
-  enable_ssh_port_forward = var.enable_ssh_port_forward
-  cost_charge_type        = var.cost_charge_type
-  cost_period             = var.cost_period
-  cost_period_unit        = var.cost_period_unit
-  instance_password       = var.instance_password == "" ? null : var.instance_password
+  preview_count             = var.preview_count
+  enable_code_server        = var.enable_code_server
+  enable_filebrowser        = var.enable_filebrowser
+  instance_type             = var.instance_type
+  system_disk_size          = var.system_disk_size
+  internet_max_bandwidth    = var.internet_max_bandwidth
+  internet_public_ip_type   = var.internet_public_ip_type
+  enable_ssh_port_forward   = var.enable_ssh_port_forward
+  cost_charge_type          = var.cost_charge_type
+  cost_period               = var.cost_period
+  cost_period_unit          = var.cost_period_unit
+  cost_discount_activity_id = var.cost_discount_activity_id
+  instance_password         = var.instance_password == "" ? null : var.instance_password
 }
 
 module "installer" {

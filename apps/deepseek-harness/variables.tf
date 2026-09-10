@@ -4,8 +4,11 @@ variable "instance_type" {
   default     = "ecs.t1s.c2m4"
 
   validation {
-    condition     = can(regex("^ecs\\.[0-9A-Za-z]+(\\.[0-9A-Za-z]+)+$", var.instance_type))
-    error_message = "instance_type 必须是以 ecs. 开头的有效 ECS 实例规格。"
+    condition = (
+      (var.cost_discount_activity_id != null && trimspace(var.cost_discount_activity_id) != "") ||
+      can(regex("^ecs\\.[0-9A-Za-z]+(\\.[0-9A-Za-z]+)+$", var.instance_type))
+    )
+    error_message = "非活动规格的 instance_type 必须是以 ecs. 开头的有效 ECS 实例规格。"
   }
 }
 
@@ -60,6 +63,17 @@ variable "internet_max_bandwidth" {
   }
 }
 
+variable "internet_public_ip_type" {
+  type        = string
+  description = "公网 IP 类型。"
+  default     = null
+
+  validation {
+    condition     = var.internet_public_ip_type == null || contains(["Shared", "Dedicated"], var.internet_public_ip_type)
+    error_message = "internet_public_ip_type 必须为 Shared 或 Dedicated。"
+  }
+}
+
 variable "enable_ssh_port_forward" {
   type        = bool
   description = "是否通过 PortForward 暴露 SSH 22 端口。"
@@ -111,6 +125,22 @@ variable "cost_period_unit" {
   validation {
     condition     = contains(["Month", "Year"], var.cost_period_unit)
     error_message = "cost_period_unit 必须为 Month 或 Year。"
+  }
+}
+
+variable "cost_discount_activity_id" {
+  type        = string
+  description = "预付费促销活动 ID。"
+  default     = null
+
+  validation {
+    condition     = var.cost_discount_activity_id == null || trimspace(var.cost_discount_activity_id) != ""
+    error_message = "cost_discount_activity_id 不能是空字符串。"
+  }
+
+  validation {
+    condition     = var.cost_charge_type != "PostPaid" || var.cost_discount_activity_id == null
+    error_message = "PostPaid 模式下 cost_discount_activity_id 必须为 null。"
   }
 }
 
