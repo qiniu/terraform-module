@@ -6,7 +6,7 @@
 
 ## 前置条件
 
-- Terraform `>= 1.6.0`；
+- Terraform `>= 1.9.0`；
 - Qiniu Provider `1.0.0`，按仓库根目录的[本地安装说明](../../README.md#基于本地-terraform-运行)安装；
 - 支持 `public_access_http_proxy` 的七牛云区域，并且该区域须恰好存在一个 Ubuntu 24.04 LTS 官方镜像；
 - ECS 能访问 Ubuntu 软件源、nodejs.org 和 npm registry。

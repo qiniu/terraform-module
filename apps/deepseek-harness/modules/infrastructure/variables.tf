@@ -38,8 +38,8 @@ variable "internet_max_bandwidth" {
 }
 
 variable "internet_public_ip_type" {
-  type    = string
-  default = null
+  type     = string
+  nullable = true
 }
 
 variable "enable_ssh_port_forward" {
@@ -61,8 +61,8 @@ variable "cost_period_unit" {
 }
 
 variable "cost_discount_activity_id" {
-  type    = string
-  default = null
+  type     = string
+  nullable = true
 }
 
 variable "instance_password" {

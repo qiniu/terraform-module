@@ -65,12 +65,12 @@ variable "internet_max_bandwidth" {
 
 variable "internet_public_ip_type" {
   type        = string
-  description = "公网 IP 类型。"
+  description = "公网 IP 类型；活动规格使用共享公网 IP。"
   default     = null
 
   validation {
-    condition     = var.internet_public_ip_type == null || contains(["Shared", "Dedicated"], var.internet_public_ip_type)
-    error_message = "internet_public_ip_type 必须为 Shared 或 Dedicated。"
+    condition     = var.internet_public_ip_type == null || var.internet_public_ip_type == "Shared"
+    error_message = "internet_public_ip_type 必须为 Shared。"
   }
 }
 

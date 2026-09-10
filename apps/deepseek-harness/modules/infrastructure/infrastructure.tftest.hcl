@@ -14,16 +14,18 @@ mock_provider "qiniu" {
 mock_provider "random" {}
 
 variables {
-  image_id                = "ubuntu-2404"
-  preview_count           = 0
-  enable_code_server      = false
-  enable_filebrowser      = false
-  instance_type           = "ecs.t1s.c2m4"
-  system_disk_size        = 40
-  internet_max_bandwidth  = 100
-  enable_ssh_port_forward = false
-  cost_charge_type        = "PostPaid"
-  instance_password       = null
+  image_id                  = "ubuntu-2404"
+  preview_count             = 0
+  enable_code_server        = false
+  enable_filebrowser        = false
+  instance_type             = "ecs.t1s.c2m4"
+  system_disk_size          = 40
+  internet_max_bandwidth    = 100
+  internet_public_ip_type   = null
+  enable_ssh_port_forward   = false
+  cost_charge_type          = "PostPaid"
+  cost_discount_activity_id = null
+  instance_password         = null
 }
 
 run "omits_instance_password_when_null" {

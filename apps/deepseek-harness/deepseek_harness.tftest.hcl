@@ -262,11 +262,33 @@ run "rejects_postpaid_discount_activity" {
   expect_failures = [var.cost_discount_activity_id]
 }
 
+run "rejects_blank_discount_activity" {
+  command = plan
+
+  variables {
+    cost_charge_type          = "PrePaid"
+    cost_period               = 1
+    cost_discount_activity_id = "   "
+  }
+
+  expect_failures = [var.cost_discount_activity_id]
+}
+
 run "rejects_invalid_public_ip_type" {
   command = plan
 
   variables {
     internet_public_ip_type = "Invalid"
+  }
+
+  expect_failures = [var.internet_public_ip_type]
+}
+
+run "rejects_dedicated_public_ip_type" {
+  command = plan
+
+  variables {
+    internet_public_ip_type = "Dedicated"
   }
 
   expect_failures = [var.internet_public_ip_type]
