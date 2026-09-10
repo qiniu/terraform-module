@@ -23,6 +23,17 @@ variable "preview_count" {
   }
 }
 
+variable "system_disk_type" {
+  type        = string
+  description = "系统盘类型；auto 根据地域能力自动选择。"
+  default     = "auto"
+
+  validation {
+    condition     = contains(["auto", "cloud.ssd", "local.ssd"], var.system_disk_type)
+    error_message = "system_disk_type 必须为 auto、cloud.ssd 或 local.ssd。"
+  }
+}
+
 variable "enable_code_server" {
   type        = bool
   description = "是否安装并公开 code-server。"

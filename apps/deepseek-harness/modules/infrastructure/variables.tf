@@ -29,6 +29,10 @@ variable "instance_type" {
   type = string
 }
 
+variable "system_disk_type" {
+  type = string
+}
+
 variable "system_disk_size" {
   type = number
 }

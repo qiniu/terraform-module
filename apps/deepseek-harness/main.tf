@@ -33,6 +33,7 @@ module "infrastructure" {
   enable_code_server        = var.enable_code_server
   enable_filebrowser        = var.enable_filebrowser
   instance_type             = var.instance_type
+  system_disk_type          = var.system_disk_type
   system_disk_size          = var.system_disk_size
   internet_max_bandwidth    = var.internet_max_bandwidth
   internet_public_ip_type   = var.internet_public_ip_type

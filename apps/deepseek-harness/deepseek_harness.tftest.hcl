@@ -306,6 +306,12 @@ run "rejects_invalid_disk_size" {
   expect_failures = [var.system_disk_size]
 }
 
+run "rejects_invalid_system_disk_type" {
+  command = plan
+  variables { system_disk_type = "Invalid" }
+  expect_failures = [var.system_disk_type]
+}
+
 run "rejects_invalid_bandwidth" {
   command = plan
   variables { internet_max_bandwidth = 150 }

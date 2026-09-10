@@ -56,7 +56,9 @@ resource "qiniu_compute_instance" "deepseek_harness" {
   ]), "")
 
   system_disk_size = var.system_disk_size
-  system_disk_type = data.qiniu_compute_region.current.region.features.ebs.supported ? "cloud.ssd" : "local.ssd"
+  system_disk_type = var.system_disk_type == "auto" ? (
+    data.qiniu_compute_region.current.region.features.ebs.supported ? "cloud.ssd" : "local.ssd"
+  ) : var.system_disk_type
 
   internet_max_bandwidth    = var.internet_max_bandwidth
   internet_charge_type      = "PeakBandwidth"
