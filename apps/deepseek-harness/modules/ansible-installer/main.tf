@@ -4,6 +4,7 @@ locals {
   dsh_qiniu_maas_plugin_package = "@qiniu/dsh-qiniu-maas-plugin"
   dsh_qiniu_maas_version        = "0.1.9"
   dsh_qiniu_maas_plugin_url     = "https://github.com/zhangzqs/dsh-qiniu-maas-plugin/releases/download/v${local.dsh_qiniu_maas_version}/qiniu-dsh-qiniu-maas-plugin-${local.dsh_qiniu_maas_version}.tgz"
+  agent_browser_version         = "0.36.0"
   dsh_web_plugins = concat(
     [
       "dshmarket@v1.37.0",
@@ -31,6 +32,7 @@ locals {
         dsh_web_plugins                 = local.dsh_web_plugins
         dsh_web_plugins_to_remove       = var.enable_dsh_qiniu_maas_plugin ? [] : [local.dsh_qiniu_maas_plugin_package]
         enable_filebrowser              = var.enable_filebrowser
+        enable_agent_browser            = var.enable_agent_browser
         dsh_web_username                = var.dsh_web_username
         dsh_web_password                = var.dsh_web_password
         dsh_environment                 = var.dsh_environment

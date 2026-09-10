@@ -7,3 +7,4 @@ dsh_base_packages:
   - git
   - build-essential
   - python3
+  - sudo
