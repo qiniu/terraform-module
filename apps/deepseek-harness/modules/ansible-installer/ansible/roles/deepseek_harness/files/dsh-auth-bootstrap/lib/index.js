@@ -20,6 +20,35 @@ function secretMatches(candidate, expected) {
     && timingSafeEqual(actualBuffer, expectedBuffer);
 }
 
+function isCrossSiteDocumentNavigation(request) {
+  return request.headers["sec-fetch-site"] === "cross-site"
+    && request.headers["sec-fetch-mode"] === "navigate"
+    && request.headers["sec-fetch-dest"] === "document";
+}
+
+function escapeHtmlAttribute(value) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+function transitionDocument(authenticatedUrl) {
+  const escapedUrl = escapeHtmlAttribute(authenticatedUrl);
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="refresh" content="0;url=${escapedUrl}">
+<title>Opening DeepSeek Harness</title>
+</head>
+<body><a href="${escapedUrl}">Continue to DeepSeek Harness</a></body>
+</html>
+`;
+}
+
 function readConfiguration() {
   const secret = process.env.DSH_AUTH_BOOTSTRAP_SECRET ?? "";
   const route = process.env.DSH_AUTH_BOOTSTRAP_ROUTE ?? "";
@@ -58,12 +87,26 @@ export function apply(ctx) {
         return reject(response, 403);
       }
 
-      response.statusCode = 303;
-      response.setHeader("Location", ctx.connection.authenticatedUrl(config.publicUrl));
+      const authenticatedUrl = ctx.connection.authenticatedUrl(config.publicUrl);
       response.setHeader("Cache-Control", "no-store");
       response.setHeader("Pragma", "no-cache");
       response.setHeader("Referrer-Policy", "no-referrer");
       response.setHeader("X-Content-Type-Options", "nosniff");
+
+      if (isCrossSiteDocumentNavigation(request)) {
+        response.statusCode = 200;
+        response.setHeader("Content-Type", "text/html; charset=utf-8");
+        response.setHeader(
+          "Content-Security-Policy",
+          "default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+        );
+        response.setHeader("X-Frame-Options", "DENY");
+        response.end(transitionDocument(authenticatedUrl));
+        return;
+      }
+
+      response.statusCode = 303;
+      response.setHeader("Location", authenticatedUrl);
       response.end();
     },
   };
