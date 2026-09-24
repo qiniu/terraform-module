@@ -556,9 +556,12 @@ run "outputs_public_contract" {
       !issensitive(output.code_server_public_url) &&
       output.dsh_web_username == "admin" &&
       output.dsh_web_password == sensitive(random_password.dsh_web[0].result) &&
-      output.ssh_command == null
+      output.ssh_command == null &&
+      strcontains(output.usage_guide, "创建时如果已填写登录密码，请使用填写的密码；否则使用“登录密码”中自动生成的密码。") &&
+      strcontains(output.usage_guide, "https://github.com/qiniu/terraform-module/issues") &&
+      strcontains(output.usage_guide, "https://support.qiniu.com/tickets")
     )
-    error_message = "根模块输出必须包含 Web 凭据和可空 SSH 命令。"
+    error_message = "根模块输出必须包含 Web 凭据、可空 SSH 命令和反馈渠道。"
   }
 }
 
