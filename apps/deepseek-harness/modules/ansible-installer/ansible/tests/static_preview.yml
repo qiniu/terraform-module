@@ -142,6 +142,13 @@
             that:
               - "'listen 0.0.0.0:3084;' not in nginx_without_code_server"
 
+        - name: Verify the FileBrowser upload request limit
+          ansible.builtin.assert:
+            that:
+              - "static_preview_nginx_config.count('client_max_body_size 128m;') == 1"
+              - "'client_max_body_size 128m;' in static_preview_nginx_config.split('listen 0.0.0.0:3086;')[1]"
+            fail_msg: FileBrowser must accept its default 100 MB upload chunks without relaxing other public endpoints.
+
         - name: Render Nginx without FileBrowser
           ansible.builtin.set_fact:
             nginx_without_filebrowser: "{{ lookup('ansible.builtin.template', nginx_template_path) }}"
@@ -153,6 +160,7 @@
           ansible.builtin.assert:
             that:
               - "'listen 0.0.0.0:3086;' not in nginx_without_filebrowser"
+              - "'client_max_body_size 128m;' not in nginx_without_filebrowser"
               - "'auth_basic' not in nginx_without_filebrowser.split('server {')[-1]"
 
         - name: Create a static site source directory

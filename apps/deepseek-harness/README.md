@@ -69,7 +69,7 @@ dsh_environment = [
 
 可通过 `enable_code_server = false` 跳过 code-server 的安装和公网入口创建；此时 `code_server_public_url` 为 `null`。已安装实例切换为关闭时会停止并禁用该服务，但保留已下载的文件和配置。
 
-默认还会安装 FileBrowser Quantum。运行 `terraform output -raw filebrowser_public_url` 获取地址，并使用与 Harness Web 相同的用户名和密码通过 FileBrowser 自带认证登录；它不使用 Nginx Basic Auth。FileBrowser 只监听实例内的 `127.0.0.1:3085`，公网 HTTPProxy 经 Nginx `3086` 转发。其根目录是 `/home/dsh`，普通用户默认看不到点号目录，但管理员可在 UI 中主动显示。
+默认还会安装 FileBrowser Quantum。运行 `terraform output -raw filebrowser_public_url` 获取地址，并使用与 Harness Web 相同的用户名和密码通过 FileBrowser 自带认证登录；它不使用 Nginx Basic Auth。FileBrowser 只监听实例内的 `127.0.0.1:3085`，公网 HTTPProxy 经 Nginx `3086` 转发。Nginx 仅为该入口接受最大 `128 MB` 的单次请求，以兼容 FileBrowser 默认的 `100 MB` 上传分块；文件总大小不受该分块上限限制。其根目录是 `/home/dsh`，普通用户默认看不到点号目录，但管理员可在 UI 中主动显示。
 
 可通过 `enable_filebrowser = false` 停止并禁用 FileBrowser，同时移除公网入口；`filebrowser_public_url` 变为 `null`。已下载二进制、配置、数据库和长期 agent token 会保留，以便重新启用后继续使用。
 

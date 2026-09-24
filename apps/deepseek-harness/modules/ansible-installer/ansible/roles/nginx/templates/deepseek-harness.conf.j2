@@ -205,6 +205,7 @@ server {
 server {
     listen 0.0.0.0:{{ filebrowser_proxy_port }};
     server_name _;
+    client_max_body_size 128m;
 
     location / {
         proxy_pass http://127.0.0.1:{{ filebrowser_port }};
