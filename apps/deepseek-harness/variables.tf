@@ -58,6 +58,105 @@ variable "enable_agent_browser" {
   default     = false
 }
 
+variable "code_server_version" {
+  type        = string
+  description = "code-server 版本。"
+  default     = "4.138.0"
+
+  validation {
+    condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$", var.code_server_version))
+    error_message = "code_server_version 必须是不带 v 前缀的明确 SemVer 版本。"
+  }
+}
+
+variable "filebrowser_version" {
+  type        = string
+  description = "FileBrowser Quantum 的 GitHub release 版本。"
+  default     = "v2.0.8-beta"
+
+  validation {
+    condition     = can(regex("^v[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$", var.filebrowser_version))
+    error_message = "filebrowser_version 必须是带 v 前缀的明确 SemVer 版本。"
+  }
+}
+
+variable "dsh_version" {
+  type        = string
+  description = "DeepSeek Harness 版本。"
+  default     = "0.1.7-rc.1"
+
+  validation {
+    condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$", var.dsh_version))
+    error_message = "dsh_version 必须是不带 v 前缀的明确 SemVer 版本。"
+  }
+}
+
+variable "nodejs_version" {
+  type        = string
+  description = "Node.js 版本。"
+  default     = "24.21.0"
+
+  validation {
+    condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$", var.nodejs_version))
+    error_message = "nodejs_version 必须是不带 v 前缀的明确 SemVer 版本。"
+  }
+}
+
+variable "pnpm_version" {
+  type        = string
+  description = "pnpm 版本。"
+  default     = "12.5.1"
+
+  validation {
+    condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$", var.pnpm_version))
+    error_message = "pnpm_version 必须是不带 v 前缀的明确 SemVer 版本。"
+  }
+}
+
+variable "agent_browser_version" {
+  type        = string
+  description = "agent-browser 版本。"
+  default     = "0.38.1"
+
+  validation {
+    condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$", var.agent_browser_version))
+    error_message = "agent_browser_version 必须是不带 v 前缀的明确 SemVer 版本。"
+  }
+}
+
+variable "dshmarket_version" {
+  type        = string
+  description = "dshmarket Web 插件版本。"
+  default     = "1.64.0"
+
+  validation {
+    condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$", var.dshmarket_version))
+    error_message = "dshmarket_version 必须是不带 v 前缀的明确 SemVer 版本。"
+  }
+}
+
+variable "dsh_better_sidebar_version" {
+  type        = string
+  description = "dsh-better-sidebar Web 插件版本。"
+  default     = "0.21.1"
+
+  validation {
+    condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$", var.dsh_better_sidebar_version))
+    error_message = "dsh_better_sidebar_version 必须是不带 v 前缀的明确 SemVer 版本。"
+  }
+}
+
+variable "dsh_qiniu_maas_plugin_version" {
+  type        = string
+  description = "七牛 MaaS Web 插件版本。"
+  default     = "0.3.0-rc.0"
+
+  validation {
+    condition     = can(regex("^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$", var.dsh_qiniu_maas_plugin_version))
+    error_message = "dsh_qiniu_maas_plugin_version 必须是不带 v 前缀的明确 SemVer 版本。"
+  }
+}
+
 variable "system_disk_size" {
   type        = number
   description = "ECS 系统盘大小（GiB）。"

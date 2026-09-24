@@ -1,0 +1,26 @@
+{
+  "name": "las-dsh-auth-bootstrap",
+  "version": "1.0.0",
+  "description": "Loopback-only DSH browser authentication bootstrap",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "4.0.2"
+  }
+}

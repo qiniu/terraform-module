@@ -1,7 +1,15 @@
 ---
-dsh_version: v0.1.1-rc.2
-dsh_cache_key: "{{ dsh_version }}:pnpm-{{ pnpm_version }}:node-pty-build"
+dsh_pnpm_dlx_allowed_builds:
+  - node-pty
+  - '@deepseek-ai/dsh-subprocess-local'
+  - koffi
+  - '@google/genai'
+  - protobufjs
+dsh_cache_key: "{{ dsh_version }}:node-{{ nodejs_version }}:pnpm-{{ pnpm_version }}:builds-{{ dsh_pnpm_dlx_allowed_builds | join(',') }}"
 dsh_cache_version_file: "{{ dsh_state_dir }}/CACHED_VERSION"
 dsh_pnpm_dlx_cache_dir: "{{ dsh_home }}/.cache/pnpm/dlx"
 dsh_web_plugins: []
 dsh_web_plugins_to_remove: []
+dsh_auth_bootstrap_plugin_dir: /opt/las-dsh-plugins/dsh-auth-bootstrap
+dsh_auth_bootstrap_route: /__las/dsh-auth-bootstrap
+dsh_auth_bootstrap_secret_path: /etc/deepseek-harness/dsh-auth-bootstrap-secret

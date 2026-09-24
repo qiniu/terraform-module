@@ -76,6 +76,65 @@ server {
         proxy_set_header Forwarded "";
     }
 
+    # Basic Auth 必须在带上游错误拦截的 location 之外完成，否则 Nginx
+    # 自己返回的 401 会被误当成 DSH 的 401，从而绕过密码校验。
+    location = / {
+        if ($dsh_origin_allowed = 0) { return 403; }
+        if ($dsh_fetch_site_allowed = 0) { return 403; }
+
+        auth_basic "DeepSeek Harness";
+        auth_basic_user_file /etc/nginx/deepseek-harness.htpasswd;
+        access_log off;
+        try_files /__las_dsh_root_proxy_never_exists__ @dsh_root_proxy;
+    }
+
+    location @dsh_root_proxy {
+        access_log off;
+        proxy_pass http://127.0.0.1:{{ dsh_port }};
+        proxy_http_version 1.1;
+        proxy_set_header Host 127.0.0.1:{{ dsh_port }};
+        proxy_set_header X-Forwarded-Host $http_x_forwarded_host;
+        proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Origin "http://127.0.0.1:{{ dsh_port }}";
+        proxy_set_header Sec-Fetch-Site "same-origin";
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_buffering off;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+
+        # 该公网入口由 Basic Auth 保护，登录用户即实例管理员。使用 DSH
+        # 原生 transport 契约开放 Host Settings，不再改写版本相关的 JS bundle。
+        proxy_set_header Accept-Encoding "";
+        sub_filter '</head>' '<script>globalThis.__DSH_TRANSPORT__=Object.assign({},globalThis.__DSH_TRANSPORT__,{ownsHost:true});</script></head>';
+
+        proxy_intercept_errors on;
+        error_page 401 = @dsh_auth_bootstrap;
+    }
+
+    location @dsh_auth_bootstrap {
+        if ($arg_token != "") { return 401; }
+
+        access_log off;
+        rewrite ^ {{ dsh_auth_bootstrap_route }} break;
+        proxy_pass http://127.0.0.1:{{ dsh_port }};
+        proxy_http_version 1.1;
+        proxy_set_header Authorization "";
+        proxy_set_header Host 127.0.0.1:{{ dsh_port }};
+        proxy_set_header Origin "";
+        proxy_set_header X-Forwarded-For "";
+        proxy_set_header X-Forwarded-Host "";
+        proxy_set_header X-Forwarded-Proto "";
+        proxy_set_header X-Real-IP "";
+        proxy_set_header Forwarded "";
+        include /etc/deepseek-harness/nginx-dsh-auth-bootstrap-secret.conf;
+    }
+
+    location = {{ dsh_auth_bootstrap_route }} {
+        return 404;
+    }
+
     location / {
         if ($dsh_origin_allowed = 0) { return 403; }
         if ($dsh_fetch_site_allowed = 0) { return 403; }
@@ -96,13 +155,9 @@ server {
         proxy_read_timeout 3600s;
         proxy_send_timeout 3600s;
 
-        # DSH走公网鉴权，DSH限制了公网环境阻止了某些DSH的前端能力，这里需要拦截篡改一些内容
-        proxy_set_header Accept-Encoding ""; # 阻止上游返回压缩内容
-        sub_filter_types application/javascript text/javascript; # 只对js代码做替换
-        sub_filter 'connection.isLoopback ? "host" : "memory"' '"host"'; # 把这个判断强制替换成"host"
-        # 插件管理后端仍通过 Basic Auth、同源和回环代理请求保护；这里只放宽公网浏览器的前端显示门槛。
-        sub_filter 'if (!isLoopback) return' 'if (false) return';
-        sub_filter_once off; # 表示每个响应中所有匹配项都替换，而不是只替换第一个
+        # 同时覆盖直接访问由 SPA fallback 返回的 HTML 路径。
+        proxy_set_header Accept-Encoding "";
+        sub_filter '</head>' '<script>globalThis.__DSH_TRANSPORT__=Object.assign({},globalThis.__DSH_TRANSPORT__,{ownsHost:true});</script></head>';
     }
 }
 

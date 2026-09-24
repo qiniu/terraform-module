@@ -9,30 +9,11 @@ dsh_workspace_dir: "{{ dsh_home }}/workspace"
 static_preview_dir: "{{ dsh_home }}/.las-static-preview"
 dsh_download_dir: /var/cache/deepseek-harness
 dsh_npm_cache_dir: /var/cache/deepseek-harness/npm
-nodejs_version: 24.19.0
-pnpm_version: 11.22.0
-agent_browser_version: 0.36.0
-code_server_version: 4.132.0
-code_server_releases:
-  x86_64:
-    archive: "code-server-{{ code_server_version }}-linux-amd64.tar.gz"
-    sha256: a38d26f4cb81f768feddff79e2937fd3f39c83d3da8be3da7225e1087e62e4ed
-  aarch64:
-    archive: "code-server-{{ code_server_version }}-linux-arm64.tar.gz"
-    sha256: ade569a677d1c04ee66ef153382b7e15bf261f955407663c7ddc6b87f9ee29fc
 code_server_port: 3083
-filebrowser_version: v2.0.3-beta
 filebrowser_port: 3085
 filebrowser_source_name: dsh-home
 filebrowser_state_dir: "{{ dsh_home }}/.filebrowser"
 filebrowser_token_path: "{{ filebrowser_state_dir }}/agent-api-token"
-filebrowser_release:
-  x86_64:
-    asset: linux-amd64-filebrowser
-    sha256: fb6b4719cb0b16520e981eb963db48bc9f4f2d6df84571b5395eca3ea3102c9a
-  aarch64:
-    asset: linux-arm64-filebrowser
-    sha256: 08585786bfcf248aa8d13531ee9acc8bd9168556546d2aecdc460cde728d9adc
 dsh_skills:
   # 发现、检索并选择适合当前任务的 Agent Skill
   - name: find-skills

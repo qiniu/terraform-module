@@ -10,6 +10,7 @@
     nginx_template_path: "{{ playbook_dir }}/../roles/nginx/templates/deepseek-harness.conf.j2"
     dsh_web_proxy_port: 3081
     dsh_web_public_authority: dsh.example.test
+    dsh_auth_bootstrap_route: /__las/dsh-auth-bootstrap
     dsh_port: 3080
     code_server_proxy_port: 3084
     code_server_port: 3083
@@ -79,10 +80,35 @@
               - "'location = /manifest.webmanifest {' in static_preview_nginx_config"
               - "'auth_basic off;' in static_preview_nginx_config.split('location = /manifest.webmanifest {')[1].split('location / {')[0]"
               - "'proxy_pass http://127.0.0.1:3080;' in static_preview_nginx_config.split('location = /manifest.webmanifest {')[1].split('location / {')[0]"
-              - "'sub_filter_types application/javascript text/javascript;' in static_preview_nginx_config"
-              - "'sub_filter ' in static_preview_nginx_config"
-              - "'connection.isLoopback ? \"host\" : \"memory\"' in static_preview_nginx_config"
-              - "\"sub_filter 'if (!isLoopback) return' 'if (false) return';\" in static_preview_nginx_config"
+
+        - name: Verify the Harness owned transport bootstrap
+          ansible.builtin.assert:
+            that:
+              - "static_preview_nginx_config.count('proxy_set_header Accept-Encoding \"\";') == 2"
+              - "static_preview_nginx_config.count('globalThis.__DSH_TRANSPORT__=Object.assign({},globalThis.__DSH_TRANSPORT__,{ownsHost:true})') == 2"
+              - "'connection.isLoopback ? \"host\" : \"memory\"' not in static_preview_nginx_config"
+              - "'if (!isLoopback) return' not in static_preview_nginx_config"
+              - "'sub_filter_types application/javascript text/javascript;' not in static_preview_nginx_config"
+              - "'globalThis.__DSH_TRANSPORT__' in static_preview_nginx_config.split('location @dsh_root_proxy {')[1].split('location @dsh_auth_bootstrap {')[0]"
+              - "'globalThis.__DSH_TRANSPORT__' in static_preview_nginx_config.split('location = /__las/dsh-auth-bootstrap {')[1].split('server {')[0]"
+            fail_msg: DSH HTML responses must declare the authenticated browser as the Host owner without rewriting compiled JavaScript bundles.
+
+        - name: Verify the Harness native authentication bootstrap boundary
+          ansible.builtin.assert:
+            that:
+              - "'location = / {' in static_preview_nginx_config"
+              - "'try_files /__las_dsh_root_proxy_never_exists__ @dsh_root_proxy;' in static_preview_nginx_config"
+              - "'location @dsh_root_proxy {' in static_preview_nginx_config"
+              - "'proxy_intercept_errors on;' in static_preview_nginx_config.split('location @dsh_root_proxy {')[1].split('location @dsh_auth_bootstrap {')[0]"
+              - "'error_page 401 = @dsh_auth_bootstrap;' in static_preview_nginx_config"
+              - "'location @dsh_auth_bootstrap {' in static_preview_nginx_config"
+              - "'if ($arg_token != \"\") { return 401; }' in static_preview_nginx_config"
+              - "'rewrite ^ /__las/dsh-auth-bootstrap break;' in static_preview_nginx_config"
+              - "'include /etc/deepseek-harness/nginx-dsh-auth-bootstrap-secret.conf;' in static_preview_nginx_config"
+              - "'location = /__las/dsh-auth-bootstrap {' in static_preview_nginx_config"
+              - "'return 404;' in static_preview_nginx_config.split('location = /__las/dsh-auth-bootstrap {')[1].split('location / {')[0]"
+              - "'access_log off;' in static_preview_nginx_config.split('location = / {')[1].split('location / {')[0]"
+            fail_msg: Basic Auth must complete before an upstream DSH 401 can enter the internal bootstrap route.
 
         - name: Verify the Harness restart route is proxied as a trusted local request
           ansible.builtin.assert:

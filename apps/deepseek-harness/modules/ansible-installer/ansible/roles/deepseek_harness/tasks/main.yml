@@ -1,11 +1,85 @@
 ---
+- name: Create the DeepSeek Harness configuration directory
+  ansible.builtin.file:
+    path: /etc/deepseek-harness
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Check the DeepSeek Harness authentication bootstrap secret
+  ansible.builtin.stat:
+    path: "{{ dsh_auth_bootstrap_secret_path }}"
+  register: dsh_auth_bootstrap_secret_file
+
+- name: Generate the DeepSeek Harness authentication bootstrap secret
+  ansible.builtin.command:
+    argv:
+      - openssl
+      - rand
+      - -hex
+      - '32'
+  register: dsh_auth_bootstrap_secret_generated
+  changed_when: true
+  no_log: true
+  when: not dsh_auth_bootstrap_secret_file.stat.exists
+
+- name: Persist the DeepSeek Harness authentication bootstrap secret
+  ansible.builtin.copy:
+    content: "{{ dsh_auth_bootstrap_secret_generated.stdout }}\n"
+    dest: "{{ dsh_auth_bootstrap_secret_path }}"
+    owner: root
+    group: root
+    mode: '0600'
+  no_log: true
+  when: not dsh_auth_bootstrap_secret_file.stat.exists
+
+- name: Read the DeepSeek Harness authentication bootstrap secret
+  ansible.builtin.slurp:
+    src: "{{ dsh_auth_bootstrap_secret_path }}"
+  register: dsh_auth_bootstrap_secret_content
+  no_log: true
+
+- name: Validate the DeepSeek Harness authentication bootstrap secret
+  ansible.builtin.assert:
+    that:
+      - dsh_auth_bootstrap_secret_content.content | b64decode | trim is match('^[0-9a-f]{64}$')
+    fail_msg: The DeepSeek Harness authentication bootstrap secret is invalid.
+  no_log: true
+
+- name: Select the DeepSeek Harness authentication bootstrap secret
+  ansible.builtin.set_fact:
+    dsh_auth_bootstrap_secret: "{{ dsh_auth_bootstrap_secret_content.content | b64decode | trim }}"
+  no_log: true
+
+- name: Create the managed DeepSeek Harness plugin directory
+  ansible.builtin.file:
+    path: "{{ dsh_auth_bootstrap_plugin_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Install the managed DeepSeek Harness authentication bootstrap plugin
+  ansible.builtin.copy:
+    src: dsh-auth-bootstrap/
+    dest: "{{ dsh_auth_bootstrap_plugin_dir }}/"
+    owner: root
+    group: root
+    mode: preserve
+  notify: restart deepseek harness
+
+- name: Select effective DeepSeek Harness Web Profile plugins
+  ansible.builtin.set_fact:
+    dsh_effective_web_plugins: "{{ dsh_web_plugins + [dsh_auth_bootstrap_plugin_dir] }}"
+
 - name: Install configured DeepSeek Harness Web Profile plugins
   ansible.builtin.include_tasks: uninstall_web_plugins.yml
-  when: dsh_web_plugins | length > 0 or dsh_web_plugins_to_remove | length > 0
+  when: dsh_effective_web_plugins | length > 0 or dsh_web_plugins_to_remove | length > 0
 
 - name: Install configured DeepSeek Harness Web Profile plugins
   ansible.builtin.include_tasks: install_web_plugins.yml
-  when: dsh_web_plugins | length > 0
+  when: dsh_effective_web_plugins | length > 0
 
 - name: Read the cached DeepSeek Harness version
   ansible.builtin.command:
@@ -18,12 +92,12 @@
 
 - name: Verify the cached DeepSeek Harness package is usable offline
   ansible.builtin.command:
-    argv:
-      - /usr/local/bin/pnpm
-      - dlx
-      - "--allow-build=node-pty"
-      - "@deepseek-ai/dsh@{{ dsh_version }}"
-      - --version
+    argv: >-
+      {{
+        ['/usr/local/bin/pnpm', 'dlx']
+        + (dsh_pnpm_dlx_allowed_builds | map('regex_replace', '^', '--allow-build=') | list)
+        + ['@deepseek-ai/dsh@' ~ dsh_version, '--version']
+      }}
   args:
     chdir: "{{ dsh_workspace_dir }}"
   environment:
@@ -53,12 +127,12 @@
 
 - name: Prewarm the pinned DeepSeek Harness package
   ansible.builtin.command:
-    argv:
-      - /usr/local/bin/pnpm
-      - dlx
-      - "--allow-build=node-pty"
-      - "@deepseek-ai/dsh@{{ dsh_version }}"
-      - --version
+    argv: >-
+      {{
+        ['/usr/local/bin/pnpm', 'dlx']
+        + (dsh_pnpm_dlx_allowed_builds | map('regex_replace', '^', '--allow-build=') | list)
+        + ['@deepseek-ai/dsh@' ~ dsh_version, '--version']
+      }}
   args:
     chdir: "{{ dsh_workspace_dir }}"
   environment:
@@ -81,18 +155,20 @@
     mode: '0600'
   when: dsh_needs_prewarm
 
-- name: Create the DeepSeek Harness configuration directory
-  ansible.builtin.file:
-    path: /etc/deepseek-harness
-    state: directory
-    owner: root
-    group: root
-    mode: '0755'
-
 - name: Render the DeepSeek Harness environment file
   ansible.builtin.template:
     src: dsh.env.j2
     dest: /etc/deepseek-harness/dsh.env
+    owner: root
+    group: root
+    mode: '0600'
+  no_log: true
+  notify: restart deepseek harness
+
+- name: Render the DeepSeek Harness authentication bootstrap environment file
+  ansible.builtin.template:
+    src: dsh-auth-bootstrap.env.j2
+    dest: /etc/deepseek-harness/dsh-auth-bootstrap.env
     owner: root
     group: root
     mode: '0600'

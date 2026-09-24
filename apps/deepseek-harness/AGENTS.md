@@ -36,7 +36,7 @@
 
 - Terraform、Provider、Python、uv 和 Ansible 的版本分别以就近 `versions.tf`、`pyproject.toml`、`uv.lock` 和 CI workflow 为准，不在本文件重复固定版本。
 - Ansible Python 依赖必须使用 `uv` 和锁定环境；不得使用 pip、poetry，也不得手工修改 `uv.lock`。
-- 本地七牛凭据和区域由 `apps/ci-runner/single/env.sh` 注入。不得检查、搜索、显示、复制或持久化该文件内容；仅可在必要时于一次性子 shell 中 source，并立即执行紧随其后的单个命令。
+- 本地七牛凭据和区域只能由本目录的 `env.sh` 注入。不得读取或复用其他目录的环境文件，也不得检查、搜索、显示、复制或持久化 `env.sh` 的内容；仅可在必要时于一次性子 shell 中 source，并立即执行紧随其后的单个命令。
 - Provider mirror 遵循仓库 README 或既有 `TF_CLI_CONFIG_FILE`。使用 development override 的环境不要运行 `terraform init`；需要刷新模块依赖时使用 `terraform get`。
 
 ## 安全边界
@@ -47,7 +47,7 @@
 - Golden image 不得包含 DSH 用户状态、Basic Auth 文件、code-server 凭据、部署密钥、临时 exec 文件或含凭据日志。
 - SSH PortForward 默认关闭；仅在明确的临时调试中配合强密码开启，结束后恢复关闭。
 - SSH PortForward 开启时，可通过 `./scripts/ssh.sh` 以 root 身份只读检查 `/root/.qiniu` 下的异步任务文件和执行日志；不得读取或输出其中的凭据。
-- `env.sh` 约定保存全局 Provider 鉴权变量。只有在明确需要执行 Terraform `apply` 时，才可在一次性子 shell 中 source 既有文件并立即执行该命令；不得读取、显示或持久化其内容。
+- 本目录的 `env.sh` 约定保存该应用的 Provider 鉴权变量。只有在明确需要执行 Terraform `apply` 时，才可在一次性子 shell 中 source 既有文件并立即执行该命令；不得读取、显示或持久化其内容。
 
 ## 验证策略
 

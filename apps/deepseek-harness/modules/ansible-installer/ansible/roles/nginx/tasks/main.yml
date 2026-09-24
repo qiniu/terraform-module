@@ -40,6 +40,16 @@
     group: www-data
     mode: '0640'
 
+- name: Render the DeepSeek Harness authentication bootstrap Nginx secret
+  ansible.builtin.template:
+    src: dsh-auth-bootstrap-secret.conf.j2
+    dest: /etc/deepseek-harness/nginx-dsh-auth-bootstrap-secret.conf
+    owner: root
+    group: root
+    mode: '0600'
+  no_log: true
+  notify: reload nginx
+
 - name: Render the DeepSeek Harness Nginx site
   ansible.builtin.template:
     src: deepseek-harness.conf.j2

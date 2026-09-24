@@ -28,14 +28,14 @@
       - code_server_port | int <= 65535
     fail_msg: code_server requires a version and a valid loopback port.
 
-- name: Select the code-server release for this architecture
-  ansible.builtin.set_fact:
-    code_server_release: "{{ code_server_releases[ansible_facts['architecture']] | default({}) }}"
-
 - name: Verify supported code-server architecture
   ansible.builtin.assert:
-    that: code_server_release | length > 0
+    that: ansible_facts['architecture'] in ['x86_64', 'aarch64']
     fail_msg: "Unsupported architecture for code-server: {{ ansible_facts['architecture'] }}"
+
+- name: Select the code-server archive for this architecture
+  ansible.builtin.set_fact:
+    code_server_archive: "code-server-{{ code_server_version }}-linux-{{ 'amd64' if ansible_facts['architecture'] == 'x86_64' else 'arm64' }}.tar.gz"
 
 - name: Check the code-server download directory
   ansible.builtin.stat:
@@ -120,9 +120,8 @@
 
 - name: Download the pinned code-server archive
   ansible.builtin.get_url:
-    url: "https://github.com/coder/code-server/releases/download/v{{ code_server_version }}/{{ code_server_release.archive }}"
-    dest: "{{ dsh_download_dir }}/{{ code_server_release.archive }}"
-    checksum: "sha256:{{ code_server_release.sha256 }}"
+    url: "https://github.com/coder/code-server/releases/download/v{{ code_server_version }}/{{ code_server_archive }}"
+    dest: "{{ dsh_download_dir }}/{{ code_server_archive }}"
     mode: '0600'
   when: code_server_needs_install
 
@@ -134,7 +133,7 @@
 
 - name: Extract the pinned code-server archive into staging
   ansible.builtin.unarchive:
-    src: "{{ dsh_download_dir }}/{{ code_server_release.archive }}"
+    src: "{{ dsh_download_dir }}/{{ code_server_archive }}"
     dest: "{{ code_server_staging.path }}"
     remote_src: true
     extra_opts:
