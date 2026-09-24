@@ -30,14 +30,14 @@
       - filebrowser_port | int <= 65535
     fail_msg: FileBrowser requires credentials, a public authority, and a valid loopback port.
 
-- name: Select the FileBrowser release for this architecture
-  ansible.builtin.set_fact:
-    filebrowser_release_info: "{{ filebrowser_release[ansible_facts['architecture']] | default({}) }}"
-
 - name: Verify supported FileBrowser architecture
   ansible.builtin.assert:
-    that: filebrowser_release_info | length > 0
+    that: ansible_facts['architecture'] in ['x86_64', 'aarch64']
     fail_msg: "Unsupported architecture for FileBrowser: {{ ansible_facts['architecture'] }}"
+
+- name: Select the FileBrowser asset for this architecture
+  ansible.builtin.set_fact:
+    filebrowser_asset: "linux-{{ 'amd64' if ansible_facts['architecture'] == 'x86_64' else 'arm64' }}-filebrowser"
 
 - name: Check the pinned FileBrowser installation
   ansible.builtin.stat:
@@ -89,9 +89,8 @@
 
 - name: Download the pinned FileBrowser binary
   ansible.builtin.get_url:
-    url: "https://github.com/gtsteffaniak/filebrowser/releases/download/{{ filebrowser_version }}/{{ filebrowser_release_info.asset }}"
-    dest: "{{ dsh_download_dir }}/{{ filebrowser_release_info.asset }}"
-    checksum: "sha256:{{ filebrowser_release_info.sha256 }}"
+    url: "https://github.com/gtsteffaniak/filebrowser/releases/download/{{ filebrowser_version }}/{{ filebrowser_asset }}"
+    dest: "{{ filebrowser_download_path }}"
     mode: '0755'
   when: filebrowser_needs_install
 
@@ -106,7 +105,7 @@
 
 - name: Publish the FileBrowser binary
   ansible.builtin.copy:
-    src: "{{ dsh_download_dir }}/{{ filebrowser_release_info.asset }}"
+    src: "{{ filebrowser_download_path }}"
     dest: "{{ filebrowser_prefix }}/filebrowser"
     remote_src: true
     owner: root

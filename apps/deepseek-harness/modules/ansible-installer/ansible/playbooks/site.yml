@@ -22,6 +22,17 @@
           - enable_filebrowser is boolean
           - enable_agent_browser is defined
           - enable_agent_browser is boolean
+          - dsh_version | default('') is match('^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$')
+          - nodejs_version | default('') is match('^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$')
+          - pnpm_version | default('') is match('^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$')
+          - agent_browser_version | default('') is match('^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$')
+          - code_server_version | default('') is match('^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$')
+          - filebrowser_version | default('') is match('^v[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$')
+          - dsh_pnpm_minimum_release_age_exclude is sequence
+          - dsh_pnpm_minimum_release_age_exclude is not string
+          - dsh_pnpm_minimum_release_age_exclude is not mapping
+          - dsh_pnpm_minimum_release_age_exclude | select('string') | list | length == dsh_pnpm_minimum_release_age_exclude | length
+          - dsh_pnpm_minimum_release_age_exclude | map('trim') | reject('equalto', '') | list | length == dsh_pnpm_minimum_release_age_exclude | length
           - dsh_web_public_authority | default('') | length > 0
           - static_preview_public_authority | default('') | length > 0
           - not (enable_code_server | bool) or code_server_public_authority | default('') | length > 0
@@ -73,16 +84,49 @@
     - name: Wait for the DeepSeek Harness loopback service
       ansible.builtin.uri:
         url: "http://127.0.0.1:{{ dsh_port }}/"
-        status_code: [200, 201, 202, 204]
+        status_code: [200, 201, 202, 204, 401]
       register: dsh_health
       retries: 60
       delay: 1
-      until: dsh_health.status in [200, 201, 202, 204]
+      until: dsh_health.status in [200, 201, 202, 204, 401]
 
     - name: Verify the Harness Nginx authentication boundary
       ansible.builtin.uri:
         url: "http://127.0.0.1:{{ dsh_web_proxy_port }}/"
         status_code: 401
+
+    - name: Verify the authenticated Harness bootstrap redirect
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ dsh_web_proxy_port }}/"
+        url_username: "{{ dsh_web_username }}"
+        url_password: "{{ dsh_web_password }}"
+        force_basic_auth: true
+        follow_redirects: none
+        status_code: 303
+      register: dsh_auth_bootstrap_redirect
+      no_log: true
+
+    - name: Exchange the Harness launch token for a native browser cookie
+      ansible.builtin.uri:
+        url: "{{ dsh_auth_bootstrap_redirect.location | regex_replace('^https://[^/]+', 'http://127.0.0.1:' ~ dsh_web_proxy_port) }}"
+        url_username: "{{ dsh_web_username }}"
+        url_password: "{{ dsh_web_password }}"
+        force_basic_auth: true
+        follow_redirects: none
+        status_code: 303
+      register: dsh_native_auth_exchange
+      no_log: true
+
+    - name: Verify the authenticated Harness browser session
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ dsh_web_proxy_port }}/"
+        url_username: "{{ dsh_web_username }}"
+        url_password: "{{ dsh_web_password }}"
+        force_basic_auth: true
+        headers:
+          Cookie: "{{ dsh_native_auth_exchange.cookies_string | default(dsh_native_auth_exchange.set_cookie | default('') | regex_replace(';.*$', '')) }}"
+        status_code: 200
+      no_log: true
 
     - name: Verify the code-server Nginx authentication boundary
       ansible.builtin.uri:

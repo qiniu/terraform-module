@@ -25,13 +25,24 @@
             dsh_user: "{{ ansible_facts['user_id'] }}"
             dsh_group: "{{ ansible_facts['user_id'] }}"
             dsh_web_plugins:
-              - dshmarket
-              - dsh-better-sidebar
+              - dshmarket@1.64.0
+              - dsh-better-sidebar@0.21.1
               - https://github.com/example/dsh-plugin/releases/download/v1.0.0/plugin-1.0.0.tgz
+              - /opt/las-dsh-plugins/dsh-auth-bootstrap
             dsh_web_plugins_to_remove:
               - dshmarket
               - old-plugin
-            dsh_version: v0.1.1-rc.2
+            dsh_pnpm_minimum_release_age_exclude:
+              - dshmarket
+              - dsh-better-sidebar
+            dsh_version: 0.1.7-rc.1
+            dsh_pnpm_resolution_mode: time-based
+            dsh_pnpm_dlx_allowed_builds:
+              - node-pty
+              - '@deepseek-ai/dsh-subprocess-local'
+              - koffi
+              - '@google/genai'
+              - protobufjs
             dsh_node_bin: node
             dsh_pnpm_bin: "{{ web_plugin_test_root.path }}/fake-pnpm"
 
@@ -59,7 +70,7 @@
 
         - name: Create an empty Web Profile manifest
           ansible.builtin.copy:
-            content: "{\"name\":\"web\",\"dependencies\":{\"dshmarket\":\"latest\",\"dsh-better-sidebar\":\"latest\"}}\n"
+            content: "{\"name\":\"web\",\"dependencies\":{\"dshmarket\":\"1.37.0\",\"dsh-better-sidebar\":\"0.17.1\"},\"dsh\":{\"profile\":{\"bundles\":[\"dshmarket\",\"dsh-better-sidebar\"]}}}\n"
             dest: "{{ dsh_state_dir }}/profiles/web/package.json"
             mode: '0600'
 
@@ -70,6 +81,7 @@
               set -euo pipefail
               manifest="${DSH_HOME}/profiles/web/package.json"
               printf '%s\n' "$*" >> "${DSH_HOME}/plugin-install.log"
+              printf '%s\n' "${PNPM_CONFIG_RESOLUTION_MODE:-}" >> "${DSH_HOME}/resolution-mode.log"
               plugin="${!#}"
               if [[ " $* " =~ " plugin --profile web remove " ]]; then
                 exit 0
@@ -79,8 +91,15 @@
               const [manifestPath, packageName] = process.argv.slice(2);
               const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
               manifest.dependencies ??= {};
-              const installedName = packageName.startsWith("https://") ? "@example/dsh-plugin" : packageName;
-              manifest.dependencies[installedName] = packageName;
+              let installedName = packageName;
+              if (packageName.startsWith("https://")) {
+                installedName = "@example/dsh-plugin";
+              } else if (packageName.startsWith("/")) {
+                installedName = "las-dsh-auth-bootstrap";
+              }
+              manifest.dependencies[installedName] = packageName.startsWith("/")
+                ? `link:${packageName}`
+                : packageName;
               manifest.dsh ??= {};
               manifest.dsh.profile ??= {};
               manifest.dsh.profile.bundles ??= [];
@@ -108,11 +127,26 @@
             src: "{{ dsh_state_dir }}/profiles/web/pnpm-workspace.yaml"
           register: pnpm_workspace
 
+        - name: Read the pnpm resolution mode log
+          ansible.builtin.slurp:
+            src: "{{ dsh_state_dir }}/resolution-mode.log"
+          register: pnpm_resolution_mode_log
+
         - name: Verify both plugins were installed with the expected command
           ansible.builtin.assert:
             that:
-              - "(first_plugin_install_log.content | b64decode).splitlines() == ['dlx --allow-build=node-pty @deepseek-ai/dsh@v0.1.1-rc.2 plugin --profile web remove dshmarket', 'dlx --allow-build=node-pty @deepseek-ai/dsh@v0.1.1-rc.2 plugin --profile web add dshmarket', 'dlx --allow-build=node-pty @deepseek-ai/dsh@v0.1.1-rc.2 plugin --profile web add dsh-better-sidebar', 'dlx --allow-build=node-pty @deepseek-ai/dsh@v0.1.1-rc.2 plugin --profile web add https://github.com/example/dsh-plugin/releases/download/v1.0.0/plugin-1.0.0.tgz']"
+              - "(first_plugin_install_log.content | b64decode).splitlines() == ['dlx --allow-build=node-pty --allow-build=@deepseek-ai/dsh-subprocess-local --allow-build=koffi --allow-build=@google/genai --allow-build=protobufjs @deepseek-ai/dsh@0.1.7-rc.1 plugin --profile web remove dshmarket', 'dlx --allow-build=node-pty --allow-build=@deepseek-ai/dsh-subprocess-local --allow-build=koffi --allow-build=@google/genai --allow-build=protobufjs @deepseek-ai/dsh@0.1.7-rc.1 plugin --profile web add dshmarket@1.64.0', 'dlx --allow-build=node-pty --allow-build=@deepseek-ai/dsh-subprocess-local --allow-build=koffi --allow-build=@google/genai --allow-build=protobufjs @deepseek-ai/dsh@0.1.7-rc.1 plugin --profile web add dsh-better-sidebar@0.21.1', 'dlx --allow-build=node-pty --allow-build=@deepseek-ai/dsh-subprocess-local --allow-build=koffi --allow-build=@google/genai --allow-build=protobufjs @deepseek-ai/dsh@0.1.7-rc.1 plugin --profile web add https://github.com/example/dsh-plugin/releases/download/v1.0.0/plugin-1.0.0.tgz', 'dlx --allow-build=node-pty --allow-build=@deepseek-ai/dsh-subprocess-local --allow-build=koffi --allow-build=@google/genai --allow-build=protobufjs @deepseek-ai/dsh@0.1.7-rc.1 plugin --profile web add /opt/las-dsh-plugins/dsh-auth-bootstrap']"
               - "'node-pty: true' in (pnpm_workspace.content | b64decode)"
+              - "'minimumReleaseAgeExclude:' in (pnpm_workspace.content | b64decode)"
+              - "'  - \"dshmarket\"' in (pnpm_workspace.content | b64decode)"
+              - "'  - \"dsh-better-sidebar\"' in (pnpm_workspace.content | b64decode)"
+              - "(pnpm_resolution_mode_log.content | b64decode).splitlines() == ['time-based', 'time-based', 'time-based', 'time-based', 'time-based']"
+
+        - name: Simulate the package manifest written by the plugin upgrade
+          ansible.builtin.copy:
+            dest: "{{ dsh_state_dir }}/profiles/web/package.json"
+            content: "{\"name\":\"web\",\"dependencies\":{\"dshmarket\":\"^1.64.0\",\"dsh-better-sidebar\":\"^0.21.1\",\"example-plugin\":\"https://github.com/example/dsh-plugin/releases/download/v1.0.0/plugin-1.0.0.tgz\",\"las-dsh-auth-bootstrap\":\"link:/opt/las-dsh-plugins/dsh-auth-bootstrap\"},\"dsh\":{\"profile\":{\"bundles\":[\"dshmarket\",\"dsh-better-sidebar\",\"example-plugin\",\"las-dsh-auth-bootstrap\"]}}}\n"
+            mode: '0600'
 
         - name: Install the configured plugins for the second time
           ansible.builtin.include_tasks: ../roles/deepseek_harness/tasks/uninstall_web_plugins.yml
@@ -125,10 +159,16 @@
             src: "{{ dsh_state_dir }}/plugin-install.log"
           register: second_plugin_install_log
 
+        - name: Read the second pnpm resolution mode log
+          ansible.builtin.slurp:
+            src: "{{ dsh_state_dir }}/resolution-mode.log"
+          register: second_pnpm_resolution_mode_log
+
         - name: Verify the second run is idempotent
           ansible.builtin.assert:
             that:
-              - "(second_plugin_install_log.content | b64decode).splitlines() == (first_plugin_install_log.content | b64decode).splitlines() + ['dlx --allow-build=node-pty @deepseek-ai/dsh@v0.1.1-rc.2 plugin --profile web remove dshmarket']"
+              - "(second_plugin_install_log.content | b64decode).splitlines() == (first_plugin_install_log.content | b64decode).splitlines() + ['dlx --allow-build=node-pty --allow-build=@deepseek-ai/dsh-subprocess-local --allow-build=koffi --allow-build=@google/genai --allow-build=protobufjs @deepseek-ai/dsh@0.1.7-rc.1 plugin --profile web remove dshmarket']"
+              - "(second_pnpm_resolution_mode_log.content | b64decode).splitlines() == ['time-based', 'time-based', 'time-based', 'time-based', 'time-based', 'time-based']"
       always:
         - name: Remove the temporary Web Profile test workspace
           ansible.builtin.file:

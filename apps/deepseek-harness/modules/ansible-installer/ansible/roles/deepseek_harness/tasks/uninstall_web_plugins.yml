@@ -38,21 +38,18 @@
 
 - name: Remove requested DeepSeek Harness Web Profile plugins
   ansible.builtin.command:
-    argv:
-      - "{{ dsh_pnpm_bin | default('/usr/local/bin/pnpm') }}"
-      - dlx
-      - --allow-build=node-pty
-      - "@deepseek-ai/dsh@{{ dsh_version }}"
-      - plugin
-      - --profile
-      - web
-      - remove
-      - "{{ dsh_web_plugin_to_remove }}"
+    argv: >-
+      {{
+        [dsh_pnpm_bin | default('/usr/local/bin/pnpm'), 'dlx']
+        + (dsh_pnpm_dlx_allowed_builds | map('regex_replace', '^', '--allow-build=') | list)
+        + ['@deepseek-ai/dsh@' ~ dsh_version, 'plugin', '--profile', 'web', 'remove', dsh_web_plugin_to_remove]
+      }}
   args:
     chdir: "{{ dsh_workspace_dir }}"
   environment:
     HOME: "{{ dsh_home }}"
     DSH_HOME: "{{ dsh_state_dir }}"
+    PNPM_CONFIG_RESOLUTION_MODE: "{{ dsh_pnpm_resolution_mode }}"
     PNPM_CONFIG_STORE_DIR: "{{ dsh_pnpm_store_dir }}"
   become_user: "{{ dsh_user }}"
   loop: "{{ dsh_web_plugin_removal_state.results }}"

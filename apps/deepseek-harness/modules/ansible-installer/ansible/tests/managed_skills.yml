@@ -18,7 +18,7 @@
     las_instance_id: test-instance
     las_region_id: ap-southeast-1
     las_region_name: Singapore
-    nodejs_version: 24.19.0
+    nodejs_version: 24.21.0
     uv_version: 0.12.5
     dsh_skills: []
     enable_code_server: false

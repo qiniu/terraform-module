@@ -3,6 +3,15 @@ variables {
   enable_dsh_qiniu_maas_plugin    = true
   enable_filebrowser              = true
   enable_agent_browser            = true
+  dsh_version                     = "0.1.7-rc.1"
+  nodejs_version                  = "24.21.0"
+  pnpm_version                    = "12.5.1"
+  agent_browser_version           = "0.38.1"
+  code_server_version             = "4.138.0"
+  filebrowser_version             = "v2.0.8-beta"
+  dshmarket_version               = "1.64.0"
+  dsh_better_sidebar_version      = "0.21.1"
+  dsh_qiniu_maas_plugin_version   = "0.3.0-rc.0"
   dsh_web_proxy_port              = 3081
   preview_ports                   = [30080]
   dsh_web_public_authority        = "dsh.example.test"
@@ -29,10 +38,180 @@ run "includes_maas_plugin_when_enabled" {
   assert {
     condition = (
       jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).enable_dsh_qiniu_maas_plugin == true &&
-      contains(jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).dsh_web_plugins, "https://github.com/zhangzqs/dsh-qiniu-maas-plugin/releases/download/v0.1.9/qiniu-dsh-qiniu-maas-plugin-0.1.9.tgz") &&
-      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).dsh_web_plugins_to_remove == []
+      contains(jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).dsh_web_plugins, "https://github.com/zhangzqs/dsh-qiniu-maas-plugin/releases/download/v0.3.0-rc.0/qiniu-dsh-qiniu-maas-plugin-0.3.0-rc.0.tgz") &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).dsh_web_plugins_to_remove == [] &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).dsh_pnpm_minimum_release_age_exclude == [
+        "dshmarket",
+        "dsh-better-sidebar",
+      ]
     )
     error_message = "启用 MaaS 插件时 bootstrap 参数必须包含 MaaS 插件。"
+  }
+}
+
+run "passes_custom_software_versions" {
+  command = plan
+
+  variables {
+    dsh_version                   = "1.2.3-rc.1"
+    nodejs_version                = "25.2.3"
+    pnpm_version                  = "13.1.2"
+    agent_browser_version         = "1.2.3"
+    code_server_version           = "5.6.7"
+    filebrowser_version           = "v3.4.5-beta.1"
+    dshmarket_version             = "2.3.4"
+    dsh_better_sidebar_version    = "1.2.3-beta.1"
+    dsh_qiniu_maas_plugin_version = "1.2.3"
+  }
+
+  assert {
+    condition = (
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).dsh_version == "1.2.3-rc.1" &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).nodejs_version == "25.2.3" &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).pnpm_version == "13.1.2" &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).agent_browser_version == "1.2.3" &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).code_server_version == "5.6.7" &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).filebrowser_version == "v3.4.5-beta.1" &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).dsh_web_plugins == [
+        "dshmarket@2.3.4",
+        "dsh-better-sidebar@1.2.3-beta.1",
+        "https://github.com/zhangzqs/dsh-qiniu-maas-plugin/releases/download/v1.2.3/qiniu-dsh-qiniu-maas-plugin-1.2.3.tgz",
+      ] &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).dsh_pnpm_minimum_release_age_exclude == [
+        "dshmarket",
+        "dsh-better-sidebar",
+      ]
+    )
+    error_message = "安装器必须将自定义软件版本传入 Ansible，并生成精确插件规格。"
+  }
+}
+
+run "rejects_floating_plugin_version" {
+  command = plan
+
+  variables {
+    dshmarket_version = "latest"
+  }
+
+  expect_failures = [var.dshmarket_version]
+}
+
+run "rejects_floating_download_versions" {
+  command = plan
+
+  variables {
+    code_server_version = "latest"
+    filebrowser_version = "latest"
+  }
+
+  expect_failures = [var.code_server_version, var.filebrowser_version]
+}
+
+run "passes_binary_versions_without_checksums" {
+  command = plan
+
+  assert {
+    condition = (
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).code_server_version == "4.138.0" &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).filebrowser_version == "v2.0.8-beta" &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+        "code_server_releases:",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+        "filebrowser_release:",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/code_server/tasks/main.yml"])),
+        "code-server-{{ code_server_version }}-linux-{{ 'amd64' if ansible_facts['architecture'] == 'x86_64' else 'arm64' }}.tar.gz",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/tasks/main.yml"])),
+        "linux-{{ 'amd64' if ansible_facts['architecture'] == 'x86_64' else 'arm64' }}-filebrowser",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
+        "sha256:",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/code_server/tasks/main.yml"])),
+        "checksum:",
+      ) &&
+      !strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/tasks/main.yml"])),
+        "checksum:",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/defaults/main.yml"])),
+        "filebrowser-{{ filebrowser_version }}-{{ filebrowser_asset }}",
+      )
+    )
+    error_message = "code-server 与 FileBrowser 必须从入口接收版本、在各自 role 内生成架构资产名，且下载任务不再维护静态校验和。"
+  }
+}
+
+run "bundles_native_authentication_bootstrap" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/files/dsh-auth-bootstrap/lib/index.js"])),
+        "ctx.connection.authenticatedUrl(config.publicUrl)",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/files/dsh-auth-bootstrap/cordis.patch.yml"])),
+        "printUrl: false",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/files/dsh-auth-bootstrap/cordis.patch.yml"])),
+        "openBrowser: false",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/nginx/templates/deepseek-harness.conf.j2"])),
+        "error_page 401 = @dsh_auth_bootstrap",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/main.yml"])),
+        "openssl",
+      )
+    )
+    error_message = "安装器必须传输本机密钥驱动的 DSH 原生认证 bootstrap，并关闭启动 token 日志。"
+  }
+}
+
+run "pins_dsh_transitive_dependencies_by_release_time" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/defaults/main.yml"])),
+        "dsh_pnpm_resolution_mode: time-based",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/defaults/main.yml"])),
+        "resolution-{{ dsh_pnpm_resolution_mode }}",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/main.yml"])),
+        "PNPM_CONFIG_RESOLUTION_MODE: \"{{ dsh_pnpm_resolution_mode }}\"",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/install_web_plugins.yml"])),
+        "PNPM_CONFIG_RESOLUTION_MODE: \"{{ dsh_pnpm_resolution_mode }}\"",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/uninstall_web_plugins.yml"])),
+        "PNPM_CONFIG_RESOLUTION_MODE: \"{{ dsh_pnpm_resolution_mode }}\"",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/templates/deepseek-harness.service.j2"])),
+        "Environment=PNPM_CONFIG_RESOLUTION_MODE={{ dsh_pnpm_resolution_mode }}",
+      )
+    )
+    error_message = "所有 DSH pnpm dlx 入口必须按 DSH 发布时间解析间接依赖，并将策略纳入缓存键。"
   }
 }
 
@@ -104,7 +283,7 @@ run "omits_maas_plugin_when_disabled" {
   assert {
     condition = (
       jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).enable_dsh_qiniu_maas_plugin == false &&
-      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).dsh_web_plugins == ["dshmarket@v1.37.0", "dsh-better-sidebar@v0.17.1"] &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).dsh_web_plugins == ["dshmarket@1.64.0", "dsh-better-sidebar@0.21.1"] &&
       jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0])).dsh_web_plugins_to_remove == ["@qiniu/dsh-qiniu-maas-plugin"]
     )
     error_message = "禁用 MaaS 插件时 bootstrap 参数不得包含 MaaS 插件。"
@@ -445,14 +624,14 @@ run "repairs_existing_ansible_venv_read_permissions" {
   }
 }
 
-run "installs_pinned_pnpm_with_nodejs" {
+run "passes_pinned_pnpm_with_nodejs" {
   command = plan
 
   assert {
     condition = (
       strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
-        "pnpm_version: 11.22.0",
+        base64decode(regex("'([^']+)'$", nonsensitive(output.install_command))[0]),
+        "\"pnpm_version\":\"12.5.1\"",
       ) &&
       strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/nodejs/tasks/main.yml"])),
@@ -482,11 +661,19 @@ run "uses_pnpm_for_dsh_prewarm_and_offline_service" {
       ) &&
       strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/main.yml"])),
-        "      - /usr/local/bin/pnpm\n      - dlx",
+        "['/usr/local/bin/pnpm', 'dlx']",
       ) &&
       strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/main.yml"])),
-        "      - \"--allow-build=node-pty\"",
+        "map('regex_replace', '^', '--allow-build=')",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/defaults/main.yml"])),
+        "  - '@deepseek-ai/dsh-subprocess-local'",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/defaults/main.yml"])),
+        "  - koffi",
       ) &&
       !strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/main.yml"])),
@@ -495,6 +682,10 @@ run "uses_pnpm_for_dsh_prewarm_and_offline_service" {
       strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/main.yml"])),
         "dsh_needs_prewarm",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/defaults/main.yml"])),
+        "node-{{ nodejs_version }}",
       ) &&
       strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/main.yml"])),
@@ -526,7 +717,7 @@ run "uses_pnpm_for_dsh_prewarm_and_offline_service" {
       ) &&
       strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/templates/deepseek-harness.service.j2"])),
-        "ExecStart=/usr/local/bin/pnpm dlx --allow-build=node-pty @deepseek-ai/dsh@{{ dsh_version }}",
+        "ExecStart=/usr/local/bin/pnpm dlx{% for package in dsh_pnpm_dlx_allowed_builds %} --allow-build={{ package }}{% endfor %} @deepseek-ai/dsh@{{ dsh_version }}",
       ) &&
       strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/templates/deepseek-harness.service.j2"])),
@@ -556,7 +747,7 @@ run "preinstalls_default_dsh_web_plugins" {
       ) &&
       strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/install_web_plugins.yml"])),
-        "plugin\n      - --profile\n      - web\n      - add",
+        "['@deepseek-ai/dsh@' ~ dsh_version, 'plugin', '--profile', 'web', 'add', item.item]",
       ) &&
       strcontains(
         base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/install_web_plugins.yml"])),
@@ -637,8 +828,8 @@ run "publishes_complete_managed_toolchains" {
         "Verify the existing FileBrowser installation is managed",
       ) &&
       strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/tasks/main.yml"])),
-        "checksum: \"sha256:{{ filebrowser_release_info.sha256 }}\"",
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/filebrowser/defaults/main.yml"])),
+        "filebrowser_download_path:",
       )
     )
     error_message = "Node.js 和 code-server 必须仅替换受管前缀，并经临时目录完整发布。"
@@ -857,28 +1048,6 @@ run "keeps_filebrowser_role_private_settings_in_role_defaults" {
       )
     )
     error_message = "FileBrowser role 私有的配置路径和 token 设置必须下沉到 role defaults。"
-  }
-}
-
-run "keeps_code_server_releases_with_version" {
-  command = plan
-
-  assert {
-    condition = (
-      strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/inventory/default/group_vars/all/main.yml"])),
-        "code_server_releases:",
-      ) &&
-      strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/code_server/tasks/main.yml"])),
-        "code_server_releases",
-      ) &&
-      !strcontains(
-        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/code_server/defaults/main.yml"])),
-        "sha256:",
-      )
-    )
-    error_message = "code-server release 清单必须与版本一同定义在 group_vars，role defaults 只保留私有派生值。"
   }
 }
 

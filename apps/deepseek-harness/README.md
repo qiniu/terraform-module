@@ -61,6 +61,8 @@ dsh_environment = [
 ]
 ```
 
+七牛 MaaS Web 插件默认启用，当前 `0.3.0-rc.0` 支持默认的 DSH `0.1.7-rc.1`。
+
 这些变量写入 root-owned、权限为 `0600` 的 systemd 环境文件，不会写入 Ansible 日志或 Terraform output。
 
 启用 code-server 时，可运行 `terraform output -raw code_server_public_url` 获取地址，并使用与 Harness Web Basic Auth 相同的密码通过 code-server 自带密码认证登录。密码是 sensitive output，不要粘贴到日志、聊天或网页内容中。code-server 默认关闭，可通过 `enable_code_server = true` 开启；它仅监听实例内的 `127.0.0.1:3083`，公网入口由独立 HTTPProxy 转发至 Nginx 的 `3084`。
@@ -111,12 +113,56 @@ enable_ssh_port_forward = true
 
 ## 升级与离线缓存验证
 
-Harness 固定为 `@deepseek-ai/dsh@v0.1.1-rc.2`，Node.js 固定为 `24.19.0`。升级时修改 `modules/ansible-installer/ansible/roles/deepseek_harness/defaults/main.yml` 中的固定版本，审阅 plan 后应用：
+默认部署以下固定版本：
+
+| 软件 | 默认版本 |
+| --- | --- |
+| DeepSeek Harness | `0.1.7-rc.1` |
+| Node.js | `24.21.0`（LTS） |
+| pnpm | `12.5.1` |
+| agent-browser | `0.38.1` |
+| dshmarket | `1.64.0` |
+| dsh-better-sidebar | `0.21.1` |
+| 七牛 MaaS Web 插件 | `0.3.0-rc.0` |
+| code-server | `4.138.0` |
+| FileBrowser Quantum | `v2.0.8-beta` |
+
+上述软件版本可通过根模块输入覆盖，必须使用明确的 SemVer，不能使用 `latest` 等浮动标签。FileBrowser 保留 GitHub release 原始的 `v` 前缀，其他版本不带 `v` 前缀：
+
+```hcl
+dsh_version                   = "0.1.7-rc.1"
+nodejs_version                = "24.21.0"
+pnpm_version                  = "12.5.1"
+agent_browser_version         = "0.38.1"
+code_server_version           = "4.138.0"
+filebrowser_version           = "v2.0.8-beta"
+dshmarket_version             = "1.64.0"
+dsh_better_sidebar_version    = "0.21.1"
+dsh_qiniu_maas_plugin_version = "0.3.0-rc.0"
+```
+
+DSH 的所有 `pnpm dlx` 入口都使用 `resolutionMode=time-based`。顶层 DSH 继续使用入口指定的精确版本，间接依赖只从不晚于该 DSH 版本发布时间的版本中解析，因此未来发布的新间接依赖不会改变同一 DSH 版本的安装结果；修改 `dsh_version` 后会用新版本的发布时间重新解析并重建缓存，无需另外维护 lockfile。
+
+安装器会把 `dshmarket` 和 `dsh-better-sidebar` 写入 pnpm 的 `minimumReleaseAgeExclude`，允许这两个由部署配置明确固定的顶层插件立即升级或降级；其他 npm 包及传递依赖仍保留 pnpm 默认的发布龄检查。
+
+公网入口继续使用 Nginx Basic Auth。密码校验通过后，如果浏览器尚未持有 DSH 原生签名 Cookie，Nginx 只会把 DSH 返回的 `401` 内部转交给本机 bootstrap 插件；插件使用当前进程的临时 token 返回一次 `303`，由 DSH 原生流程写入 Cookie 后回到干净的根路径。token 不写入 Terraform state、磁盘或服务日志，bootstrap 路由也不能从公网直接访问。
+
+通过 Basic Auth 的用户视为实例管理员。Nginx 会在 DSH HTML 启动页中声明浏览器拥有当前 Host，使 DSH 使用原生 Host Settings 持久化并开放包括 Qiniu MaaS 在内的设置项；该声明使用 DSH 的 `__DSH_TRANSPORT__.ownsHost` 契约，不修改版本相关的 JavaScript bundle 内容。
+
+code-server 和 FileBrowser 的版本同样由上述入口变量控制。FileBrowser 使用 GitHub release 的原始 `v` 前缀，code-server 不带 `v` 前缀；修改版本后先审阅 plan，再应用：
 
 ```bash
 terraform plan
 terraform apply
 ```
+
+### 从旧版本升级
+
+从本模块此前默认的 DSH `0.1.1-rc.2` 或 `0.1.5-rc.3`、Node.js `24.19.0`、code-server `4.132.0` 和 FileBrowser `v2.0.3-beta` 可原地升级。安装器保留 `/home/dsh/.dsh`、`/home/dsh/workspace`、code-server 用户数据以及 FileBrowser 的配置和数据库，只切换受管软件版本；单机服务在升级过程中会短暂重启。
+
+DSH `0.1.7` 会在读取受支持的旧 Session 时生成 V4 日志并保留原日志，但升级后的 Session 不保证能由旧 DSH 读取。FileBrowser 会在启动时迁移数据库、JWT 签名密钥和 token，安装器随后重新登录并校验或创建长期 agent token。升级前应备份 `/home/dsh/.dsh` 和 `/home/dsh/.filebrowser`，并确认备份可恢复；本模块不提供自动降级或自动回滚。手工启用过旧版 SQLite Session 后端的部署应先用旧版 DSH 导出数据，不属于直接升级保证范围。
+
+`dshmarket` `1.64.0`、`dsh-better-sidebar` `0.21.1`、七牛 MaaS Web 插件 `0.3.0-rc.0` 和本模块的认证 bootstrap 已通过 DSH `0.1.7-rc.1` Profile 组合与启动验证。覆盖版本时应保持 DSH 与 Web 插件兼容，不要只调整其中一个。
 
 ### Ansible 安装器迁移状态
 

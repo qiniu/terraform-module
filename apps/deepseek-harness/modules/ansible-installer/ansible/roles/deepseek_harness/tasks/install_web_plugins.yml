@@ -16,6 +16,10 @@
 
       nodeLinker: hoisted
       autoInstallPeers: false
+      minimumReleaseAgeExclude:
+      {% for package_name in dsh_pnpm_minimum_release_age_exclude %}
+        - {{ package_name | to_json }}
+      {% endfor %}
       allowBuilds:
         node-pty: true
     dest: "{{ dsh_state_dir }}/profiles/web/pnpm-workspace.yaml"
@@ -32,13 +36,29 @@
       - |
         const fs = require("node:fs");
         const manifestPath = process.argv[1];
-        const packageName = process.argv[2];
+        const packageSpec = process.argv[2];
+        const versionSeparator = packageSpec.startsWith("@")
+          ? packageSpec.indexOf("@", 1)
+          : packageSpec.lastIndexOf("@");
+        const packageName = versionSeparator > 0
+          ? packageSpec.slice(0, versionSeparator)
+          : packageSpec;
+        const requestedVersion = versionSeparator > 0
+          ? packageSpec.slice(versionSeparator + 1)
+          : null;
+        const requestedSpecifiers = requestedVersion === null
+          ? [packageSpec, `file:${packageSpec}`, `link:${packageSpec}`]
+          : [packageSpec, requestedVersion, `^${requestedVersion}`, `~${requestedVersion}`];
         if (!fs.existsSync(manifestPath)) process.exit(1);
         const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
         const dependencies = manifest.dependencies ?? {};
         const bundles = manifest.dsh?.profile?.bundles ?? [];
         const installed = Object.entries(dependencies).some(
-          ([name, specifier]) => (name === packageName || specifier === packageName) && bundles.includes(name),
+          ([name, specifier]) => (
+            specifier === packageSpec
+            || requestedSpecifiers.includes(specifier)
+            || (name === packageName && requestedVersion === null)
+          ) && bundles.includes(name),
         );
         process.exit(
           installed ? 0 : 1,
@@ -52,7 +72,7 @@
     DSH_HOME: "{{ dsh_state_dir }}"
     PNPM_CONFIG_STORE_DIR: "{{ dsh_pnpm_store_dir }}"
   become_user: "{{ dsh_user }}"
-  loop: "{{ dsh_web_plugins }}"
+  loop: "{{ dsh_effective_web_plugins | default(dsh_web_plugins) }}"
   loop_control:
     label: "{{ item }}"
   register: dsh_web_plugin_state
@@ -61,21 +81,18 @@
 
 - name: Install missing DeepSeek Harness Web Profile plugins
   ansible.builtin.command:
-    argv:
-      - "{{ dsh_pnpm_bin | default('/usr/local/bin/pnpm') }}"
-      - dlx
-      - --allow-build=node-pty
-      - "@deepseek-ai/dsh@{{ dsh_version }}"
-      - plugin
-      - --profile
-      - web
-      - add
-      - "{{ item.item }}"
+    argv: >-
+      {{
+        [dsh_pnpm_bin | default('/usr/local/bin/pnpm'), 'dlx']
+        + (dsh_pnpm_dlx_allowed_builds | map('regex_replace', '^', '--allow-build=') | list)
+        + ['@deepseek-ai/dsh@' ~ dsh_version, 'plugin', '--profile', 'web', 'add', item.item]
+      }}
   args:
     chdir: "{{ dsh_workspace_dir }}"
   environment:
     HOME: "{{ dsh_home }}"
     DSH_HOME: "{{ dsh_state_dir }}"
+    PNPM_CONFIG_RESOLUTION_MODE: "{{ dsh_pnpm_resolution_mode }}"
     PNPM_CONFIG_STORE_DIR: "{{ dsh_pnpm_store_dir }}"
   become_user: "{{ dsh_user }}"
   loop: "{{ dsh_web_plugin_state.results }}"

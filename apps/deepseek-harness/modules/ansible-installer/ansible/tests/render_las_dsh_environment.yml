@@ -25,7 +25,7 @@
     dsh_user: dsh
     dsh_web_public_authority: dsh.example.test
     dsh_web_proxy_port: 3081
-    nodejs_version: 24.19.0
+    nodejs_version: 24.21.0
     skill_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las-dsh-environment/SKILL.md.j2"
     session_summary_script_template_path: "{{ playbook_dir }}/../roles/managed_skills/templates/las-dsh-environment/inspect-session.sh.j2"
     uv_version: 0.12.5

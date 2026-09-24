@@ -62,6 +62,15 @@ module "installer" {
   code_server_public_authority    = var.enable_code_server ? module.infrastructure.code_server_public_authority : null
   enable_filebrowser              = var.enable_filebrowser
   enable_agent_browser            = var.enable_agent_browser
+  code_server_version             = var.code_server_version
+  filebrowser_version             = var.filebrowser_version
+  dsh_version                     = var.dsh_version
+  nodejs_version                  = var.nodejs_version
+  pnpm_version                    = var.pnpm_version
+  agent_browser_version           = var.agent_browser_version
+  dshmarket_version               = var.dshmarket_version
+  dsh_better_sidebar_version      = var.dsh_better_sidebar_version
+  dsh_qiniu_maas_plugin_version   = var.dsh_qiniu_maas_plugin_version
   filebrowser_proxy_port          = var.enable_filebrowser ? module.infrastructure.filebrowser_proxy_port : null
   filebrowser_public_authority    = var.enable_filebrowser ? module.infrastructure.filebrowser_public_authority : null
   dsh_web_username                = local.dsh_web_username
@@ -82,10 +91,6 @@ module "ansible_runtime_transfer" {
   file_metadata = module.installer.file_metadata
 }
 
-resource "terraform_data" "install_dsh_runtime" {
-  triggers_replace = nonsensitive(module.installer.file_metadata)
-}
-
 resource "qiniu_compute_instance_exec" "install_dsh" {
   depends_on = [module.ansible_runtime_transfer]
 
@@ -95,6 +100,9 @@ resource "qiniu_compute_instance_exec" "install_dsh" {
   private_key = module.infrastructure.deployment_private_key
   shell       = "bash"
   command     = module.installer.install_command
+  triggers = {
+    runtime_revision = sha256(jsonencode(module.installer.file_metadata))
+  }
 
   store_stdout = false
   store_stderr = false
@@ -104,7 +112,4 @@ resource "qiniu_compute_instance_exec" "install_dsh" {
     delete = "10m"
   }
 
-  lifecycle {
-    replace_triggered_by = [terraform_data.install_dsh_runtime]
-  }
 }

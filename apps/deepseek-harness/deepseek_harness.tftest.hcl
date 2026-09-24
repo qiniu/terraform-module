@@ -32,14 +32,16 @@ override_module {
 }
 
 variables {
-  instance_type           = "ecs.t1s.c2m4"
-  system_disk_size        = 40
-  internet_max_bandwidth  = 100
-  cost_charge_type        = "PostPaid"
-  cost_period             = null
-  cost_period_unit        = "Month"
-  enable_ssh_port_forward = false
-  dsh_web_password        = ""
+  instance_type                 = "ecs.t1s.c2m4"
+  system_disk_size              = 40
+  internet_max_bandwidth        = 100
+  cost_charge_type              = "PostPaid"
+  cost_period                   = null
+  cost_period_unit              = "Month"
+  enable_ssh_port_forward       = false
+  enable_dsh_qiniu_maas_plugin  = true
+  dsh_qiniu_maas_plugin_version = "0.3.0-rc.0"
+  dsh_web_password              = ""
 }
 
 run "uses_fixed_versions_and_installer_contract" {
@@ -80,6 +82,21 @@ run "uses_fixed_versions_and_installer_contract" {
 
   assert {
     condition = (
+      var.dsh_version == "0.1.7-rc.1" &&
+      var.nodejs_version == "24.21.0" &&
+      var.pnpm_version == "12.5.1" &&
+      var.agent_browser_version == "0.38.1" &&
+      var.code_server_version == "4.138.0" &&
+      var.filebrowser_version == "v2.0.8-beta" &&
+      var.dshmarket_version == "1.64.0" &&
+      var.dsh_better_sidebar_version == "0.21.1" &&
+      var.dsh_qiniu_maas_plugin_version == "0.3.0-rc.0"
+    )
+    error_message = "根模块必须使用经过验证的默认软件版本。"
+  }
+
+  assert {
+    condition = (
       qiniu_compute_instance_exec.install_dsh.instance_id == "test-instance" &&
       qiniu_compute_instance_exec.install_dsh.user == "root" &&
       qiniu_compute_instance_exec.install_dsh.port == "22" &&
@@ -94,10 +111,10 @@ run "uses_fixed_versions_and_installer_contract" {
 
   assert {
     condition = (
-      nonsensitive(terraform_data.install_dsh_runtime.triggers_replace) ==
-      nonsensitive(module.installer.file_metadata)
+      length(qiniu_compute_instance_exec.install_dsh.triggers) == 1 &&
+      qiniu_compute_instance_exec.install_dsh.triggers["runtime_revision"] == sha256(jsonencode(module.installer.file_metadata))
     )
-    error_message = "运行时文件变更必须触发最终安装 exec 重新执行。"
+    error_message = "运行时文件 revision 必须通过 exec triggers 触发重新执行。"
   }
 
   assert {
@@ -115,6 +132,65 @@ run "uses_fixed_versions_and_installer_contract" {
     )
     error_message = "Web 密码必须为 24 位并包含所有字符类别，特殊字符须对 URL、Basic Auth 与 shell 安全。"
   }
+}
+
+run "passes_custom_software_versions_to_installer" {
+  command = plan
+
+  variables {
+    enable_dsh_qiniu_maas_plugin  = true
+    dsh_version                   = "1.2.3-rc.1"
+    nodejs_version                = "25.2.3"
+    pnpm_version                  = "13.1.2"
+    agent_browser_version         = "1.2.3"
+    code_server_version           = "5.6.7"
+    filebrowser_version           = "v3.4.5-beta.1"
+    dshmarket_version             = "2.3.4"
+    dsh_better_sidebar_version    = "1.2.3-beta.1"
+    dsh_qiniu_maas_plugin_version = "1.2.3"
+  }
+
+  assert {
+    condition = (
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(module.installer.install_command))[0])).dsh_version == "1.2.3-rc.1" &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(module.installer.install_command))[0])).nodejs_version == "25.2.3" &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(module.installer.install_command))[0])).pnpm_version == "13.1.2" &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(module.installer.install_command))[0])).agent_browser_version == "1.2.3" &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(module.installer.install_command))[0])).code_server_version == "5.6.7" &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(module.installer.install_command))[0])).filebrowser_version == "v3.4.5-beta.1" &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(module.installer.install_command))[0])).dsh_web_plugins == [
+        "dshmarket@2.3.4",
+        "dsh-better-sidebar@1.2.3-beta.1",
+        "https://github.com/zhangzqs/dsh-qiniu-maas-plugin/releases/download/v1.2.3/qiniu-dsh-qiniu-maas-plugin-1.2.3.tgz",
+      ] &&
+      jsondecode(base64decode(regex("'([^']+)'$", nonsensitive(module.installer.install_command))[0])).dsh_pnpm_minimum_release_age_exclude == [
+        "dshmarket",
+        "dsh-better-sidebar",
+      ]
+    )
+    error_message = "根模块必须将自定义软件版本完整传递给安装器。"
+  }
+}
+
+run "rejects_floating_dsh_version" {
+  command = plan
+
+  variables {
+    dsh_version = "latest"
+  }
+
+  expect_failures = [var.dsh_version]
+}
+
+run "rejects_floating_download_versions" {
+  command = plan
+
+  variables {
+    code_server_version = "latest"
+    filebrowser_version = "latest"
+  }
+
+  expect_failures = [var.code_server_version, var.filebrowser_version]
 }
 
 run "converts_dsh_environment_entries_to_map" {
