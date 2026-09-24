@@ -106,8 +106,6 @@ resource "qiniu_compute_instance_exec" "install_dsh" {
 
   store_stdout = false
   store_stderr = false
-  log_stderr   = true
-  log_stdout   = true
 
   timeouts {
     create = "30m"
