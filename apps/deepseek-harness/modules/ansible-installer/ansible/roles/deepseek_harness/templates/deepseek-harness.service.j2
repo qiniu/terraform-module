@@ -10,6 +10,7 @@ Group={{ dsh_group }}
 Environment=HOME={{ dsh_home }}
 Environment=DSH_HOME={{ dsh_state_dir }}
 Environment=PATH={{ nodejs_prefix }}/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PNPM_CONFIG_RESOLUTION_MODE={{ dsh_pnpm_resolution_mode }}
 Environment=PNPM_CONFIG_STORE_DIR={{ dsh_pnpm_store_dir }}
 Environment=PNPM_OFFLINE=true
 EnvironmentFile=/etc/deepseek-harness/dsh.env

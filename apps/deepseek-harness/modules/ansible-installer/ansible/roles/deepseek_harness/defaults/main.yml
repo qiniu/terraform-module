@@ -5,7 +5,8 @@ dsh_pnpm_dlx_allowed_builds:
   - koffi
   - '@google/genai'
   - protobufjs
-dsh_cache_key: "{{ dsh_version }}:node-{{ nodejs_version }}:pnpm-{{ pnpm_version }}:builds-{{ dsh_pnpm_dlx_allowed_builds | join(',') }}"
+dsh_pnpm_resolution_mode: time-based
+dsh_cache_key: "{{ dsh_version }}:node-{{ nodejs_version }}:pnpm-{{ pnpm_version }}:resolution-{{ dsh_pnpm_resolution_mode }}:builds-{{ dsh_pnpm_dlx_allowed_builds | join(',') }}"
 dsh_cache_version_file: "{{ dsh_state_dir }}/CACHED_VERSION"
 dsh_pnpm_dlx_cache_dir: "{{ dsh_home }}/.cache/pnpm/dlx"
 dsh_web_plugins: []

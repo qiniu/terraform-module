@@ -36,6 +36,7 @@
               - dshmarket
               - dsh-better-sidebar
             dsh_version: 0.1.7-rc.1
+            dsh_pnpm_resolution_mode: time-based
             dsh_pnpm_dlx_allowed_builds:
               - node-pty
               - '@deepseek-ai/dsh-subprocess-local'
@@ -80,6 +81,7 @@
               set -euo pipefail
               manifest="${DSH_HOME}/profiles/web/package.json"
               printf '%s\n' "$*" >> "${DSH_HOME}/plugin-install.log"
+              printf '%s\n' "${PNPM_CONFIG_RESOLUTION_MODE:-}" >> "${DSH_HOME}/resolution-mode.log"
               plugin="${!#}"
               if [[ " $* " =~ " plugin --profile web remove " ]]; then
                 exit 0
@@ -125,6 +127,11 @@
             src: "{{ dsh_state_dir }}/profiles/web/pnpm-workspace.yaml"
           register: pnpm_workspace
 
+        - name: Read the pnpm resolution mode log
+          ansible.builtin.slurp:
+            src: "{{ dsh_state_dir }}/resolution-mode.log"
+          register: pnpm_resolution_mode_log
+
         - name: Verify both plugins were installed with the expected command
           ansible.builtin.assert:
             that:
@@ -133,6 +140,7 @@
               - "'minimumReleaseAgeExclude:' in (pnpm_workspace.content | b64decode)"
               - "'  - \"dshmarket\"' in (pnpm_workspace.content | b64decode)"
               - "'  - \"dsh-better-sidebar\"' in (pnpm_workspace.content | b64decode)"
+              - "(pnpm_resolution_mode_log.content | b64decode).splitlines() == ['time-based', 'time-based', 'time-based', 'time-based', 'time-based']"
 
         - name: Simulate the package manifest written by the plugin upgrade
           ansible.builtin.copy:
@@ -151,10 +159,16 @@
             src: "{{ dsh_state_dir }}/plugin-install.log"
           register: second_plugin_install_log
 
+        - name: Read the second pnpm resolution mode log
+          ansible.builtin.slurp:
+            src: "{{ dsh_state_dir }}/resolution-mode.log"
+          register: second_pnpm_resolution_mode_log
+
         - name: Verify the second run is idempotent
           ansible.builtin.assert:
             that:
               - "(second_plugin_install_log.content | b64decode).splitlines() == (first_plugin_install_log.content | b64decode).splitlines() + ['dlx --allow-build=node-pty --allow-build=@deepseek-ai/dsh-subprocess-local --allow-build=koffi --allow-build=@google/genai --allow-build=protobufjs @deepseek-ai/dsh@0.1.7-rc.1 plugin --profile web remove dshmarket']"
+              - "(second_pnpm_resolution_mode_log.content | b64decode).splitlines() == ['time-based', 'time-based', 'time-based', 'time-based', 'time-based', 'time-based']"
       always:
         - name: Remove the temporary Web Profile test workspace
           ansible.builtin.file:

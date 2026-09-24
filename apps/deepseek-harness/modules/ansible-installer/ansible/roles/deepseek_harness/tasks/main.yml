@@ -103,6 +103,7 @@
   environment:
     HOME: "{{ dsh_home }}"
     PNPM_OFFLINE: "true"
+    PNPM_CONFIG_RESOLUTION_MODE: "{{ dsh_pnpm_resolution_mode }}"
     PNPM_CONFIG_STORE_DIR: "{{ dsh_pnpm_store_dir }}"
   become_user: "{{ dsh_user }}"
   when: dsh_cached_version.stdout | trim == dsh_cache_key
@@ -137,6 +138,7 @@
     chdir: "{{ dsh_workspace_dir }}"
   environment:
     HOME: "{{ dsh_home }}"
+    PNPM_CONFIG_RESOLUTION_MODE: "{{ dsh_pnpm_resolution_mode }}"
     PNPM_CONFIG_STORE_DIR: "{{ dsh_pnpm_store_dir }}"
   become_user: "{{ dsh_user }}"
   when: dsh_needs_prewarm

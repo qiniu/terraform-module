@@ -141,6 +141,8 @@ dsh_better_sidebar_version    = "0.21.1"
 dsh_qiniu_maas_plugin_version = "0.3.0-rc.0"
 ```
 
+DSH 的所有 `pnpm dlx` 入口都使用 `resolutionMode=time-based`。顶层 DSH 继续使用入口指定的精确版本，间接依赖只从不晚于该 DSH 版本发布时间的版本中解析，因此未来发布的新间接依赖不会改变同一 DSH 版本的安装结果；修改 `dsh_version` 后会用新版本的发布时间重新解析并重建缓存，无需另外维护 lockfile。
+
 安装器会把 `dshmarket` 和 `dsh-better-sidebar` 写入 pnpm 的 `minimumReleaseAgeExclude`，允许这两个由部署配置明确固定的顶层插件立即升级或降级；其他 npm 包及传递依赖仍保留 pnpm 默认的发布龄检查。
 
 公网入口继续使用 Nginx Basic Auth。密码校验通过后，如果浏览器尚未持有 DSH 原生签名 Cookie，Nginx 只会把 DSH 返回的 `401` 内部转交给本机 bootstrap 插件；插件使用当前进程的临时 token 返回一次 `303`，由 DSH 原生流程写入 Cookie 后回到干净的根路径。token 不写入 Terraform state、磁盘或服务日志，bootstrap 路由也不能从公网直接访问。

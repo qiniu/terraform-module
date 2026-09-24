@@ -181,6 +181,40 @@ run "bundles_native_authentication_bootstrap" {
   }
 }
 
+run "pins_dsh_transitive_dependencies_by_release_time" {
+  command = plan
+
+  assert {
+    condition = (
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/defaults/main.yml"])),
+        "dsh_pnpm_resolution_mode: time-based",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/defaults/main.yml"])),
+        "resolution-{{ dsh_pnpm_resolution_mode }}",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/main.yml"])),
+        "PNPM_CONFIG_RESOLUTION_MODE: \"{{ dsh_pnpm_resolution_mode }}\"",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/install_web_plugins.yml"])),
+        "PNPM_CONFIG_RESOLUTION_MODE: \"{{ dsh_pnpm_resolution_mode }}\"",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/tasks/uninstall_web_plugins.yml"])),
+        "PNPM_CONFIG_RESOLUTION_MODE: \"{{ dsh_pnpm_resolution_mode }}\"",
+      ) &&
+      strcontains(
+        base64decode(nonsensitive(output.file_contents["/opt/las-dsh-installer/project/roles/deepseek_harness/templates/deepseek-harness.service.j2"])),
+        "Environment=PNPM_CONFIG_RESOLUTION_MODE={{ dsh_pnpm_resolution_mode }}",
+      )
+    )
+    error_message = "所有 DSH pnpm dlx 入口必须按 DSH 发布时间解析间接依赖，并将策略纳入缓存键。"
+  }
+}
+
 run "includes_agent_browser_settings_when_enabled" {
   command = plan
 

@@ -92,6 +92,7 @@
   environment:
     HOME: "{{ dsh_home }}"
     DSH_HOME: "{{ dsh_state_dir }}"
+    PNPM_CONFIG_RESOLUTION_MODE: "{{ dsh_pnpm_resolution_mode }}"
     PNPM_CONFIG_STORE_DIR: "{{ dsh_pnpm_store_dir }}"
   become_user: "{{ dsh_user }}"
   loop: "{{ dsh_web_plugin_state.results }}"
