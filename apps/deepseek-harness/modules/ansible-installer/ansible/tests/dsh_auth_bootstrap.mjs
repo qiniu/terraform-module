@@ -56,7 +56,8 @@ function responseRecorder() {
     ended: false,
     headers,
     statusCode: 0,
-    end() {
+    end(body) {
+      this.body = body;
       this.ended = true;
     },
     setHeader(name, value) {
@@ -92,6 +93,26 @@ test("returns the current process authenticated URL without caching", () => {
   const secondResponse = responseRecorder();
   registeredRoute.handler(request(), secondResponse);
   assert.equal(secondResponse.headers.get("location"), "https://dsh.example.test/?token=second-token");
+});
+
+test("ends a cross-site navigation before exchanging the Strict cookie", () => {
+  currentToken = "cross-site-token";
+  const response = responseRecorder();
+  registeredRoute.handler(request({
+    headers: {
+      "sec-fetch-dest": "document",
+      "sec-fetch-mode": "navigate",
+      "sec-fetch-site": "cross-site",
+      "x-las-dsh-auth-bootstrap-secret": secret,
+    },
+  }), response);
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.headers.get("location"), undefined);
+  assert.equal(response.headers.get("content-type"), "text/html; charset=utf-8");
+  assert.match(response.headers.get("content-security-policy"), /default-src 'none'/);
+  assert.match(response.body, /http-equiv="refresh"/);
+  assert.match(response.body, /https:\/\/dsh\.example\.test\/\?token=cross-site-token/);
 });
 
 test("rejects non-loopback, wrong-secret, and non-GET requests", () => {
