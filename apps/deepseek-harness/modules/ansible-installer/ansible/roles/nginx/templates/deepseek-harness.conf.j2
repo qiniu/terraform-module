@@ -78,6 +78,8 @@ server {
 
     # Basic Auth 必须在带上游错误拦截的 location 之外完成，否则 Nginx
     # 自己返回的 401 会被误当成 DSH 的 401，从而绕过密码校验。
+    # DSH 会把 Cookie 绑定到 Host；公网认证路径必须保留实例公网 authority，
+    # 避免所有反向代理实例共用回环 authority 对应的 Cookie 名称。
     location = / {
         if ($dsh_origin_allowed = 0) { return 403; }
         if ($dsh_fetch_site_allowed = 0) { return 403; }
@@ -92,11 +94,11 @@ server {
         access_log off;
         proxy_pass http://127.0.0.1:{{ dsh_port }};
         proxy_http_version 1.1;
-        proxy_set_header Host 127.0.0.1:{{ dsh_port }};
+        proxy_set_header Host {{ dsh_web_public_authority }};
         proxy_set_header X-Forwarded-Host $http_x_forwarded_host;
         proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header Origin "http://127.0.0.1:{{ dsh_port }}";
+        proxy_set_header Origin "https://{{ dsh_web_public_authority }}";
         proxy_set_header Sec-Fetch-Site "same-origin";
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection $connection_upgrade;
@@ -143,11 +145,11 @@ server {
         auth_basic_user_file /etc/nginx/deepseek-harness.htpasswd;
         proxy_pass http://127.0.0.1:{{ dsh_port }};
         proxy_http_version 1.1;
-        proxy_set_header Host 127.0.0.1:{{ dsh_port }};
+        proxy_set_header Host {{ dsh_web_public_authority }};
         proxy_set_header X-Forwarded-Host $http_x_forwarded_host;
         proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header Origin "http://127.0.0.1:{{ dsh_port }}";
+        proxy_set_header Origin "https://{{ dsh_web_public_authority }}";
         proxy_set_header Sec-Fetch-Site "same-origin";
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection $connection_upgrade;
