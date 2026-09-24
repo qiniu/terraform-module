@@ -14,6 +14,19 @@ map "$http_sec_fetch_site:$http_sec_fetch_mode:$http_sec_fetch_dest:$request_met
     ~^cross-site: 0;
 }
 
+# dshmarket 只允许回环 authority 修改插件状态。公网请求先通过上述
+# Origin 与 Fetch Metadata 校验，再仅为 POST 请求转换上游 authority；
+# GET 继续保留公网 authority，避免改变 DSH 的 Cookie 与资源语义。
+map $request_method $dsh_market_upstream_host {
+    default {{ dsh_web_public_authority }};
+    POST 127.0.0.1:{{ dsh_port }};
+}
+
+map $request_method $dsh_market_upstream_origin {
+    default "https://{{ dsh_web_public_authority }}";
+    POST "http://127.0.0.1:{{ dsh_port }}";
+}
+
 map $http_upgrade $connection_upgrade {
     default upgrade;
     "" close;
@@ -57,6 +70,27 @@ server {
         return 204;
     }
 
+    location ^~ /dsh-market/ {
+        if ($dsh_origin_allowed = 0) { return 403; }
+        if ($dsh_fetch_site_allowed = 0) { return 403; }
+
+        auth_basic "DeepSeek Harness";
+        auth_basic_user_file /etc/nginx/deepseek-harness.htpasswd;
+        proxy_pass http://127.0.0.1:{{ dsh_port }};
+        proxy_http_version 1.1;
+        proxy_set_header Host $dsh_market_upstream_host;
+        proxy_set_header X-Forwarded-Host $http_x_forwarded_host;
+        proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Origin $dsh_market_upstream_origin;
+        proxy_set_header Sec-Fetch-Site "same-origin";
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_buffering off;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+    }
+
     # dshmarket 只接受直接来自回环地址且不带代理转发链的重启请求。
     # 公网访问仍受本部署的 Basic Auth 和上述同源校验保护。
     location = /dsh-market/restart {
@@ -67,8 +101,8 @@ server {
         auth_basic_user_file /etc/nginx/deepseek-harness.htpasswd;
         proxy_pass http://127.0.0.1:{{ dsh_port }};
         proxy_http_version 1.1;
-        proxy_set_header Host {{ dsh_web_public_authority }};
-        proxy_set_header Origin "https://{{ dsh_web_public_authority }}";
+        proxy_set_header Host 127.0.0.1:{{ dsh_port }};
+        proxy_set_header Origin "http://127.0.0.1:{{ dsh_port }}";
         proxy_set_header X-Forwarded-For "";
         proxy_set_header X-Forwarded-Host "";
         proxy_set_header X-Forwarded-Proto "";

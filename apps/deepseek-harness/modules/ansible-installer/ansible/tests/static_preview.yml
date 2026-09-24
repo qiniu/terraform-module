@@ -121,11 +121,30 @@
             that:
               - "'location = /dsh-market/restart {' in static_preview_nginx_config"
               - "'auth_basic \"DeepSeek Harness\";' in static_preview_nginx_config.split('location = /dsh-market/restart {')[1].split('location / {')[0]"
-              - "'proxy_set_header Host dsh.example.test;' in static_preview_nginx_config.split('location = /dsh-market/restart {')[1].split('location / {')[0]"
-              - "'proxy_set_header Origin \"https://dsh.example.test\";' in static_preview_nginx_config.split('location = /dsh-market/restart {')[1].split('location / {')[0]"
+              - "'proxy_set_header Host 127.0.0.1:3080;' in static_preview_nginx_config.split('location = /dsh-market/restart {')[1].split('location / {')[0]"
+              - "'proxy_set_header Origin \"http://127.0.0.1:3080\";' in static_preview_nginx_config.split('location = /dsh-market/restart {')[1].split('location / {')[0]"
               - "'proxy_set_header X-Forwarded-For \"\";' in static_preview_nginx_config.split('location = /dsh-market/restart {')[1].split('location / {')[0]"
               - "'proxy_set_header X-Real-IP \"\";' in static_preview_nginx_config.split('location = /dsh-market/restart {')[1].split('location / {')[0]"
               - "'proxy_set_header Forwarded \"\";' in static_preview_nginx_config.split('location = /dsh-market/restart {')[1].split('location / {')[0]"
+
+        - name: Verify Harness marketplace writes use the loopback authority
+          ansible.builtin.assert:
+            that:
+              - "'map $request_method $dsh_market_upstream_host {' in static_preview_nginx_config"
+              - "'map $request_method $dsh_market_upstream_origin {' in static_preview_nginx_config"
+              - "'default dsh.example.test;' in static_preview_nginx_config.split('map $request_method $dsh_market_upstream_host {')[1].split('}')[0]"
+              - "'POST 127.0.0.1:3080;' in static_preview_nginx_config.split('map $request_method $dsh_market_upstream_host {')[1].split('}')[0]"
+              - "'default \"https://dsh.example.test\";' in static_preview_nginx_config.split('map $request_method $dsh_market_upstream_origin {')[1].split('}')[0]"
+              - "'POST \"http://127.0.0.1:3080\";' in static_preview_nginx_config.split('map $request_method $dsh_market_upstream_origin {')[1].split('}')[0]"
+              - "'location ^~ /dsh-market/ {' in static_preview_nginx_config"
+              - "'if ($dsh_origin_allowed = 0) { return 403; }' in static_preview_nginx_config.split('location ^~ /dsh-market/ {')[1].split('location = /dsh-market/restart {')[0]"
+              - "'if ($dsh_fetch_site_allowed = 0) { return 403; }' in static_preview_nginx_config.split('location ^~ /dsh-market/ {')[1].split('location = /dsh-market/restart {')[0]"
+              - "'auth_basic \"DeepSeek Harness\";' in static_preview_nginx_config.split('location ^~ /dsh-market/ {')[1].split('location = /dsh-market/restart {')[0]"
+              - "'proxy_set_header Host $dsh_market_upstream_host;' in static_preview_nginx_config.split('location ^~ /dsh-market/ {')[1].split('location = /dsh-market/restart {')[0]"
+              - "'proxy_set_header Origin $dsh_market_upstream_origin;' in static_preview_nginx_config.split('location ^~ /dsh-market/ {')[1].split('location = /dsh-market/restart {')[0]"
+              - "'proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;' in static_preview_nginx_config.split('location ^~ /dsh-market/ {')[1].split('location = /dsh-market/restart {')[0]"
+              - "'proxy_set_header X-Real-IP \"\";' not in static_preview_nginx_config.split('location ^~ /dsh-market/ {')[1].split('location = /dsh-market/restart {')[0]"
+            fail_msg: Marketplace POST requests must become loopback requests only after the public-origin boundary accepts them.
 
         - name: Verify the unpaired heartbeat cannot trigger a Basic Auth prompt
           ansible.builtin.assert:
